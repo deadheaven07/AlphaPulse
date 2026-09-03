@@ -17,7 +17,7 @@ You MUST respond strictly with a valid JSON object matching this schema:
   "sector_overview": "1-2 sentence macroeconomic context for Indian markets",
   "recommendations": [
     {
-      "symbol": "NSE_TICKER (e.g. TATAMOTORS, BEL, LT, RELIANCE, TCS)",
+      "symbol": "NSE_TICKER (e.g. TATAMOTORS, BEL, HAL, LT, RELIANCE, TCS)",
       "company_name": "Full Company Name",
       "sector": "Sector Name",
       "current_price": 1050.0,
@@ -59,7 +59,6 @@ def generate_fallback_ai_thesis(query: str, capital: float = 50000, horizon_mont
     for sym in symbols:
         quote = fetch_live_quote(sym)
         p = quote["price"]
-        roce = quote.get("roce", 18.0)
         
         if sym == "BEL":
             thesis = "Zero-debt defense electronics champion with ₹75,000+ Cr order backlog spanning radars, electronic warfare systems, and avionics."
@@ -141,51 +140,68 @@ async def generate_ai_analysis(query: str, capital: float = 50000, horizon_month
     if not key or key == "YOUR_GEMINI_API_KEY_HERE":
         return generate_fallback_ai_thesis(query, capital, horizon_months)
 
-    try:
-        client = genai.Client(api_key=key)
-        prompt = f"""
+    # List of candidate models in order of priority
+    candidate_models = [
+        GEMINI_MODEL,
+        "gemini-2.5-flash",
+        "gemini-2.5-flash",
+        "gemini-2.5-pro",
+        "gemini-flash-latest"
+    ]
+    # Remove duplicates while preserving order
+    models_to_try = list(dict.fromkeys([m for m in candidate_models if m]))
+
+    last_error = None
+    client = genai.Client(api_key=key)
+    prompt = f"""
 User Query: "{query}"
 Investment Capital: ₹{capital:,.2f} INR
 Planned Duration: {horizon_months} Months
 
 Provide your investment thesis, catalysts, risks, and verdict in exact JSON.
 """
-        response = client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[
-                types.Content(
-                    role="user",
-                    parts=[types.Part.from_text(text=f"{SYSTEM_PROMPT}\n\n{prompt}")]
+
+    for model_name in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    types.Content(
+                        role="user",
+                        parts=[types.Part.from_text(text=f"{SYSTEM_PROMPT}\n\n{prompt}")]
+                    )
+                ],
+                config=types.GenerateContentConfig(
+                    temperature=0.2,
+                    response_mime_type="application/json"
                 )
-            ],
-            config=types.GenerateContentConfig(
-                temperature=0.2,
-                response_mime_type="application/json"
             )
-        )
 
-        raw = response.text.strip()
-        if raw.startswith("```json"):
-            raw = raw[7:]
-        if raw.startswith("```"):
-            raw = raw[3:]
-        if raw.endswith("```"):
-            raw = raw[:-3]
+            raw = response.text.strip()
+            if raw.startswith("```json"):
+                raw = raw[7:]
+            if raw.startswith("```"):
+                raw = raw[3:]
+            if raw.endswith("```"):
+                raw = raw[:-3]
 
-        parsed = json.loads(raw.strip())
-        
-        # Verify quotes
-        if "recommendations" in parsed:
-            for rec in parsed["recommendations"]:
-                sym = rec.get("symbol", "").upper()
-                if sym:
-                    live_q = fetch_live_quote(sym)
-                    if live_q.get("price"):
-                        rec["current_price"] = live_q["price"]
+            parsed = json.loads(raw.strip())
+            
+            # Enrich recommendation prices
+            if "recommendations" in parsed:
+                for rec in parsed["recommendations"]:
+                    sym = rec.get("symbol", "").upper()
+                    if sym:
+                        live_q = fetch_live_quote(sym)
+                        if live_q.get("price"):
+                            rec["current_price"] = live_q["price"]
 
-        return parsed
-    except Exception as e:
-        print(f"Gemini API error: {e}. Using deterministic engine.")
-        fallback = generate_fallback_ai_thesis(query, capital, horizon_months)
-        fallback["notice"] = f"Generated via AlphaPulse Heuristics (Gemini fallback: {str(e)})"
-        return fallback
+            return parsed
+        except Exception as e:
+            last_error = e
+            continue
+
+    print(f"All Gemini models returned error: {last_error}. Using deterministic heuristic engine.")
+    fallback = generate_fallback_ai_thesis(query, capital, horizon_months)
+    fallback["notice"] = f"Generated via AlphaPulse Heuristics (Gemini fallback: {str(last_error)})"
+    return fallback
