@@ -9,7 +9,10 @@ import type {
   DividendAnalysisData,
   TopDividendYielder,
   KpiRadarStock,
-  DiagnosticSuiteResult
+  DiagnosticSuiteResult,
+  PortfolioAlert,
+  PennyStockCandidate,
+  BreakoutCandidate
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -119,5 +122,27 @@ export async function fetchKpiRadar(capital = 100000): Promise<KpiRadarStock[]> 
 export async function fetchSystemDiagnostics(): Promise<DiagnosticSuiteResult> {
   const res = await fetch(`${API_BASE}/diagnostics/self-test`);
   if (!res.ok) throw new Error("Failed to run system diagnostics self-test");
+  return res.json();
+}
+
+export async function inspectPortfolioThreats(holdings: any[]): Promise<PortfolioAlert[]> {
+  const res = await fetch(`${API_BASE}/portfolio/inspect-threats`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(holdings)
+  });
+  if (!res.ok) throw new Error("Failed to inspect portfolio threats");
+  return res.json();
+}
+
+export async function fetchPennyRadar(budget = 25000): Promise<PennyStockCandidate[]> {
+  const res = await fetch(`${API_BASE}/stocks/penny-radar?budget=${budget}`);
+  if (!res.ok) throw new Error("Failed to fetch penny stocks radar");
+  return res.json();
+}
+
+export async function fetchSidewaysBreakouts(): Promise<BreakoutCandidate[]> {
+  const res = await fetch(`${API_BASE}/stocks/sideways-breakouts`);
+  if (!res.ok) throw new Error("Failed to fetch sideways breakouts");
   return res.json();
 }

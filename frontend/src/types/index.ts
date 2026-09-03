@@ -309,3 +309,54 @@ export interface DiagnosticSuiteResult {
   total_duration_ms: number;
   checks: DiagnosticCheck[];
 }
+
+export type AlertType = "PROFIT_TARGET" | "STOP_LOSS_BREACH" | "NEWS_THREAT" | "CONSOLIDATION_BREAKOUT";
+export type AlertSeverity = "SUCCESS" | "CRITICAL" | "WARNING" | "INFO";
+
+export interface PortfolioAlert {
+  id: string;
+  symbol: string;
+  company_name: string;
+  alert_type: AlertType;
+  severity: AlertSeverity;
+  current_price: number;
+  target_price?: number;
+  stop_loss_price?: number;
+  pnl_inr?: number;
+  pnl_pct?: number;
+  risk_of_loss_pct?: number;
+  title: string;
+  message: string;
+  recommended_action: string;
+}
+
+export interface PennyStockCandidate {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  price: number;
+  change: number;
+  change_pct: number;
+  penny_score: number;
+  delivery_pct: number;
+  promoter_pledge_pct: number;
+  piotroski_score: number;
+  target_price: number;
+  potential_upside_pct: number;
+  trailing_stop_loss: number;
+  budget_allocation: number;
+  shares_purchasable: number;
+  catalyst: string;
+  risk_reward: string;
+  is_institutional_safe: boolean;
+}
+
+export interface BreakoutCandidate {
+  symbol: string;
+  company_name: string;
+  price: number;
+  change_pct: number;
+  volume_surge: number;
+  high_20d: number;
+  signal: string;
+}
