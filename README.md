@@ -15,7 +15,7 @@
 
 **AlphaPulse India Pro** is a modern, modular institutional quantitative equity workstation and AI copilot designed for Indian stock market investors (NSE / BSE). 
 
-Engineered with a **6-Page Dedicated Workstation Architecture**, an **Interactive Left-Pane "Ask Alpha AI" Copilot (`⌘K`)**, a **3D Deep-Space Asteroid Belt Canvas Engine**, and a **1-Week Tactical Momentum Engine with a Personal "Stock Market Guru" & Crowd Psychology Watchdog**, AlphaPulse provides end-to-end mathematical rigor from live market discovery to post-tax bank account realization.
+Engineered with a **6-Page Dedicated Workstation Architecture**, an **Interactive Left-Pane "Ask Alpha AI" Copilot (`⌘K`)**, a **65+ Stock Dynamic Live Market Momentum Scanner (72 NSE equities across 10 sectors)**, a **3D Deep-Space Asteroid Belt Canvas Engine**, and a **1-Week Tactical Momentum Engine with a Personal "Stock Market Guru" & Crowd Psychology Watchdog**, AlphaPulse provides end-to-end mathematical rigor from live market discovery to post-tax bank account realization.
 
 ---
 
@@ -27,7 +27,8 @@ graph TD
     WebApp -->|Async REST & Live Polling| API[FastAPI High-Concurrency Backend :8000]
     
     subgraph Quantitative & Tactical Engines
-        API --> Tactical[tactical_swing_engine.py<br/>1-Week Momentum & 2-Tier Targets]
+        API --> Scanner[tactical_swing_engine.py<br/>65+ NSE Universe Dynamic Momentum Scanner]
+        API --> Tactical[tactical_swing_engine.py<br/>Dynamic Volatility Holding Periods & 2-Tier Targets]
         API --> Psychology[crowd_psychology_engine.py<br/>Fatal Trap vs Bear Trap Classifier]
         API --> Radar[radar_engine.py<br/>5-Factor KPI & Sub-₹150 Penny Screener]
         API --> MonteCarlo[monte_carlo_engine.py<br/>1,000-Path Stochastic GBM & VaR]
@@ -48,23 +49,36 @@ graph TD
 
 ## 💎 Core Capabilities
 
-### 1. 🧙‍♂️ Personal "Stock Market Guru" & 1-Week Tactical Alpha Engine
-- **Proprietary Trading Mandate**:
-  - **Rule #1: Protect Principal** — Strict mathematical invalidation cutoff (-2.5%); zero hope trading.
-  - **Rule #2: Maximize Take-Home Cash** — Computes exact post-tax net profit after Budget 2024 STCG (20%) and all statutory levies.
-- **4 Critical Tactical Execution Levels (5–7 Trading Days)**:
-  1. **Exact Buy Range**: Dynamic accumulation demand pocket (e.g., `₹406.56 – ₹411.87`).
-  2. **Target 1 (+5.5% in 3–4 Days)**: Mandatory 50% profit booking to eliminate trade risk.
-  3. **Target 2 (+8.5% in 7 Days)**: Squeeze remaining 50% position with stop-loss trailed to breakeven entry price.
-  4. **Hard Stop-Loss (-2.5%)**: Automated risk cutoff for immediate capital preservation.
+### 1. 🧙‍♂️ 65+ Stock Live Market Dynamic Momentum Scanner & Personal "Stock Market Guru"
+- **65+ Stock Liquid NSE Universe (72 Equities Across 10 High-Growth Sectors)**:
+  - *Defense & Aerospace*: BEL, HAL, MAZDOCK, BDL, COCHINSHIP, PARAS, MTARTECH, DATAPATTNS.
+  - *Railways & Infra Modernization*: RVNL, IRFC, TITAGARH, BHEL, LT, TEXRAIL, RITES, CONCOR.
+  - *Renewable Power, Solar & Grid*: TATAPOWER, IREDA, SUZLON, NTPC, POWERGRID, ADANIGREEN, NHPC, SJVN.
+  - *Consumer, Retail & Quick Commerce*: TRENT, ZOMATO, DIXON, TITAN, DMART, KAYNES, POLYCAB, HAVELLS.
+  - *High-Yield PSU Cash Compounders*: COALINDIA, RECLTD, PFC, VEDL, ONGC, IOC, BPCL, GAIL.
+  - *Auto & Electric Mobility*: TATAMOTORS, M&M, BAJAJ-AUTO, MOTHERSON, MARUTI, ASHOKLEY, TVSMOTOR, SONACOMS.
+  - *Metals & Industrial Commodities*: JINDALSTEL, TATASTEEL, HINDALCO, JSWSTEEL, SAIL, NATIONALUM.
+  - *Banking & Financial Heavyweights*: HDFCBANK, ICICIBANK, SBIN, AXISBANK, KOTAKBANK, BANKBARODA, CANBK, PNB.
+  - *Pharma & Healthcare*: SUNPHARMA, CIPLA, DRREDDY, TORNTPHARM, APOLLOHOSP.
+  - *Technology & Engineering Services*: TCS, INFY, TECHM, PERSISTENT, KPITTECH.
+- **Dynamic Live Momentum Scoring Algorithm**:
+  - Calculates real-time composite score from day momentum %, 52-week high proximity, delivery volume velocity, and beta acceleration:
+    $$\text{Score} = (\Delta_{\text{day}}\% \times 4.0) + (\text{Prox}_{52\text{W}} \times 0.5) + (\beta \times 10.0)$$
+  - Selects today's genuine #1 breakout leader and cites top 3 runner-ups for transparent institutional thesis comparison.
+- **Dynamic Volatility Holding Periods (ATR & Beta Calibrated)**:
+  - **High-Beta Fast Runners ($\beta \ge 1.50$, e.g. Titagarh, Mazdock, Trent, Dixon)**: **3 to 5 Trading Days** (Target 1: +6.5%, Target 2: +9.5%).
+  - **Moderate-Beta Momentum ($\beta \ge 1.25$, e.g. Tata Motors, Tata Power)**: **4 to 6 Trading Days** (Target 1: +5.5%, Target 2: +8.5%).
+  - **Steady Cash Compounders ($\beta < 1.25$, e.g. Coal India, L&T)**: **6 to 8 Trading Days** (Target 1: +4.5%, Target 2: +7.0%).
+- **Budget 2024 Exact Net In-Hand Cash Profit**:
+  - Customized to user's exact capital, calculating take-home profit after Budget 2024 statutory deductions (20% STCG + STT + GST + exchange turnover charges).
 - **1-Click Pre-Buy Target Watchlist (`WAITING_FOR_ENTRY`)**:
   - Click `[🔔 Arm Pre-Buy on Watchlist]` from in-chat AI Guru cards to place a 24/7 background watchdog before purchasing.
   - Fires an upbeat rising **Buy Trigger Chime** (520Hz $\to$ 784Hz) the moment live market LTP dips into the accumulation pocket.
-  - 1-Click `[✓ Mark as Bought at ₹X]` transitions trade directly into **Active Holdings** and starts the 7-day execution clock.
+  - 1-Click `[✓ Mark as Bought at ₹X]` transitions trade directly into **Active Holdings** and starts the dynamic sprint execution clock.
 - **Dynamic Holding Extension Engine ("Can I hold for more days?")**:
-  - Click `[⏳ Can I Hold More Days?]` on any active 1-week sprint to receive a quantitative trend evaluation from the Guru.
+  - Click `[⏳ Can I Hold More Days?]` on any active tactical sprint to receive a quantitative trend evaluation from the Guru.
   - Recommends +3 to +4 extra holding days with a dynamic **Trailing Stop-Loss** and **Stretch Target 2**.
-  - 1-Click `[Apply +X Days to Countdown]` automatically updates the 7-day clock and stop-loss floor in SQLite.
+  - 1-Click `[Apply +X Days to Countdown]` automatically updates the sprint clock and stop-loss floor in SQLite.
 
 ---
 

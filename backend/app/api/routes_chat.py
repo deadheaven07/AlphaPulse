@@ -4,7 +4,10 @@ from typing import List, Dict, Any, Optional
 import os
 import re
 from backend.app.quant.data_engine import fetch_live_quote, INDIAN_STOCKS_DB
-from backend.app.quant.tactical_swing_engine import generate_tactical_1week_setup
+from backend.app.quant.tactical_swing_engine import (
+    scan_live_market_tactical_leaders,
+    EXPANDED_NSE_UNIVERSE
+)
 from backend.app.quant.crowd_psychology_engine import analyze_news_crowd_psychology
 
 router = APIRouter(prefix="/api/ai", tags=["conversational-ai"])
@@ -68,7 +71,8 @@ def handle_conversational_chat(req: ConversationalChatRequest):
     is_guru_query = any(k in q_lower for k in [
         "guru", "week", "1 week", "large profit", "short term", "swing",
         "when to buy", "when to get out", "where can i develop", "tactical",
-        "quick profit", "mentor", "dalal street"
+        "quick profit", "mentor", "dalal street", "scan", "scanner", "recommend",
+        "best stock"
     ]) or ("profit" in q_lower and any(char.isdigit() for char in q_lower))
 
     parsed_capital = extract_capital_from_query(latest_user_msg, ctx.capital or 50000.0)
@@ -78,17 +82,19 @@ def handle_conversational_chat(req: ConversationalChatRequest):
     tactical_card = None
     follow_up_chips = []
 
-    # If Guru / 1-Week Tactical query, pre-generate the mathematical tactical setup
+    # If Guru / Tactical query, run the 65+ Dynamic Live Market Momentum Scanner
     if is_guru_query:
-        # Check if user preferred a specific stock in their prompt
+        # Check if user explicitly specified a stock from the 65+ universe
         preferred_symbol = None
-        for cand in ["BEL", "HAL", "TATAPOWER", "TRENT", "TATAMOTORS", "COALINDIA", "ZOMATO"]:
-            if cand.lower() in q_lower:
-                preferred_symbol = cand
+        for cand in EXPANDED_NSE_UNIVERSE:
+            if cand["symbol"].lower() in q_lower or cand["name"].lower() in q_lower:
+                preferred_symbol = cand["symbol"]
                 break
-        tactical_card = generate_tactical_1week_setup(
+
+        tactical_card = scan_live_market_tactical_leaders(
             capital=parsed_capital,
-            preferred_symbol=preferred_symbol
+            preferred_symbol=preferred_symbol,
+            risk_mode="Aggressive" if "aggressive" in q_lower or "high profit" in q_lower or "large profit" in q_lower else "Balanced"
         )
 
     # 3. Gemini 2.5 Flash Conversational Execution
@@ -98,24 +104,29 @@ def handle_conversational_chat(req: ConversationalChatRequest):
             client = genai.Client(api_key=api_key)
 
             if is_guru_query and tactical_card:
+                alternatives_str = ", ".join(tactical_card.get("runner_ups", ["HAL", "Trent", "Mazagon Dock"]))
                 system_instruction = f"""You are AlphaPulse India Pro's Lead Proprietary Trading Mentor & 'Stock Market Guru'.
 Your sole mandate is to maximize the user's in-hand net cash profit while fiercely protecting their capital against losses ('Rule #1: Protect Principal, Rule #2: Never forget Rule #1').
 
-The user has ₹{parsed_capital:,.0f} and wants a 1-week tactical high-probability trade.
-We have selected: [{tactical_card['symbol']}] ({tactical_card['company_name']}).
-Quantitative Blueprint:
+We just ran our 65+ Stock Dynamic Momentum Scanner across Defense, Railways, Renewable Power, Retail, EMS, Auto, PSU, Metals, and Pharma.
+The user has ₹{parsed_capital:,.0f}.
+Today's #1 Ranked Tactical Leader is: [{tactical_card['symbol']}] ({tactical_card['company_name']}) in sector {tactical_card['sector']}.
+Runner-up alternatives scanned today: {alternatives_str}.
+
+Quantitative Execution Blueprint:
 - Live Spot Price: ₹{tactical_card['current_price']:,.2f}
-- Exact Buy Range: {tactical_card['entry_range']}
-- Target 1 (+{tactical_card['target_1_pct']}% in 3-4 days): ₹{tactical_card['target_1']:,.2f} (Book 50% profit = +₹{tactical_card['net_in_hand_profit']:,.0f} in hand after 20% STCG + STT)
-- Target 2 (+{tactical_card['target_2_pct']}% in 7 days): ₹{tactical_card['target_2']:,.2f}
+- Target Demand Pocket: {tactical_card['entry_range']}
+- Dynamic Holding Period: {tactical_card['holding_period_label']}
+- Target 1 (+{tactical_card['target_1_pct']}%): ₹{tactical_card['target_1']:,.2f} (Book 50% profit = +₹{tactical_card['net_in_hand_profit']:,.0f} in-hand net cash after 20% STCG + STT)
+- Target 2 (+{tactical_card['target_2_pct']}%): ₹{tactical_card['target_2']:,.2f} (Trail stop to entry)
 - Hard Stop-Loss (-{abs(tactical_card['stop_loss_pct'])}%): ₹{tactical_card['stop_loss']:,.2f} (Cut immediately if broken)
 - Institutional Catalyst: {tactical_card['catalyst']}
 
 Guidelines:
 1. Speak with street-smart Dalal Street authority, crisp discipline, and zero fluff.
-2. Tell them EXACTLY when to buy, why FIIs/institutions are accumulating, where to book 50% profit, and when to get out.
-3. State the exact in-hand net cash profit (+₹{tactical_card['net_in_hand_profit']:,.0f}) they take home after Budget 2024 20% STCG and STT.
-4. Explain how our 24/7 Watchdog protects them against fatal news catalysts and bear traps.
+2. Explicitly state: "I scanned 65+ liquid NSE equities across 10 sectors today. [{tactical_card['symbol']}] outranked competitors today due to {tactical_card['catalyst']}."
+3. Give exact execution: Demand pocket {tactical_card['entry_range']}, holding window ({tactical_card['holding_period_label']}), and take-home net profit (+₹{tactical_card['net_in_hand_profit']:,.0f} net in hand).
+4. Emphasize why our 24/7 Watchdog and pre-buy dip alerts protect their hard-earned money.
 5. Suggest 2-3 short follow-up questions at the very end in a line starting with 'FOLLOW_UPS: question1 | question2 | question3'.
 """
             else:
@@ -159,25 +170,27 @@ Guidelines:
     # 4. Intelligent Dynamic Fallback (When Offline / No API Key)
     if not ai_reply_text:
         if is_guru_query and tactical_card:
-            ai_reply_text = f"""🔥 **Welcome to the Trading Floor. Here is your 1-Week Tactical Blueprint:**
+            ai_reply_text = f"""🔥 **Welcome to the Trading Floor. Here is today's 65+ Stock Dynamic Momentum Scan:**
 
-Listen closely. In the Indian stock market, retail traders lose because they trade on hope. We trade on **institutional order flow, exact mathematical invalidation, and strict capital defense**.
+I scanned **65+ liquid NSE equities** across Defense, Railways, Renewable Power, Retail, Auto, PSU, and Capital Goods. 
 
-With your **₹{parsed_capital:,.0f}**, the highest-probability 1-week tactical setup is **[{tactical_card['symbol']}] ({tactical_card['company_name']})**:
+With your **₹{parsed_capital:,.0f}**, today's #1 Ranked Quantitative Leader is **[{tactical_card['symbol']}] ({tactical_card['company_name']})** in sector **{tactical_card['sector']}**:
 
-1. **When to Buy**: Enter strictly inside the demand pocket between **{tactical_card['entry_range']}**. Do not chase higher if it gaps up.
-2. **When to Take Profit (Target 1)**: Sell 50% of your position at **₹{tactical_card['target_1']:,.2f} (+{tactical_card['target_1_pct']}%)** in 3–4 days. This locks in **+₹{tactical_card['net_in_hand_profit']:,.0f} net cash in hand** after Budget 2024 STCG (20%) and all STT charges.
-3. **When to Squeeze (Target 2)**: Let the remaining 50% run toward **₹{tactical_card['target_2']:,.2f} (+{tactical_card['target_2_pct']}%)** with your stop-loss moved up to your entry price (a 100% risk-free trade).
-4. **When to Get Out (Rule #1 Invalidation)**: If the price breaks below **₹{tactical_card['stop_loss']:,.2f} (-{abs(tactical_card['stop_loss_pct'])}%)**, cut the trade immediately without emotion.
+- **Why this outranked competitors today**: {tactical_card['catalyst']}
+- **Dynamic Holding Window**: **{tactical_card['holding_period_label']}** (calibrated to stock daily ATR volatility).
+- **Exact Accumulation Zone**: Enter strictly between **{tactical_card['entry_range']}**.
+- **Target 1 (+{tactical_card['target_1_pct']}%)**: Sell 50% at **₹{tactical_card['target_1']:,.2f}** to bank **+₹{tactical_card['net_in_hand_profit']:,.0f} net cash in hand** after Budget 2024 STCG (20%) and all STT charges.
+- **Target 2 (+{tactical_card['target_2_pct']}%)**: Squeeze remaining shares to **₹{tactical_card['target_2']:,.2f}** with stop-loss trailed to breakeven.
+- **Rule #1 Capital Invalidation**: Cut immediately if price breaches **₹{tactical_card['stop_loss']:,.2f} (-{abs(tactical_card['stop_loss_pct'])}%)**.
 
-🛡️ **Arm the Watchdog below**: It will monitor live prices 24/7, fire a victory chime at Target 1, sound the buzzer at Stop-Loss, and filter negative news with our Crowd Psychology radar!"""
+🛡️ **Arm the Pre-Buy Watchdog below**: It will monitor live prices 24/7, chime the instant it enters the buy zone, and enforce trailing stops!"""
             follow_up_chips = [
                 f"Arm watchdog for {tactical_card['symbol']}",
-                f"Why are FIIs buying {tactical_card['symbol']}?",
-                "Show alternative 1-week setup"
+                f"Why are institutions buying {tactical_card['symbol']}?",
+                "Show runner-up momentum stocks"
             ]
         elif is_greeting:
-            ai_reply_text = f"👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **{ctx.current_page.upper()}**. You are inspecting **{ctx.active_symbol}** with a simulation capital of **₹{ctx.capital:,.0f}**.\n\nHow can I help you today? You can ask me to find a **1-week tactical trade for quick profit**, analyze any stock, or build a long-term compounder portfolio."
+            ai_reply_text = f"👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **{ctx.current_page.upper()}**. You are inspecting **{ctx.active_symbol}** with a simulation capital of **₹{ctx.capital:,.0f}**.\n\nHow can I help you today? You can ask me to find a **1-week tactical trade for quick profit**, scan 65+ NSE stocks, or build a long-term compounder portfolio."
             follow_up_chips = [f"I have ₹50,000 for 1 week", f"Analyze {ctx.active_symbol} fundamentals", "Show top dividend yielders"]
         elif "defense" in q_lower or "hal" in q_lower or "bel" in q_lower:
             ai_reply_text = "Here are India's premier high-conviction defense compounders:\n\n- **[BEL]**: Bharat Electronics holds a dominant sovereign radar/avionics order book with >25% ROCE.\n- **[HAL]**: Hindustan Aeronautics possesses a sovereign monopoly on fighter aircraft platforms with high operating cash flow."

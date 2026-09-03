@@ -449,6 +449,7 @@ export interface CrowdPsychologyResult {
 export interface TacticalSetup {
   symbol: string;
   company_name: string;
+  sector?: string;
   current_price: number;
   capital_allocated: number;
   cash_buffer: number;
@@ -466,9 +467,15 @@ export interface TacticalSetup {
   gross_profit: number;
   total_tax_and_charges: number;
   net_in_hand_profit: number;
-  holding_period_days: number;
+  holding_period_days?: number;
+  holding_days?: number;
+  holding_days_min?: number;
+  holding_days_max?: number;
+  holding_period_label?: string;
   catalyst: string;
   crowd_psychology?: CrowdPsychologyResult;
+  scanned_universe_count?: number;
+  runner_ups?: string[];
   guru_thesis: string;
 }
 

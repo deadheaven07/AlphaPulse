@@ -19,7 +19,8 @@ import {
   ShieldCheck,
   Radio,
   Bell,
-  Coins
+  Coins,
+  Clock
 } from "lucide-react";
 
 interface AiAssistantPaneProps {
@@ -309,17 +310,33 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                           <ShieldAlert className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-extrabold font-mono text-sm text-emerald-400">{msg.tacticalCard.symbol}</span>
-                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-900/60 text-emerald-300 font-mono font-bold">1-Week Alpha</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-900/60 text-emerald-300 font-mono font-bold border border-emerald-500/30">
+                              Scanned 65+ NSE Equities
+                            </span>
+                            {msg.tacticalCard.sector && (
+                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 font-mono">
+                                {msg.tacticalCard.sector}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-[10px] text-slate-300 truncate max-w-[180px]">{msg.tacticalCard.company_name}</div>
+                          <div className="text-[10px] text-slate-300 truncate max-w-[200px]">{msg.tacticalCard.company_name}</div>
                         </div>
                       </div>
                       <div className="text-right font-mono">
                         <div className="text-xs font-black text-white">{formatINR(msg.tacticalCard.current_price)}</div>
                         <div className="text-[10px] text-emerald-400 font-bold">{msg.tacticalCard.shares} Shares ({formatINR(msg.tacticalCard.capital_allocated)})</div>
                       </div>
+                    </div>
+
+                    {/* Dynamic Holding Sprint Banner */}
+                    <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-[10px]">
+                      <span className="text-slate-400 uppercase tracking-wider font-bold">Dynamic Volatility Sprint:</span>
+                      <span className="font-mono font-extrabold text-amber-300 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        {msg.tacticalCard.holding_period_label || `${msg.tacticalCard.holding_period_days || 7} Days`}
+                      </span>
                     </div>
 
                     {/* 4 Crucial Tactical Levels */}
@@ -330,17 +347,23 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                       </div>
 
                       <div className="p-2 rounded-xl bg-slate-900/80 border border-emerald-900/60 space-y-0.5">
-                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">2. Target 1 (+5.5% in 3-4d)</span>
+                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">
+                          2. Target 1 (+{msg.tacticalCard.target_1_pct}%)
+                        </span>
                         <span className="text-xs font-black text-emerald-300">₹{msg.tacticalCard.target_1.toLocaleString("en-IN")} (Book 50%)</span>
                       </div>
 
                       <div className="p-2 rounded-xl bg-slate-900/80 border border-emerald-900/60 space-y-0.5">
-                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">3. Target 2 (+8.5% in 7d)</span>
+                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">
+                          3. Target 2 (+{msg.tacticalCard.target_2_pct}%)
+                        </span>
                         <span className="text-xs font-black text-emerald-300">₹{msg.tacticalCard.target_2.toLocaleString("en-IN")} (Squeeze)</span>
                       </div>
 
                       <div className="p-2 rounded-xl bg-slate-900/80 border border-rose-900/60 space-y-0.5">
-                        <span className="text-[9px] text-rose-400 font-bold uppercase tracking-wider block">4. Hard Stop-Loss (-2.5%)</span>
+                        <span className="text-[9px] text-rose-400 font-bold uppercase tracking-wider block">
+                          4. Hard Stop-Loss (-{Math.abs(msg.tacticalCard.stop_loss_pct)}%)
+                        </span>
                         <span className="text-xs font-black text-rose-400">₹{msg.tacticalCard.stop_loss.toLocaleString("en-IN")} (Cut Exit)</span>
                       </div>
                     </div>
@@ -357,6 +380,14 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                         +₹{msg.tacticalCard.net_in_hand_profit.toLocaleString("en-IN")}
                       </div>
                     </div>
+
+                    {/* Runner-Up Alternatives */}
+                    {msg.tacticalCard.runner_ups && msg.tacticalCard.runner_ups.length > 0 && (
+                      <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-[10px] flex items-center justify-between gap-2">
+                        <span className="text-slate-400 font-bold uppercase tracking-wider shrink-0">Runner-Up Scans:</span>
+                        <span className="font-mono text-slate-300 truncate text-right">{msg.tacticalCard.runner_ups.join(" • ")}</span>
+                      </div>
+                    )}
 
                     {/* Crowd Psychology Radar */}
                     {msg.tacticalCard.crowd_psychology && (
