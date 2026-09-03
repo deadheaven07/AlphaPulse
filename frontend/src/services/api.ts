@@ -4,7 +4,11 @@ import type {
   MarketStatusData,
   AiAnalysisResponse,
   SimulationResult,
-  RiskTolerance
+  RiskTolerance,
+  NewsSentimentData,
+  DividendAnalysisData,
+  TopDividendYielder,
+  KpiRadarStock
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -84,5 +88,29 @@ export async function askGeminiAi(
     })
   });
   if (!res.ok) throw new Error("AI Analysis request failed");
+  return res.json();
+}
+
+export async function fetchNewsSentiment(symbol: string): Promise<NewsSentimentData> {
+  const res = await fetch(`${API_BASE}/stocks/news-sentiment?symbol=${encodeURIComponent(symbol)}`);
+  if (!res.ok) throw new Error(`Failed to fetch news sentiment for ${symbol}`);
+  return res.json();
+}
+
+export async function fetchDividendAnalysis(symbol: string, capital = 100000): Promise<DividendAnalysisData> {
+  const res = await fetch(`${API_BASE}/dividend/analyzer?symbol=${encodeURIComponent(symbol)}&capital=${capital}`);
+  if (!res.ok) throw new Error(`Failed to fetch dividend analysis for ${symbol}`);
+  return res.json();
+}
+
+export async function fetchTopDividendYielders(): Promise<TopDividendYielder[]> {
+  const res = await fetch(`${API_BASE}/dividend/top-yielders`);
+  if (!res.ok) throw new Error("Failed to fetch top dividend yielders");
+  return res.json();
+}
+
+export async function fetchKpiRadar(capital = 100000): Promise<KpiRadarStock[]> {
+  const res = await fetch(`${API_BASE}/stocks/kpi-radar?capital=${capital}`);
+  if (!res.ok) throw new Error("Failed to fetch KPI radar");
   return res.json();
 }

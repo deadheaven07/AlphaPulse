@@ -9,6 +9,8 @@ from backend.app.quant.data_engine import (
 from backend.app.quant.technicals import get_technical_summary
 from backend.app.quant.sector_rrg import analyze_sector_rrg
 from backend.app.quant.quality_filters import evaluate_quality_filters
+from backend.app.quant.news_engine import analyze_stock_news_sentiment
+from backend.app.quant.radar_engine import scan_real_time_kpi_radar
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
@@ -21,11 +23,13 @@ def get_quote(symbol: str = Query(..., description="Stock symbol (e.g. TATAMOTOR
     technicals = get_technical_summary(df)
     rrg = analyze_sector_rrg(quote.get("sector", "General"))
     quality = evaluate_quality_filters(symbol, quote)
+    news = analyze_stock_news_sentiment(symbol, quote)
     
     quote_copy = dict(quote)
     quote_copy["technicals"] = technicals
     quote_copy["sector_rrg"] = rrg
     quote_copy["quality_filters"] = quality
+    quote_copy["news_sentiment"] = news
     return quote_copy
 
 @router.get("/search")
@@ -69,3 +73,12 @@ def get_rrg(sector: str = Query(..., description="Sector name")):
 def get_quality(symbol: str = Query(..., description="Stock symbol")):
     quote = fetch_live_quote(symbol)
     return evaluate_quality_filters(symbol, quote)
+
+@router.get("/news-sentiment")
+def get_news_sentiment(symbol: str = Query(..., description="Stock symbol")):
+    quote = fetch_live_quote(symbol)
+    return analyze_stock_news_sentiment(symbol, quote)
+
+@router.get("/kpi-radar")
+def get_kpi_radar(capital: float = Query(default=100000.0, description="Reference capital in INR")):
+    return scan_real_time_kpi_radar(capital_reference=capital)

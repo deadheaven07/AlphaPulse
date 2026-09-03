@@ -4,21 +4,25 @@ import { fetchHealth, fetchStockQuote, askGeminiAi } from "./services/api";
 import type { AiAnalysisResponse, SimulationResult } from "./types";
 import { Navbar } from "./components/Navbar";
 import { TickerTape } from "./components/TickerTape";
+import { RealTimeRadarKPIs } from "./components/RealTimeRadarKPIs";
 import { AskAIBar } from "./components/AskAIBar";
 import { StockOverviewCard } from "./components/StockOverviewCard";
+import { LiveNewsSentimentBar } from "./components/LiveNewsSentimentBar";
 import { QualityScoreCard } from "./components/QualityScoreCard";
 import { TechnicalSignals } from "./components/TechnicalSignals";
 import { SectorRrgMap } from "./components/SectorRrgMap";
+import { DividendAnalyzer } from "./components/DividendAnalyzer";
 import { ProfitSimulator } from "./components/ProfitSimulator";
 import { LiveNewsAndThesis } from "./components/LiveNewsAndThesis";
 import { WatchlistVaultModal } from "./components/WatchlistVaultModal";
 import { SettingsModal } from "./components/SettingsModal";
-import { Sparkles, Globe } from "lucide-react";
+import { Sparkles, Globe, LineChart, Coins } from "lucide-react";
 
 export function App() {
   const [selectedSymbol, setSelectedSymbol] = useState<string>("TATAMOTORS");
   const [simCapital, setSimCapital] = useState<number>(100000);
   const [simHorizon, setSimHorizon] = useState<number>(12);
+  const [activeTab, setActiveTab] = useState<"studio" | "dividend">("studio");
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isVaultOpen, setIsVaultOpen] = useState<boolean>(false);
 
@@ -35,9 +39,9 @@ export function App() {
   const [watchlist, setWatchlist] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem("alphapulse_watchlist");
-      return stored ? JSON.parse(stored) : ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL"];
+      return stored ? JSON.parse(stored) : ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL", "COALINDIA"];
     } catch {
-      return ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL"];
+      return ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL", "COALINDIA"];
     }
   });
 
@@ -83,9 +87,14 @@ export function App() {
     }
   };
 
+  const handleSelectFromRadar = (symbol: string) => {
+    setSelectedSymbol(symbol);
+    window.scrollTo({ top: 480, behavior: "smooth" });
+  };
+
   const handleSimulateFromAi = (symbol: string) => {
     setSelectedSymbol(symbol);
-    window.scrollTo({ top: 450, behavior: "smooth" });
+    window.scrollTo({ top: 480, behavior: "smooth" });
   };
 
   const handleToggleWatchlist = (symbol: string) => {
@@ -123,6 +132,14 @@ export function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Real-Time KPI Stocks Radar (Top 6 Multi-Factor Buys Now) */}
+        <section>
+          <RealTimeRadarKPIs
+            onSelectStock={handleSelectFromRadar}
+            referenceCapital={simCapital}
+          />
+        </section>
+
         {/* Module A: Natural Language Stock Explorer */}
         <section className="space-y-4">
           <AskAIBar onSearch={handleAiSearch} isLoading={isAiLoading} />
@@ -168,49 +185,96 @@ export function App() {
           )}
         </section>
 
-        {/* Module B: Live Stock Studio & RRG Overview */}
-        <section className="space-y-6">
-          {quote ? (
-            <>
-              <StockOverviewCard
-                quote={quote}
-                onSelectSymbol={(sym) => setSelectedSymbol(sym)}
-                isWatchlisted={watchlist.includes(quote.symbol)}
-                onToggleWatchlist={handleToggleWatchlist}
-              />
+        {/* View Mode Switcher Tabs */}
+        <div className="flex items-center justify-between border-b border-border/80 pb-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab("studio")}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 ${
+                activeTab === "studio"
+                  ? "bg-slate-900 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-border"
+              }`}
+            >
+              <LineChart className="w-4 h-4" />
+              <span>Quantitative Stock Studio & Simulator</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("dividend")}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 ${
+                activeTab === "dividend"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-border"
+              }`}
+            >
+              <Coins className="w-4 h-4" />
+              <span>Dividend Intelligence & Timing</span>
+            </button>
+          </div>
 
-              {/* Quality & Governance Screener (Piotroski, Delivery %, Promoter Pledge) */}
-              <QualityScoreCard
-                quality={quote.quality_filters}
-                symbol={quote.symbol}
-              />
+          <span className="text-xs font-bold font-mono text-slate-500 hidden sm:inline">
+            Active Stock: <strong className="text-brand-600">{selectedSymbol}</strong>
+          </span>
+        </div>
 
-              {/* Technical Signals (PKScreener RSI, Breakout, EMA) */}
-              <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
+        {/* Tab 1: Quantitative Stock Studio */}
+        {activeTab === "studio" && (
+          <section className="space-y-6">
+            {quote ? (
+              <>
+                <StockOverviewCard
+                  quote={quote}
+                  onSelectSymbol={(sym) => setSelectedSymbol(sym)}
+                  isWatchlisted={watchlist.includes(quote.symbol)}
+                  onToggleWatchlist={handleToggleWatchlist}
+                />
 
-              {/* Relative Rotation Graph 2D Quadrant Map */}
-              <SectorRrgMap
-                currentSectorRrg={quote.sector_rrg}
-                activeStockSymbol={quote.symbol}
-              />
+                {/* Real-Time News Feed & Loss Risk Gauge */}
+                <LiveNewsSentimentBar symbol={quote.symbol} />
 
-              {/* Module C: Monte Carlo Simulation & Post-Tax Profit Simulator */}
-              <ProfitSimulator
-                symbol={quote.symbol}
-                initialCapital={simCapital}
-                initialHorizon={simHorizon}
-                onSaveSimulation={handleSaveSimulation}
-              />
-            </>
-          ) : (
-            <div className="bg-white rounded-2xl border border-border p-12 text-center space-y-3">
-              <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs font-semibold text-slate-500">
-                Fetching live NSE quotes, quality metrics, and technical indicators for {selectedSymbol}...
-              </p>
-            </div>
-          )}
-        </section>
+                {/* Quality & Governance Screener (Piotroski, Delivery %, Promoter Pledge) */}
+                <QualityScoreCard
+                  quality={quote.quality_filters}
+                  symbol={quote.symbol}
+                />
+
+                {/* Technical Signals (PKScreener RSI, Breakout, EMA) */}
+                <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
+
+                {/* Relative Rotation Graph 2D Quadrant Map */}
+                <SectorRrgMap
+                  currentSectorRrg={quote.sector_rrg}
+                  activeStockSymbol={quote.symbol}
+                />
+
+                {/* Module C: Monte Carlo Simulation & Post-Tax Profit Simulator */}
+                <ProfitSimulator
+                  symbol={quote.symbol}
+                  initialCapital={simCapital}
+                  initialHorizon={simHorizon}
+                  onSaveSimulation={handleSaveSimulation}
+                />
+              </>
+            ) : (
+              <div className="bg-white rounded-2xl border border-border p-12 text-center space-y-3">
+                <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs font-semibold text-slate-500">
+                  Fetching live NSE quotes, quality metrics, and technical indicators for {selectedSymbol}...
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Tab 2: Dividend Intelligence & Timing */}
+        {activeTab === "dividend" && (
+          <section>
+            <DividendAnalyzer
+              symbol={selectedSymbol}
+              onSelectStock={(sym) => setSelectedSymbol(sym)}
+            />
+          </section>
+        )}
       </main>
 
       {/* Footer */}
@@ -222,7 +286,7 @@ export function App() {
             <span>Real-Time Equity & Post-Tax ROI Engine</span>
           </div>
           <div className="flex items-center gap-4 text-[11px] flex-wrap">
-            <span>Integrations: jugaad-data • nsepython • PKScreener • RRG Sector Rotation • Monte Carlo (1,000 Paths)</span>
+            <span>Integrations: jugaad-data • nsepython • PKScreener • RRG Sector Rotation • Monte Carlo • Dividend Timing</span>
             <span>•</span>
             <span>Budget 2024 Tax Compliant</span>
           </div>

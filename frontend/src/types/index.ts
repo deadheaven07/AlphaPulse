@@ -45,6 +45,31 @@ export interface QualityFiltersData {
   quality_verdict: string;
 }
 
+export interface NewsHeadline {
+  title: string;
+  source: string;
+  time_ago: string;
+  published_at: string;
+  impact: string;
+  summary: string;
+  sentiment_score: number;
+  url: string;
+}
+
+export interface NewsSentimentData {
+  symbol: string;
+  sentiment_score: number;
+  sentiment_label: string;
+  sentiment_badge: string;
+  sentiment_color: string;
+  risk_of_loss_pct: number;
+  win_probability_pct: number;
+  primary_catalyst: string;
+  sentiment_drift_modifier: number;
+  total_news_analyzed: number;
+  headlines: NewsHeadline[];
+}
+
 export interface StockQuote {
   symbol: string;
   company_name: string;
@@ -72,6 +97,7 @@ export interface StockQuote {
   technicals?: TechnicalSignalsData;
   sector_rrg?: SectorRrgData;
   quality_filters?: QualityFiltersData;
+  news_sentiment?: NewsSentimentData;
 }
 
 export interface CandlePoint {
@@ -190,4 +216,78 @@ export interface SimulationResult {
     confidence_level: string;
   };
   trajectory: TrajectoryPoint[];
+}
+
+export interface DividendTimelineStep {
+  step: number;
+  title: string;
+  date: string;
+  description: string;
+  status: string;
+}
+
+export interface DividendAnalysisData {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  price: number;
+  capital: number;
+  shares: number;
+  deployed_capital: number;
+  dividend_yield_pct: number;
+  dps_annual: number;
+  last_dps: number;
+  expected_annual_cash: number;
+  expected_payout_cash: number;
+  payout_frequency: string;
+  payout_months: string;
+  next_ex_date: string;
+  next_record_date: string;
+  expected_credit_date: string;
+  optimal_buy_window: string;
+  consecutive_years_paying: number;
+  dividend_safety_score: number;
+  timeline_steps: DividendTimelineStep[];
+  description: string;
+}
+
+export interface TopDividendYielder {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  price: number;
+  change_pct: number;
+  dividend_yield_pct: number;
+  dps_annual: number;
+  payout_months: string;
+  next_ex_date: string;
+  dividend_safety_score: number;
+}
+
+export interface KpiRadarStock {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  price: number;
+  change: number;
+  change_pct: number;
+  radar_score: number;
+  conviction: string;
+  delivery_pct: number;
+  piotroski_score: number;
+  sentiment_label: string;
+  sentiment_badge: string;
+  win_probability_pct: number;
+  post_tax_net_gain_inr: number;
+  post_tax_roi_pct: number;
+  target_price: number;
+  primary_catalyst: string;
+  technical_signal: string;
+  factors_passed: {
+    delivery: boolean;
+    piotroski: boolean;
+    technicals: boolean;
+    news_sentiment: boolean;
+    post_tax_roi: boolean;
+  };
 }
