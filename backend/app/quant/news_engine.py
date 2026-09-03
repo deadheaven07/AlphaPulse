@@ -1,7 +1,11 @@
 import time
 from typing import Dict, Any, List
 from datetime import datetime, timedelta
-import yfinance as yf
+
+try:
+    import yfinance as yf
+except ImportError:
+    yf = None
 
 # In-memory fast cache for live news (5-minute TTL)
 _LIVE_NEWS_CACHE: Dict[str, Dict[str, Any]] = {}
@@ -87,9 +91,10 @@ def fetch_live_stock_news(symbol: str) -> List[Dict[str, Any]]:
     articles: List[Dict[str, Any]] = []
 
     try:
-        ticker = yf.Ticker(f"{sym}.NS")
-        yf_news = ticker.news
-        if yf_news and isinstance(yf_news, list):
+        if yf is not None:
+            ticker = yf.Ticker(f"{sym}.NS")
+            yf_news = ticker.news
+            if yf_news and isinstance(yf_news, list):
             for item in yf_news[:6]:
                 content = item.get("content") or {}
                 title = item.get("title") or content.get("title")
