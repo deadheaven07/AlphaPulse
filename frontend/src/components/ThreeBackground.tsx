@@ -40,19 +40,19 @@ export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) 
     window.addEventListener("mousemove", handleMouseMove);
 
     // Generate 3D Grid Wave Matrix Points
-    const rows = 28;
-    const cols = 42;
+    const rows = 26;
+    const cols = 38;
     const points: Array<{ x: number; y: number; z: number; baseZ: number; colorType: number }> = [];
 
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        // Distribute colors: 0=Green(profit), 1=Blue(institutional), 2=Orange(catalyst), 3=Red(risk)
+        // Distribute colors: 0=Soft Emerald, 1=Soothing Periwinkle Blue, 2=Warm Amber, 3=Soft Coral
         const colorType = (r * cols + c) % 4;
         points.push({
           x: (c / (cols - 1) - 0.5) * 2200,
           y: (r / (rows - 1) - 0.5) * 1400 + 200,
-          z: (Math.sin(c * 0.3) + Math.cos(r * 0.3)) * 60,
-          baseZ: (Math.sin(c * 0.3) + Math.cos(r * 0.3)) * 60,
+          z: (Math.sin(c * 0.3) + Math.cos(r * 0.3)) * 50,
+          baseZ: (Math.sin(c * 0.3) + Math.cos(r * 0.3)) * 50,
           colorType,
         });
       }
@@ -61,21 +61,21 @@ export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) 
     let time = 0;
 
     const render = () => {
-      time += 0.02;
+      time += 0.015;
 
       // Mouse smooth interpolation
-      mouseX += (targetMouseX - mouseX) * 0.05;
-      mouseY += (targetMouseY - mouseY) * 0.05;
+      mouseX += (targetMouseX - mouseX) * 0.04;
+      mouseY += (targetMouseY - mouseY) * 0.04;
 
       ctx.clearRect(0, 0, width, height);
 
       // Camera 3D perspective variables
-      const fov = 450;
-      const cameraX = (mouseX - width / 2) * 0.3;
-      const cameraY = (mouseY - height / 2) * 0.2 - 150;
+      const fov = 460;
+      const cameraX = (mouseX - width / 2) * 0.25;
+      const cameraY = (mouseY - height / 2) * 0.18 - 140;
       const cameraZ = -300;
 
-      // Draw 3D Wave lines & nodes
+      // Draw 3D Wave lines & soothing nodes
       for (let r = 0; r < rows; r++) {
         ctx.beginPath();
         let firstDrawn = false;
@@ -84,8 +84,8 @@ export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) 
           const idx = r * cols + c;
           const p = points[idx];
 
-          // Dynamic wave oscillation
-          const wave = Math.sin(time + c * 0.2 + r * 0.15) * 45;
+          // Dynamic gentle wave oscillation
+          const wave = Math.sin(time + c * 0.18 + r * 0.12) * 35;
           const currentZ = p.baseZ + wave;
 
           // 3D to 2D projection
@@ -110,37 +110,36 @@ export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) 
             ctx.lineTo(projX, projY);
           }
 
-          // Render glowing 3D node points
-          const nodeRadius = Math.max(0.8, scale * (isDarkMode ? 2.2 : 1.6));
+          // Render soft, soothing non-pinching 3D node points
+          const nodeRadius = Math.max(0.7, scale * (isDarkMode ? 1.5 : 1.3));
           ctx.save();
           ctx.beginPath();
           ctx.arc(projX, projY, nodeRadius, 0, Math.PI * 2);
 
           if (isDarkMode) {
-            if (p.colorType === 0) ctx.fillStyle = "rgba(16, 185, 129, 0.65)"; // Emerald
-            else if (p.colorType === 1) ctx.fillStyle = "rgba(99, 102, 241, 0.65)"; // Blue
-            else if (p.colorType === 2) ctx.fillStyle = "rgba(245, 158, 11, 0.65)"; // Orange
-            else ctx.fillStyle = "rgba(244, 63, 94, 0.55)"; // Rose Red
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = ctx.fillStyle as string;
+            // Soothing desaturated pastels that are gentle on dark screens
+            if (p.colorType === 0) ctx.fillStyle = "rgba(52, 211, 153, 0.35)"; // Soft Emerald
+            else if (p.colorType === 1) ctx.fillStyle = "rgba(129, 140, 248, 0.35)"; // Periwinkle Indigo
+            else if (p.colorType === 2) ctx.fillStyle = "rgba(251, 191, 36, 0.30)"; // Warm Honey Amber
+            else ctx.fillStyle = "rgba(251, 113, 133, 0.28)"; // Soft Coral
           } else {
-            if (p.colorType === 0) ctx.fillStyle = "rgba(16, 185, 129, 0.35)";
-            else if (p.colorType === 1) ctx.fillStyle = "rgba(99, 102, 241, 0.35)";
-            else if (p.colorType === 2) ctx.fillStyle = "rgba(245, 158, 11, 0.35)";
-            else ctx.fillStyle = "rgba(244, 63, 94, 0.25)";
+            if (p.colorType === 0) ctx.fillStyle = "rgba(16, 185, 129, 0.30)";
+            else if (p.colorType === 1) ctx.fillStyle = "rgba(99, 102, 241, 0.30)";
+            else if (p.colorType === 2) ctx.fillStyle = "rgba(245, 158, 11, 0.25)";
+            else ctx.fillStyle = "rgba(244, 63, 94, 0.22)";
           }
 
           ctx.fill();
           ctx.restore();
         }
 
-        // Draw connecting matrix line
+        // Connecting matrix line (Subtle and delicate)
         if (isDarkMode) {
-          ctx.strokeStyle = `rgba(99, 102, 241, ${0.08 + (r / rows) * 0.08})`;
-          ctx.lineWidth = 0.75;
-        } else {
-          ctx.strokeStyle = `rgba(148, 163, 184, ${0.12 + (r / rows) * 0.1})`;
+          ctx.strokeStyle = `rgba(148, 163, 184, ${0.03 + (r / rows) * 0.04})`;
           ctx.lineWidth = 0.6;
+        } else {
+          ctx.strokeStyle = `rgba(148, 163, 184, ${0.08 + (r / rows) * 0.08})`;
+          ctx.lineWidth = 0.5;
         }
         ctx.stroke();
       }
@@ -162,36 +161,36 @@ export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) 
       {/* 3D WebGL / Canvas wave matrix */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full block opacity-90 transition-opacity duration-700"
+        className="absolute inset-0 w-full h-full block opacity-85 transition-opacity duration-700"
       />
 
-      {/* Vibrant Ambient Glow Color Meshes */}
+      {/* Gentle, Diffuse Ambient Glow Meshes (Never pinching or glaring) */}
       <div
-        className={`absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full blur-[130px] transition-all duration-700 ${
+        className={`absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full blur-[160px] transition-all duration-700 pointer-events-none ${
           isDarkMode
-            ? "bg-indigo-600/15"
-            : "bg-indigo-400/15"
+            ? "bg-indigo-900/15"
+            : "bg-indigo-300/15"
         }`}
       />
       <div
-        className={`absolute top-1/4 -right-32 w-[600px] h-[600px] rounded-full blur-[140px] transition-all duration-700 ${
+        className={`absolute top-1/4 -right-32 w-[600px] h-[600px] rounded-full blur-[170px] transition-all duration-700 pointer-events-none ${
           isDarkMode
-            ? "bg-emerald-600/15"
-            : "bg-emerald-300/20"
+            ? "bg-emerald-950/20"
+            : "bg-emerald-200/20"
         }`}
       />
       <div
-        className={`absolute bottom-10 left-1/4 w-[500px] h-[500px] rounded-full blur-[140px] transition-all duration-700 ${
+        className={`absolute bottom-10 left-1/4 w-[500px] h-[500px] rounded-full blur-[160px] transition-all duration-700 pointer-events-none ${
           isDarkMode
-            ? "bg-amber-600/12"
-            : "bg-amber-300/15"
+            ? "bg-amber-950/15"
+            : "bg-amber-200/15"
         }`}
       />
       <div
-        className={`absolute -bottom-32 right-1/4 w-[550px] h-[550px] rounded-full blur-[140px] transition-all duration-700 ${
+        className={`absolute -bottom-32 right-1/4 w-[550px] h-[550px] rounded-full blur-[160px] transition-all duration-700 pointer-events-none ${
           isDarkMode
-            ? "bg-rose-600/12"
-            : "bg-rose-300/15"
+            ? "bg-rose-950/15"
+            : "bg-rose-200/15"
         }`}
       />
     </div>
