@@ -1,179 +1,202 @@
-# 🚀 AlphaPulse India Pro
-### Institutional-Grade Real-Time Equity, Dividend Intelligence & Post-Tax ROI Engine (NSE / BSE)
+# 🚀 AlphaPulse India Pro Workstation
+### Institutional-Grade Real-Time Equity Intelligence, 1-Week Tactical Alpha & Post-Tax ROI Engine (NSE / BSE)
 
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI%200.115-009688.svg?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%2B%20Vite-61DAFB.svg?style=flat&logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript%205.9-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC.svg?style=flat&logo=tailwind-css)](https://tailwindcss.com)
-[![Google Gemini](https://img.shields.io/badge/AI-Google%20GenAI%20%2B%20Search%20Grounding-4285F4.svg?style=flat&logo=google)](https://ai.google.dev)
+[![Google Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash%20%2B%20Search%20Grounding-4285F4.svg?style=flat&logo=google)](https://ai.google.dev)
+[![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL%20Mode-003B57.svg?style=flat&logo=sqlite)](https://www.sqlite.org)
 [![Budget 2024](https://img.shields.io/badge/Tax%20Engine-Budget%202024%20Compliant-10B981.svg?style=flat)](https://www.incometax.gov.in)
 
 ---
 
 ## 🌟 Overview
 
-**AlphaPulse India Pro** is an institutional-grade quantitative stock intelligence, risk analytics, and holding-period profit forecasting workstation designed for Indian equities (NSE / BSE). 
+**AlphaPulse India Pro** is a modern, modular institutional quantitative equity workstation and AI copilot designed for Indian stock market investors (NSE / BSE). 
 
-Built with a distraction-free, minimalist **Light Mode** design system, it combines live market feeds, 1,000-path stochastic Monte Carlo simulations, real-world Indian statutory tax deduction (Budget 2024 compliant), breaking news sentiment loss risk modeling, pre-dividend accumulation timing roadmaps, and **Google Gemini Live Web Search Grounding**.
+Engineered with a **6-Page Dedicated Workstation Architecture**, an **Interactive Left-Pane "Ask Alpha AI" Copilot (`⌘K`)**, a **3D Deep-Space Asteroid Belt Canvas Engine**, and a **1-Week Tactical Momentum Engine with a Personal "Stock Market Guru" & Crowd Psychology Watchdog**, AlphaPulse provides end-to-end mathematical rigor from live market discovery to post-tax bank account realization.
 
 ---
 
-## 💎 Core Institutional Modules
+## 🏗️ Architecture & Engine Topology
 
 ```mermaid
 graph TD
-    User([Investor / Quantitative Analyst]) -->|Natural Language Search & Sliders| WebApp[React + Vite Frontend :5173]
-    WebApp -->|Live Proxy Calls| API[FastAPI Backend :8000]
+    User([Investor / Quantitative Trader]) -->|Interactive UI & ⌘K Copilot| WebApp[React 19 + TypeScript + Vite :5173]
+    WebApp -->|Async REST & Live Polling| API[FastAPI High-Concurrency Backend :8000]
     
-    subgraph Multi-Factor Quantitative Engines
-        API --> Radar[radar_engine.py<br/>5-Factor KPI Stocks Radar]
-        API --> News[news_engine.py<br/>Live News Sentiment & Loss Risk Meter]
-        API --> Dividend[dividend_engine.py<br/>Cash Payout & Pre-Ex Date Accumulation]
-        API --> MonteCarlo[monte_carlo_engine.py<br/>1,000-Path GBM Stochastic VaR]
-        API --> Taxes[taxes_charges.py<br/>Indian STT, GST, STCG/LTCG Engine]
+    subgraph Quantitative & Tactical Engines
+        API --> Tactical[tactical_swing_engine.py<br/>1-Week Momentum & 2-Tier Targets]
+        API --> Psychology[crowd_psychology_engine.py<br/>Fatal Trap vs Bear Trap Classifier]
+        API --> Radar[radar_engine.py<br/>5-Factor KPI & Sub-₹150 Penny Screener]
+        API --> MonteCarlo[monte_carlo_engine.py<br/>1,000-Path Stochastic GBM & VaR]
+        API --> Taxes[taxes_charges.py<br/>Budget 2024 STCG, LTCG, STT & GST Solver]
+        API --> Planner[planner_engine.py<br/>Exact Actuarial SIP & Milestone Solver]
         API --> Quality[quality_filters.py<br/>Piotroski F-Score & Delivery % Screener]
-        API --> Technicals[technicals.py<br/>PKScreener 14-RSI & Breakouts]
-        API --> RRG[sector_rrg.py<br/>RRG Sector Rotation 2D Map]
+        API --> RRG[sector_rrg.py<br/>2D Sector Rotation Relative Strength Map]
     end
     
-    subgraph External & AI Layer
-        API --> Gemini[gemini_service.py<br/>Google GenAI SDK]
-        Gemini -->|Live Web Search Grounding| GoogleSearch[Google Search Tool<br/>Concalls, Broker Targets, Catalysts]
-        API --> NSE[jugaad-data & nsepython<br/>Live Quotes & FII/DII Net Flows]
+    subgraph AI & Persistence Layer
+        API --> Gemini[gemini_service.py & routes_chat.py<br/>Gemini 2.5 Flash + Web Search Grounding]
+        API --> SQLite[(SQLite WAL Database<br/>Holdings, Goals, Tactical Swings)]
+        API --> Monitor[portfolio_monitor.py<br/>24/7 Watchdog & Audio Alerts]
     end
 ```
 
 ---
 
-### 1. 📡 Real-Time KPI Stocks Radar ("Top Profitable Stocks to Buy Now")
-- **5-Factor Institutional Multi-Factor Screener**:
-  1. **Institutional Delivery %**: $\ge 50\%$ (accumulation confirmation vs. retail day-trading churn).
-  2. **Piotroski F-Score**: $\ge 7/9$ (profitability, leverage, liquidity, and operating efficiency).
-  3. **Technical Breakout / Golden Cross**: 20-day high breakout with volume surge ($>1.5\times$) or $50 > 200$ EMA golden cross via `PKScreener`.
-  4. **Positive Live News Sentiment**: Aggregate news sentiment score $\ge +0.25$.
-  5. **Post-Tax Annualized Projected ROI**: $\ge 15\%$.
-- **Interactive Top Banner Deck**: Ranked top 6 high-conviction buys with live price, post-tax net gains (₹), target price, delivery %, and **1-Click Simulation Jump**.
+## 💎 Core Capabilities
+
+### 1. 🧙‍♂️ Personal "Stock Market Guru" & 1-Week Tactical Alpha Engine
+- **Proprietary Trading Mandate**:
+  - **Rule #1: Protect Principal** — Strict mathematical invalidation cutoff (-2.5%); zero hope trading.
+  - **Rule #2: Maximize Take-Home Cash** — Computes exact post-tax net profit after Budget 2024 STCG (20%) and all statutory levies.
+- **4 Critical Tactical Execution Levels (5–7 Trading Days)**:
+  1. **Exact Buy Range**: Dynamic accumulation demand pocket (e.g., `₹406.56 – ₹411.87`).
+  2. **Target 1 (+5.5% in 3–4 Days)**: Mandatory 50% profit booking to eliminate trade risk.
+  3. **Target 2 (+8.5% in 7 Days)**: Squeeze remaining 50% position with stop-loss trailed to breakeven entry price.
+  4. **Hard Stop-Loss (-2.5%)**: Automated risk cutoff for immediate capital preservation.
+- **In-Chat Tactical Blueprint Action Cards**: Click `[🛡️ Arm Stock Market Guru 24/7 Watchdog]` to launch 7-day automated surveillance.
 
 ---
 
-### 2. 📰 Live News Feed & Loss Risk Probability Gauge
-- **Live Financial News Ingestion**: Automatically pulls breaking financial headlines for the active stock with source links and timestamps.
-- **Dynamic Trade Loss Risk Probability Meter**:
-  - `sentiment_score`: Scale from $-1.0$ (Extreme Bearish) to $+1.0$ (Extreme Bullish).
-  - `risk_of_loss_pct` & `win_probability_pct`: Quantifies the empirical probability of entering a losing trade.
-  - `primary_catalyst`: Displays the exact corporate news event driving sentiment.
-  - `sentiment_drift_modifier`: Dynamically modulates the Monte Carlo drift ($\mu$).
+### 2. 🧠 Crowd Psychology & Negative News Classifier
+- **Fatal Traps** (*SEBI raids, forensic audits, promoter dumping, CBI probes*):
+  - Predicts **85–95% Retail Panic Dump & Circuit Lock** $\rightarrow$ **Guru Command: `DUMP_IMMEDIATELY`**.
+- **Overreaction Bear Trap Noise** (*Routine GST queries, single-quarter raw material cost dip in monopoly blue chips*):
+  - Correlates institutional delivery % (>55%) and predicts **75–85% Smart Money Dip-Buying** $\rightarrow$ **Guru Command: `HOLD_FOR_REBOUND`**.
 
 ---
 
-### 3. 💰 Dividend Intelligence & "When to Buy" Timing Roadmap
-- **Capital Payout Calculator**: Input your capital (₹) and immediately see your exact annual cash payout and next interim credit:
-  $$\text{Cash Payout} = \text{Shares} \times \text{DPS}$$
-- **10-Day Pre-Dividend Optimal Accumulation Window**: Recommends the exact calendar dates to accumulate shares before the ex-dividend price adjustment rush.
-- **4-Step Visual Progress Roadmap**:
-  1. `Optimal Buy Window` $\to$ 2. `Ex-Dividend Cutoff Date` $\to$ 3. `Record Date (Demat)` $\to$ 4. `Direct Bank Account Credit`.
-- **Top Indian Dividend Champions Ranked Deck**: Quick 1-click exploration of high-yield stocks (e.g., *COALINDIA, VEDL, RECLTD, PFC, ITC, TCS, BEL*).
+### 3. 🎯 Goal Planner & Exact Actuarial SIP Solver
+- **True Monthly Compounding Formula**:
+  Replaces naive linear approximations with the actuarial future-value solver:
+  $$FV = P \cdot (1+r)^n + \text{SIP} \cdot \left[\frac{(1 + r_m)^{12n} - 1}{r_m}\right] \cdot (1 + r_m)$$
+  *(where $r_m = (1+r)^{1/12} - 1$)*
+- **Interactive Goal Tracking**: Save financial milestones (e.g. ₹10 Lakhs in 3 years) with live portfolio progress bars.
+- **Dedicated Goal News Radar**: Streams real-time financial catalysts specifically matching stocks in your goal basket.
 
 ---
 
-### 4. 🎲 1,000-Path Stochastic Monte Carlo Simulation
-- **Geometric Brownian Motion (GBM)**: Replaces naive straight lines with 1,000 random-walk stochastic paths:
+### 4. 💼 Demat Portfolio Vault with Live LTP & 24/7 Watchdog
+- **Real-Time Market Valuation & P&L**:
+  - Synchronizes live market LTP, day change %, current valuation, and color-coded net profit/loss badges.
+- **Active 1-Week Tactical Sprints**:
+  - Dedicated surveillance deck with a **7-day countdown clock**, level-by-level progress bar, and 1-click stock inspection.
+- **Institutional Audio Alerts**:
+  - `PROFIT_TARGET` $\rightarrow$ Victory chime.
+  - `STOP_LOSS_BREACH` $\rightarrow$ Discipline buzzer.
+  - `FATAL_RISK` $\rightarrow$ Emergency siren.
+
+---
+
+### 5. 🔬 1,000-Path Stochastic Monte Carlo Simulation
+- **Geometric Brownian Motion (GBM)**:
   $$S_t = S_0 \exp\left(\left(\mu - \frac{\sigma^2}{2}\right)t + \sigma \sqrt{t} Z\right)$$
 - **Statistical Percentiles**:
-  - **Base Case (50th Percentile / Median)**: Most probable price trajectory with sector drift.
+  - **Base Case (50th Percentile / Median)**: Most probable price trajectory.
   - **Bull Case (90th Percentile)**: Statistical upside momentum ceiling.
-  - **Bear Case (10th Percentile / VaR)**: 90% Value at Risk empirical floor modeling maximum expected drawdown.
+  - **Bear Case (10th Percentile / VaR)**: 90% Value at Risk empirical floor.
 
 ---
 
-### 5. 🇮🇳 Real In-Hand Post-Tax & Friction Engine (Budget 2024 Compliant)
-Calculates exact real-world statutory levies and taxes so your net profit matches your bank account:
-- **Securities Transaction Tax (STT)**: 0.1% on delivery exit turnover.
+### 6. 🇮🇳 Budget 2024 Statutory Post-Tax & Friction Engine
+Accurately accounts for every statutory levy on Indian exchanges:
+- **Securities Transaction Tax (STT)**: 0.1% on delivery turnover.
 - **Exchange Turnover Fees**: ~0.00345% (NSE).
 - **SEBI Turnover Charges**: ₹10 per crore (0.0001%).
 - **Stamp Duty**: 0.015% on entry turnover.
 - **GST**: 18% on (Brokerage + Exchange Fees + SEBI Charges).
 - **Capital Gains Taxes**:
   - `Holding < 12 Months`: **STCG @ 20%** on net gains.
-  - `Holding ≥ 12 Months`: **LTCG @ 12.5%** on net gains exceeding the ₹1,25,000 annual exemption limit.
+  - `Holding ≥ 12 Months`: **LTCG @ 12.5%** on net gains exceeding ₹1,25,000 exemption.
 
 ---
 
-### 6. 🌐 Google Gemini AI with Live Web Search Grounding
-- **Search Tooling Integration**: Configured with `types.Tool(google_search=types.GoogleSearch())` via the `google-genai` Python SDK.
-- **Consensus Research Targets**: Real-time aggregation of broker price targets from top research houses (*Motilal Oswal, ICICI Direct, Jefferies, Morgan Stanley*).
-- **Quarterly Concall Takeaways**: Extracts management guidance, EBITDA margin trajectories, order backlog additions, and upcoming catalysts.
+### 7. 🌌 3D Deep-Space Asteroid Belt Canvas & Design System
+- **Floating 3D Polygonal Asteroids**: High-performance HTML5 Canvas rendering craggy 3D tumbling asteroids with cosmic dust and linear perspective.
+- **Zero-Battery Idle Pause**: Uses `requestAnimationFrame` with visibility detection to pause when inactive.
+- **Sleek Dual Theme**: Seamless switching between Dark Mode and Light Mode.
 
 ---
 
-### 7. 🛡️ Institutional Quality & Governance Screener
-- **NSE Delivery %**: Flags `>50%` as institutional accumulation vs `<25%` as speculative retail churn.
-- **Piotroski F-Score (0 to 9)**: Evaluates profitability, leverage, liquidity, and operating efficiency.
-- **Promoter Pledging**: Verifies promoter pledge integrity and flags any pledge `>15%` as a red flag.
-- **Order Book Backlog (₹ Cr)**: Tracks sovereign and commercial order backlogs for defense, infra, and power titans.
+## 🖥️ The 6 Dedicated Workstation Pages
+
+| Page | Description | Key Modules |
+| :--- | :--- | :--- |
+| **1. Overview** | Market Command Center | Live Indices (Sensex, Nifty, VIX), Continuous Ticker Tape, Quick Access Cards |
+| **2. Radar & Screener** | Discovery & Filtering | 5-Factor KPI Leaders, Sub-₹150 Turnaround Penny Screener |
+| **3. Stock Studio** | Deep-Dive Analytics | Interactive Charts (1D–5Y), Piotroski F-Score (0–9), 2D Sector RRG, News Sentiment |
+| **4. Profit Simulator** | Holding-Period Forecasting | 1,000-Path Monte Carlo Fan Chart, Budget 2024 Post-Tax Net ROI Calculator |
+| **5. Dividend Income** | Cash Flow Intelligence | DPS Payout Calculator, 10-Day Pre-Ex Date Accumulation Roadmap |
+| **6. Goal Planner** | Wealth Milestones | Actuarial SIP Solver, Tracked Goals Vault, Goal News Radar |
+| **7. Portfolio Vault** | Demat Execution & Defense | SQLite WAL Holdings, Live Net P&L, Active 1-Week Tactical Sprints, 24/7 Watchdog |
 
 ---
 
-### 8. 🔬 4 Genuine Open-Source Quantitative Integrations
-- [`jugaad-py/jugaad-data`](https://github.com/jugaad-py/jugaad-data): Historical OHLCV candles, delivery percentages, and local caching.
-- [`aeron7/nsepython`](https://github.com/aeron7/nsepython): Live NSE quotes, FII/DII net flows, and sector stats.
-- [`pkjmesra/PKScreener`](https://github.com/pkjmesra/PKScreener): 14-period Wilder's RSI, 20-day breakout with volume surge (`>1.5x`), and 50/200 EMA golden cross.
-- [`AdroitAnandAI/RRG-Sector-Rotation-India`](https://github.com/AdroitAnandAI/RRG-Sector-Rotation-India): 2D Relative Rotation Graph quadrant scatter plot (Leading, Improving, Weakening, Lagging).
-
----
-
-## 📁 Repository Structure
+## 📁 Repository Directory Structure
 
 ```
-alphapulse-india/
+AlphaHprizon/
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── routes_stocks.py       # Live quotes, search, candles, quality, news, KPI radar
-│   │   │   ├── routes_simulator.py    # Monte Carlo & Post-Tax calculations
-│   │   │   ├── routes_dividend.py     # Dividend analyzer & top yielders
-│   │   │   └── routes_ai.py           # Gemini AI with Live Web Search Grounding
+│   │   │   ├── routes_stocks.py       # Live quotes, OHLCV candles, quality metrics, penny radar
+│   │   │   ├── routes_simulator.py    # Monte Carlo simulation & Post-Tax math
+│   │   │   ├── routes_dividend.py     # Dividend timing & cash payout solver
+│   │   │   ├── routes_portfolio.py    # Persistent SQLite holdings CRUD & threat alerts
+│   │   │   ├── routes_planner.py      # Goal planning & basket news radar
+│   │   │   ├── routes_chat.py         # Multi-turn Conversational AI & Guru persona
+│   │   │   ├── routes_tactical.py     # 1-Week Tactical screening & watchdog arming
+│   │   │   └── routes_diagnostics.py  # System health & API diagnostic tools
 │   │   ├── quant/
-│   │   │   ├── data_engine.py         # jugaad-data & nsepython adapters
-│   │   │   ├── technicals.py          # PKScreener RSI, breakout & EMA cross
-│   │   │   ├── sector_rrg.py          # Relative Strength 2D quadrant scatter
-│   │   │   ├── quality_filters.py     # Piotroski F-Score & Promoter Pledge
-│   │   │   ├── taxes_charges.py       # Indian STT, GST, STCG/LTCG tax engine
-│   │   │   ├── monte_carlo_engine.py  # 1,000-path stochastic simulation & VaR
-│   │   │   ├── news_engine.py         # Real-time news sentiment & loss risk meter
-│   │   │   ├── dividend_engine.py     # Dividend cash payout & timing roadmap
-│   │   │   └── radar_engine.py        # 5-factor real-time KPI stocks radar
+│   │   │   ├── tactical_swing_engine.py  # 1-Week momentum setup & Budget 2024 post-tax math
+│   │   │   ├── crowd_psychology_engine.py# Fatal risk vs bear trap noise classifier
+│   │   │   ├── data_engine.py            # Live quotes & historical OHLCV adapters
+│   │   │   ├── technicals.py             # PKScreener RSI, breakouts & EMA crosses
+│   │   │   ├── sector_rrg.py             # 2D Sector Relative Rotation Graph
+│   │   │   ├── quality_filters.py        # Piotroski F-Score & promoter pledge filters
+│   │   │   ├── taxes_charges.py          # Budget 2024 STCG/LTCG, STT, GST & turnover levies
+│   │   │   ├── monte_carlo_engine.py     # 1,000-path stochastic GBM simulation & VaR
+│   │   │   ├── news_engine.py            # Financial news sentiment & loss risk modeling
+│   │   │   ├── dividend_engine.py        # Dividend cash payouts & accumulation windows
+│   │   │   ├── radar_engine.py           # 5-factor quality screener
+│   │   │   └── portfolio_monitor.py      # 24/7 threat watchdog & audio alert triggers
+│   │   ├── db/
+│   │   │   └── database.py            # SQLite WAL mode schema & CRUD operations
 │   │   ├── core/
-│   │   │   ├── config.py              # Environment variables & constants
-│   │   │   └── gemini_service.py      # Google GenAI with Search Grounding
+│   │   │   ├── config.py              # Environment settings & CORS constants
+│   │   │   └── gemini_service.py      # Google GenAI SDK with Search Grounding
 │   │   └── main.py                    # FastAPI application entrypoint
-│   ├── requirements.txt
-│   └── .env.example
+│   └── requirements.txt
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Navbar.tsx             # Top navbar with live status & FII/DII flow
-│   │   │   ├── TickerTape.tsx         # Live continuous scrolling index ticker
-│   │   │   ├── RealTimeRadarKPIs.tsx  # Top 6 profitable buys KPI deck
-│   │   │   ├── AskAIBar.tsx           # Natural language query search with Web Grounding
-│   │   │   ├── LiveNewsAndThesis.tsx  # Gemini web-grounded thesis & broker targets
-│   │   │   ├── StockOverviewCard.tsx  # Live price, 1D-5Y chart, 52W range, Delivery %
-│   │   │   ├── LiveNewsSentimentBar.tsx# Breaking headlines & loss risk gauge
-│   │   │   ├── QualityScoreCard.tsx   # Piotroski F-Score (0-9) & Promoter Pledge
-│   │   │   ├── TechnicalSignals.tsx   # PKScreener breakout, RSI & EMA cross
-│   │   │   ├── SectorRrgMap.tsx       # 2D RRG Quadrant Scatter Map
-│   │   │   ├── DividendAnalyzer.tsx   # Dividend cash calculator & timing roadmap
-│   │   │   ├── ProfitSimulator.tsx    # Monte Carlo + Post-Tax Net In-Hand ROI
-│   │   │   ├── ProjectionChart.tsx    # 1,000-path percentile confidence curves
-│   │   │   ├── WatchlistVaultModal.tsx# Saved strategy vault & CSV export
-│   │   │   └── SettingsModal.tsx      # Gemini API key configuration
-│   │   ├── types/index.ts             # TypeScript data contracts
-│   │   ├── services/api.ts            # Typed API client
-│   │   ├── App.tsx                    # Master dashboard layout
-│   │   └── index.css                  # Light-mode Tailwind styling
+│   │   │   ├── Sidebar.tsx            # Left navigation bar with ⌘K badge
+│   │   │   ├── TickerTape.tsx         # Live continuous marquee ticker
+│   │   │   ├── AiAssistantPane.tsx    # Left drawer multi-turn AI & Tactical Blueprint card
+│   │   │   ├── ThreeBackground.tsx    # 3D Deep-Space Asteroid Belt Canvas
+│   │   │   ├── RealTimeAlertToasts.tsx# Audio-enabled popup alerts
+│   │   │   ├── SettingsModal.tsx      # Gemini API key configuration modal
+│   │   │   └── ...                    # Modular chart & widget components
+│   │   ├── pages/
+│   │   │   ├── OverviewPage.tsx       # Market overview & dashboard hub
+│   │   │   ├── RadarPage.tsx          # Multi-factor & penny screener
+│   │   │   ├── StockStudioPage.tsx    # Technicals, Piotroski score, sector RRG
+│   │   │   ├── SimulatorPage.tsx      # Monte Carlo & Post-Tax simulation
+│   │   │   ├── DividendPage.tsx       # Cash payouts & ex-date roadmap
+│   │   │   ├── GoalPlannerPage.tsx    # Actuarial SIP solver & goal tracking
+│   │   │   └── PortfolioPage.tsx      # Demat holdings & Active Tactical Sprints
+│   │   ├── services/
+│   │   │   └── api.ts                 # Full typed API client
+│   │   ├── types/
+│   │   │   └── index.ts               # TypeScript data contracts
+│   │   ├── App.tsx                    # Root routing & global shortcut listener
+│   │   └── index.css                  # Modern Tailwind CSS styling tokens
 │   ├── package.json
 │   └── vite.config.ts
-├── run.sh                             # 1-click startup script
+├── start.sh                           # Zero-configuration 1-click startup script
 └── README.md
 ```
 
@@ -182,26 +205,32 @@ alphapulse-india/
 ## ⚡ Quickstart
 
 ### Prerequisites
-- Python 3.10+
-- Node.js 18+
+- **Python**: `3.10` or higher
+- **Node.js**: `18` or higher
+- **Package Managers**: `pip` and `npm`
 
-### 1-Click Startup
+### 1-Click Launch
 ```bash
-chmod +x run.sh
-./run.sh
+chmod +x start.sh
+./start.sh
 ```
 
-- **Frontend Workstation**: `http://localhost:5173`
-- **Backend API**: `http://localhost:8000`
-- **Interactive Swagger Docs**: `http://localhost:8000/docs`
+- **Frontend Workstation**: [`http://localhost:5173`](http://localhost:5173)
+- **FastAPI Backend**: [`http://localhost:8000`](http://localhost:8000)
+- **Interactive OpenAPI / Swagger Docs**: [`http://localhost:8000/docs`](http://localhost:8000/docs)
+
+### Keyboard Shortcuts
+- `⌘K` / `Ctrl+K`: Open / Close the **Alpha AI & Stock Market Guru Copilot**.
+- `Esc`: Close any active modal or drawer.
 
 ---
 
-## 🔒 Security & Privacy
-- All API keys and environment variables are stored strictly locally in `.env` (safely blocked by `.gitignore`).
-- No sensitive credentials, proprietary keys, or database binaries are pushed to GitHub.
+## 🔒 Security & Concurrency
+- **SQLite WAL Mode**: Enabled (`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;`) for zero-lock concurrent reads and writes between the API server and portfolio background monitor.
+- **Client-Side API Key Storage**: User Gemini API keys configured in the UI are saved strictly in the browser's `localStorage` and sent over HTTPS/local loopback headers.
+- **CORS Hardening**: Strict origin whitelist configured for development and production dev hosts (`localhost` and `127.0.0.1` on ports `5173` and `8000`).
 
 ---
 
 ### ⚖️ Disclaimer
-*AlphaPulse India Pro is an educational and personal quantitative research simulator. It does not constitute SEBI-registered financial advisory. Past performance does not guarantee future results.*
+*AlphaPulse India Pro is an educational and quantitative research workstation. It does not constitute SEBI-registered investment advisory or financial advice. Indian equity markets involve risk; always conduct independent research before deploying capital.*
