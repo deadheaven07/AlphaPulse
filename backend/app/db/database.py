@@ -5,14 +5,19 @@ from typing import List, Dict, Any, Optional
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "alphapulse.db")
 
 def get_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10.0)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db() -> None:
-    """Initialize SQLite tables for persistent portfolio holdings and watchlist."""
+    """Initialize SQLite tables with WAL mode for high-concurrency read/write operations."""
     with get_connection() as conn:
         cursor = conn.cursor()
+        # Concurrency & Performance Hardening
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA busy_timeout=5000;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS portfolio_holdings (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

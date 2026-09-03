@@ -19,7 +19,7 @@ if [ ! -d "frontend/node_modules" ]; then
 fi
 
 echo "Starting FastAPI Backend on http://127.0.0.1:8000..."
-./backend/venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000 &
+./backend/venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 &
 BACKEND_PID=$!
 
 echo "Starting Vite React Frontend on http://localhost:5173..."
