@@ -376,3 +376,13 @@ export interface DbHolding {
   stop_loss?: number;
   created_at?: string;
 }
+
+export interface TickerItem {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_pct: number;
+  is_index?: boolean;
+}
+

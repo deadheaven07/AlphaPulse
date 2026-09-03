@@ -177,9 +177,10 @@ DIVIDEND_CHAMPIONS_DB: Dict[str, Dict[str, Any]] = {
     }
 }
 
-def analyze_stock_dividend(raw_symbol: str, capital: float = 100000.0) -> Dict[str, Any]:
+def analyze_stock_dividend(raw_symbol: str = "COALINDIA", capital: float = 100000.0, symbol: str = None) -> Dict[str, Any]:
     """Analyze complete dividend metrics, cash payouts, and future dates."""
-    sym = raw_symbol.strip().upper()
+    target_sym = symbol or raw_symbol or "COALINDIA"
+    sym = target_sym.strip().upper()
     if sym.endswith(".NS") or sym.endswith(".BO"):
         sym = sym[:-3]
 

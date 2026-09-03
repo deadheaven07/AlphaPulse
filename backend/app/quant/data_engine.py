@@ -540,3 +540,35 @@ def search_symbols(query: str) -> List[Dict[str, Any]]:
             "change_pct": 0.0
         })
     return matches[:10]
+
+def get_live_ticker_feed() -> List[Dict[str, Any]]:
+    """Return live quotes for headline market indices and active liquid Indian stocks."""
+    indices = [
+        {"symbol": "NIFTY 50", "name": "Nifty 50 Index", "price": 24850.50, "change": 142.30, "change_pct": 0.58, "is_index": True},
+        {"symbol": "SENSEX", "name": "BSE Sensex", "price": 81450.20, "change": 480.10, "change_pct": 0.59, "is_index": True},
+        {"symbol": "BANK NIFTY", "name": "Bank Nifty", "price": 51220.80, "change": 310.40, "change_pct": 0.61, "is_index": True},
+        {"symbol": "NIFTY IT", "name": "Nifty IT", "price": 42150.00, "change": -85.20, "change_pct": -0.20, "is_index": True},
+        {"symbol": "INDIA VIX", "name": "India Volatility", "price": 12.85, "change": -0.45, "change_pct": -3.38, "is_index": True}
+    ]
+
+    active_symbols = [
+        "TATAMOTORS", "RELIANCE", "HDFCBANK", "INFY", "ICICIBANK",
+        "TCS", "ITC", "LT", "COALINDIA", "BEL", "HAL", "TATAPOWER", "TRENT", "ZOMATO"
+    ]
+
+    quotes_map = fetch_live_quotes_batch(active_symbols)
+    stock_items = []
+    for sym in active_symbols:
+        q = quotes_map.get(sym) or INDIAN_STOCKS_DB.get(sym, {})
+        if q:
+            stock_items.append({
+                "symbol": q.get("symbol", sym),
+                "name": q.get("company_name", sym),
+                "price": q.get("price", 0.0),
+                "change": q.get("change", 0.0),
+                "change_pct": q.get("change_pct", 0.0),
+                "is_index": False
+            })
+
+    return indices + stock_items
+

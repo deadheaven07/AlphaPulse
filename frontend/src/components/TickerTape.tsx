@@ -2,113 +2,108 @@ import React, { useMemo } from "react";
 import { formatINR, formatPct } from "../utils/formatters";
 import { TrendingUp, TrendingDown, Radio } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchKpiRadar } from "../services/api";
-
-interface TickerItem {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  change_pct: number;
-  isIndex?: boolean;
-}
+import { fetchTickerFeed } from "../services/api";
+import type { TickerItem } from "../types";
 
 interface TickerTapeProps {
   onSelectSymbol: (symbol: string) => void;
 }
 
-const DEFAULT_TICKERS: TickerItem[] = [
-  { symbol: "NIFTY 50", name: "Nifty 50 Index", price: 24850.50, change: 142.30, change_pct: 0.58, isIndex: true },
-  { symbol: "SENSEX", name: "BSE Sensex", price: 81450.20, change: 480.10, change_pct: 0.59, isIndex: true },
-  { symbol: "BANK NIFTY", name: "Bank Nifty", price: 51220.80, change: 310.40, change_pct: 0.61, isIndex: true },
-  { symbol: "NIFTY IT", name: "Nifty IT", price: 42150.00, change: -85.20, change_pct: -0.20, isIndex: true },
-  { symbol: "INDIA VIX", name: "India Volatility", price: 12.85, change: -0.45, change_pct: -3.38, isIndex: true },
-  { symbol: "TATAMOTORS", name: "Tata Motors", price: 1045.60, change: 22.30, change_pct: 2.18 },
-  { symbol: "BEL", name: "Bharat Electronics", price: 408.60, change: 9.40, change_pct: 2.35 },
-  { symbol: "HAL", name: "Hindustan Aeronautics", price: 4765.60, change: 88.00, change_pct: 1.88 },
-  { symbol: "RELIANCE", name: "Reliance Ind.", price: 1302.50, change: 14.20, change_pct: 1.10 },
-  { symbol: "TCS", name: "Tata Consultancy", price: 4180.25, change: -12.40, change_pct: -0.30 },
-  { symbol: "COALINDIA", name: "Coal India", price: 485.40, change: 11.20, change_pct: 2.36 },
-  { symbol: "HDFCBANK", name: "HDFC Bank", price: 1640.80, change: 14.50, change_pct: 0.89 },
-  { symbol: "LT", name: "Larsen & Toubro", price: 3620.50, change: 38.00, change_pct: 1.06 },
-  { symbol: "TATAPOWER", name: "Tata Power", price: 435.60, change: 8.90, change_pct: 2.09 },
-  { symbol: "TRENT", name: "Trent Retail", price: 6850.00, change: 140.00, change_pct: 2.09 },
-  { symbol: "ZOMATO", name: "Zomato Ltd", price: 265.50, change: 7.80, change_pct: 3.03 },
+const FALLBACK_TICKERS: TickerItem[] = [
+  { symbol: "NIFTY 50", name: "Nifty 50 Index", price: 24850.50, change: 142.30, change_pct: 0.58, is_index: true },
+  { symbol: "SENSEX", name: "BSE Sensex", price: 81450.20, change: 480.10, change_pct: 0.59, is_index: true },
+  { symbol: "BANK NIFTY", name: "Bank Nifty", price: 51220.80, change: 310.40, change_pct: 0.61, is_index: true },
+  { symbol: "NIFTY IT", name: "Nifty IT", price: 42150.00, change: -85.20, change_pct: -0.20, is_index: true },
+  { symbol: "INDIA VIX", name: "India Volatility", price: 12.85, change: -0.45, change_pct: -3.38, is_index: true },
+  { symbol: "TATAMOTORS", name: "Tata Motors", price: 1045.60, change: 22.30, change_pct: 2.18, is_index: false },
+  { symbol: "RELIANCE", name: "Reliance Ind.", price: 1302.50, change: -10.60, change_pct: -0.81, is_index: false },
+  { symbol: "HDFCBANK", name: "HDFC Bank", price: 706.65, change: 5.85, change_pct: 0.83, is_index: false },
+  { symbol: "INFY", name: "Infosys Ltd", price: 1130.30, change: -9.70, change_pct: -0.85, is_index: false },
+  { symbol: "ICICIBANK", name: "ICICI Bank", price: 1430.00, change: 3.50, change_pct: 0.25, is_index: false },
+  { symbol: "TCS", name: "Tata Consultancy", price: 2320.10, change: -27.90, change_pct: -1.19, is_index: false },
+  { symbol: "ITC", name: "ITC Ltd", price: 263.00, change: -3.30, change_pct: -1.24, is_index: false },
+  { symbol: "LT", name: "Larsen & Toubro", price: 3975.00, change: -6.00, change_pct: -0.15, is_index: false },
+  { symbol: "COALINDIA", name: "Coal India", price: 420.05, change: 2.20, change_pct: 0.53, is_index: false },
+  { symbol: "BEL", name: "Bharat Electronics", price: 408.60, change: 2.85, change_pct: 0.70, is_index: false },
+  { symbol: "HAL", name: "Hindustan Aero", price: 4765.60, change: -14.40, change_pct: -0.30, is_index: false },
+  { symbol: "TATAPOWER", name: "Tata Power", price: 365.70, change: 1.70, change_pct: 0.47, is_index: false },
+  { symbol: "TRENT", name: "Trent Retail", price: 2815.60, change: -36.70, change_pct: -1.29, is_index: false },
+  { symbol: "ZOMATO", name: "Zomato Ltd", price: 265.50, change: 7.80, change_pct: 3.03, is_index: false },
 ];
 
 export const TickerTape: React.FC<TickerTapeProps> = ({ onSelectSymbol }) => {
-  // Sync live stock radar data into ticker tape if available
-  const { data: radarStocks } = useQuery({
-    queryKey: ["kpi-radar-tickers"],
-    queryFn: () => fetchKpiRadar(100000),
-    refetchInterval: 20000,
+  // Live continuous real-time ticker data polling every 15s
+  const { data: liveTickers } = useQuery({
+    queryKey: ["live-ticker-feed"],
+    queryFn: fetchTickerFeed,
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
 
   const tickerList = useMemo(() => {
-    if (!radarStocks || radarStocks.length === 0) return DEFAULT_TICKERS;
-    
-    // Combine indices with live radar stocks
-    const indices = DEFAULT_TICKERS.filter((t) => t.isIndex);
-    const dynamicStocks: TickerItem[] = radarStocks.map((s) => ({
-      symbol: s.symbol,
-      name: s.company_name,
-      price: s.price,
-      change: s.change,
-      change_pct: s.change_pct,
-      isIndex: false,
-    }));
-
-    return [...indices, ...dynamicStocks];
-  }, [radarStocks]);
+    if (liveTickers && liveTickers.length > 0) {
+      return liveTickers;
+    }
+    return FALLBACK_TICKERS;
+  }, [liveTickers]);
 
   return (
-    <div className="w-full bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-border dark:border-border-dark overflow-hidden py-1.5 select-none relative z-30 shadow-xs transition-colors duration-300">
-      <div className="flex items-center">
-        {/* Left Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-0.5 bg-slate-100 dark:bg-canvas-dark text-slate-700 dark:text-slate-300 text-[10px] font-extrabold uppercase tracking-wider rounded-r-md shrink-0 border-r border-slate-200 dark:border-border-dark shadow-2xs">
-          <Radio className="w-3 h-3 text-emerald-500 animate-pulse" />
-          <span>NSE/BSE Feeds</span>
+    <div className="w-full h-11 min-h-[44px] bg-white/95 dark:bg-surface-dark/95 backdrop-blur-md border-b border-border dark:border-border-dark flex items-center select-none relative z-30 shadow-xs transition-colors duration-300">
+      <div className="flex items-center w-full h-full min-w-0">
+        {/* Left Live Badge */}
+        <div className="flex items-center gap-1.5 px-3.5 h-full bg-slate-100 dark:bg-canvas-dark text-slate-800 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider shrink-0 border-r border-slate-200 dark:border-border-dark shadow-2xs z-20">
+          <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse shrink-0" />
+          <span className="font-mono hidden sm:inline tracking-tight">NSE/BSE LIVE</span>
+          <span className="font-mono sm:hidden">LIVE</span>
         </div>
 
-        {/* Continuous Flow Container */}
-        <div className="overflow-hidden whitespace-nowrap w-full">
-          <div className="animate-ticker flex items-center gap-6">
+        {/* Continuous Flow Marquee Viewport */}
+        <div className="flex-1 h-full overflow-hidden whitespace-nowrap relative min-w-0 flex items-center">
+          {/* Subtle gradient edge fades */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-surface-dark to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-surface-dark to-transparent z-10 pointer-events-none" />
+
+          {/* Seamless Infinite Marquee Track */}
+          <div className="animate-ticker inline-flex items-center gap-3 pl-4">
             {[...tickerList, ...tickerList].map((item, idx) => {
               const isPos = item.change >= 0;
+              const isIndex = item.is_index;
+
               return (
                 <div
                   key={`${item.symbol}-${idx}`}
-                  onClick={() => !item.isIndex && onSelectSymbol(item.symbol)}
-                  className={`inline-flex items-center gap-2 text-xs font-semibold px-2.5 py-0.5 rounded-lg transition-all ${
-                    !item.isIndex
-                      ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-surface-elevated hover:scale-105"
-                      : ""
+                  onClick={() => !isIndex && onSelectSymbol(item.symbol)}
+                  className={`inline-flex items-center gap-2 text-xs py-1 px-2.5 rounded-lg border transition-all ${
+                    isIndex
+                      ? "bg-slate-50 dark:bg-canvas-dark border-slate-200 dark:border-border-dark text-slate-800 dark:text-slate-200"
+                      : "bg-white dark:bg-surface-elevated border-slate-200 dark:border-border-dark hover:border-emerald-500 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/30 hover:scale-105 cursor-pointer shadow-2xs"
                   }`}
-                  title={!item.isIndex ? `Click to simulate ${item.symbol}` : undefined}
+                  title={!isIndex ? `Click to inspect & simulate ${item.symbol}` : undefined}
                 >
                   <span
-                    className={`font-mono ${
-                      item.isIndex
-                        ? "font-bold text-slate-800 dark:text-slate-200"
-                        : "font-extrabold text-slate-900 dark:text-white"
+                    className={`font-mono text-xs ${
+                      isIndex
+                        ? "font-extrabold text-slate-700 dark:text-slate-300"
+                        : "font-black text-slate-900 dark:text-white"
                     }`}
                   >
                     {item.symbol}
                   </span>
 
-                  <span className="font-mono text-slate-600 dark:text-muted-dark">
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-xs">
                     {item.symbol === "INDIA VIX" || item.symbol.includes("VIX")
                       ? item.price.toFixed(2)
                       : formatINR(item.price)}
                   </span>
 
                   <span
-                    className={`inline-flex items-center gap-0.5 text-[10px] font-bold ${
-                      isPos ? "text-profit-600 dark:text-profit-400" : "text-risk-600 dark:text-risk-400"
+                    className={`inline-flex items-center gap-0.5 text-[10px] font-extrabold px-1.5 py-0.2 rounded-md font-mono ${
+                      isPos
+                        ? "bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300"
+                        : "bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300"
                     }`}
                   >
-                    {isPos ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {isPos ? "+" : ""}
+                    {isPos ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                     {formatPct(item.change_pct)}
                   </span>
                 </div>

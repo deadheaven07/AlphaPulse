@@ -86,3 +86,9 @@ def get_news_sentiment(symbol: str = Query(..., description="Stock symbol")):
 @router.get("/kpi-radar")
 def get_kpi_radar(capital: float = Query(default=100000.0, description="Reference capital in INR")):
     return scan_real_time_kpi_radar(capital_reference=capital)
+
+@router.get("/ticker-feed")
+def get_ticker_tape_feed():
+    from backend.app.quant.data_engine import get_live_ticker_feed
+    return get_live_ticker_feed()
+

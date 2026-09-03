@@ -13,7 +13,8 @@ import type {
   PortfolioAlert,
   PennyStockCandidate,
   BreakoutCandidate,
-  DbHolding
+  DbHolding,
+  TickerItem
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -200,3 +201,10 @@ export async function deleteDbWatchlist(symbol: string): Promise<void> {
   });
   if (!res.ok) throw new Error("Failed to unpin symbol from database watchlist");
 }
+
+export async function fetchTickerFeed(): Promise<TickerItem[]> {
+  const res = await fetch(`${API_BASE}/stocks/ticker-feed`);
+  if (!res.ok) throw new Error("Failed to fetch ticker tape feed");
+  return res.json();
+}
+
