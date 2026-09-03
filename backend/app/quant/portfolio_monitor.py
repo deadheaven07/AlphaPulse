@@ -1,16 +1,26 @@
 import time
 import os
+import datetime
 from typing import Dict, Any, List
 from .data_engine import fetch_live_quotes_batch, fetch_historical_dataframe
 from .news_engine import analyze_stock_news_sentiment
 from .technicals import detect_breakout
 from .crowd_psychology_engine import analyze_news_crowd_psychology
-from backend.app.db.database import get_active_tactical_swings, get_prebuy_tactical_swings, get_setting
+from .intraday_engine import get_session_time_status
+from backend.app.db.database import (
+    get_active_tactical_swings,
+    get_prebuy_tactical_swings,
+    get_active_intraday_trades,
+    get_setting
+)
 from backend.app.core.telegram_notifier import (
     send_telegram_alert,
     format_buy_trigger_msg,
     format_profit_target_msg,
-    format_emergency_exit_msg
+    format_emergency_exit_msg,
+    format_intraday_target_hit_msg,
+    format_intraday_sl_hit_msg,
+    format_310_square_off_warning_msg
 )
 
 # In-memory tracking of dispatched Telegram alerts (alert_id -> timestamp)
@@ -77,14 +87,120 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
     except Exception:
         pass
 
+    # 3. Fetch active intraday MIS trades from SQLite
+    intraday_trades: List[Dict[str, Any]] = []
+    try:
+        intraday_trades = get_active_intraday_trades()
+    except Exception:
+        pass
+
     all_symbols = list(set(
-        [item.get("symbol", "").strip().upper() for item in (active_items + prebuy_items) if item.get("symbol")]
+        [item.get("symbol", "").strip().upper() for item in (active_items + prebuy_items + intraday_trades) if item.get("symbol")]
     ))
-    if not all_symbols:
+    if not all_symbols and not intraday_trades:
         return []
 
     quotes_map = fetch_live_quotes_batch(all_symbols)
     alerts: List[Dict[str, Any]] = []
+
+    # --- 3:10 PM Square-Off Guardian Alarm ---
+    session_status = get_session_time_status()
+    if intraday_trades and session_status["is_square_off_warning"]:
+        active_syms = [t["symbol"] for t in intraday_trades]
+        alert_id = f"intraday-squareoff-310-{datetime.date.today()}"
+        alerts.append({
+            "id": alert_id,
+            "symbol": "MIS_ENGINE",
+            "company_name": "Intraday Square-Off Guardian",
+            "alert_type": "310_SQUARE_OFF_WARNING",
+            "severity": "CRITICAL",
+            "current_price": 0.0,
+            "title": "⏰ 3:10 PM MANDATORY INTRADAY SQUARE-OFF!",
+            "message": f"You have {len(intraday_trades)} active MIS positions ({', '.join(active_syms)}). Square off on Zerodha / Groww before 3:15 PM to avoid broker auto-square-off penalty charges!",
+            "recommended_action": "SQUARE_OFF_NOW"
+        })
+        _try_dispatch_telegram(alert_id, format_310_square_off_warning_msg(active_syms))
+
+    # --- Active Intraday Trades Surveillance ---
+    for it in intraday_trades:
+        sym = it.get("symbol", "").strip().upper()
+        if not sym:
+            continue
+        try:
+            quote = quotes_map.get(sym) or {}
+            current_price = quote.get("price", 0.0)
+            if current_price <= 0:
+                continue
+
+            direction = it.get("direction", "LONG").upper()
+            entry_price = float(it["entry_price"])
+            target_price = float(it["target_price"])
+            stop_loss = float(it["stop_loss"])
+            shares = int(it["shares"])
+            margin_capital = float(it.get("margin_capital", entry_price * shares / 5.0))
+
+            is_long = direction == "LONG"
+            if is_long:
+                pnl = (current_price - entry_price) * shares
+                target_hit = current_price >= target_price
+                sl_hit = current_price <= stop_loss
+            else: # SHORT
+                pnl = (entry_price - current_price) * shares
+                target_hit = current_price <= target_price
+                sl_hit = current_price >= stop_loss
+
+            roi_pct = round((pnl / max(margin_capital, 1.0)) * 100.0, 2)
+
+            if target_hit:
+                alert_id = f"intraday-target-{sym}-{it['id']}"
+                alerts.append({
+                    "id": alert_id,
+                    "symbol": sym,
+                    "company_name": quote.get("company_name", sym),
+                    "alert_type": "INTRADAY_TARGET_HIT",
+                    "severity": "SUCCESS",
+                    "current_price": current_price,
+                    "title": f"🎯 Intraday Target Hit: {sym} (+{roi_pct}%)",
+                    "message": f"{direction} 5x MIS Target reached at ₹{current_price:,.2f}! Net Profit: +₹{pnl:,.2f} on ₹{margin_capital:,.0f} margin. Square off on broker now!",
+                    "recommended_action": "SQUARE_OFF_PROFIT"
+                })
+                _try_dispatch_telegram(
+                    alert_id,
+                    format_intraday_target_hit_msg(
+                        symbol=sym,
+                        direction=direction,
+                        live_price=current_price,
+                        target_price=target_price,
+                        net_pnl=pnl,
+                        roi_pct=roi_pct
+                    )
+                )
+            elif sl_hit:
+                alert_id = f"intraday-sl-{sym}-{it['id']}"
+                alerts.append({
+                    "id": alert_id,
+                    "symbol": sym,
+                    "company_name": quote.get("company_name", sym),
+                    "alert_type": "INTRADAY_SL_HIT",
+                    "severity": "CRITICAL",
+                    "current_price": current_price,
+                    "title": f"🛑 Intraday Stop-Loss Hit: {sym} ({roi_pct}%)",
+                    "message": f"DISCIPLINE: Stop-Loss reached at ₹{current_price:,.2f}. Close {direction} position immediately on broker to avoid further loss!",
+                    "recommended_action": "SQUARE_OFF_LOSS"
+                })
+                _try_dispatch_telegram(
+                    alert_id,
+                    format_intraday_sl_hit_msg(
+                        symbol=sym,
+                        direction=direction,
+                        live_price=current_price,
+                        stop_loss=stop_loss,
+                        net_loss=abs(pnl),
+                        risk_pct=abs(roi_pct)
+                    )
+                )
+        except Exception:
+            continue
 
     # --- Pre-Buy Zone Triggers Surveillance ---
     for pb in prebuy_items:

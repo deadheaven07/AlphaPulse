@@ -91,3 +91,46 @@ def format_emergency_exit_msg(
         f"<b>Reason:</b> {reason}\n\n"
         f"⚠️ <i>Exit trade on your broker immediately to preserve capital (Rule #1)!</i>"
     )
+
+def format_intraday_target_hit_msg(
+    symbol: str,
+    direction: str,
+    live_price: float,
+    target_price: float,
+    net_pnl: float,
+    roi_pct: float
+) -> str:
+    action_str = "BUY" if direction == "LONG" else "SHORT SELL"
+    return (
+        f"🎯 <b>INTRADAY MIS TARGET HIT (+{roi_pct:.1f}% on Margin)!</b>\n\n"
+        f"<b>Stock:</b> {symbol} ({direction} 5x MIS)\n"
+        f"<b>Execution:</b> {action_str}\n"
+        f"<b>Current LTP:</b> ₹{live_price:,.2f} (Target: ₹{target_price:,.2f})\n"
+        f"<b>Net Profit Realized:</b> +₹{net_pnl:,.2f} Net In-Hand\n\n"
+        f"⚡ <i>Square off on Zerodha / Groww now and lock in your daily gains!</i>"
+    )
+
+def format_intraday_sl_hit_msg(
+    symbol: str,
+    direction: str,
+    live_price: float,
+    stop_loss: float,
+    net_loss: float,
+    risk_pct: float
+) -> str:
+    return (
+        f"🛑 <b>INTRADAY STOP-LOSS HIT (-{risk_pct:.1f}% on Margin)!</b>\n\n"
+        f"<b>Stock:</b> {symbol} ({direction} 5x MIS)\n"
+        f"<b>Current LTP:</b> ₹{live_price:,.2f} (SL: ₹{stop_loss:,.2f})\n"
+        f"<b>Loss:</b> -₹{net_loss:,.2f}\n\n"
+        f"⚠️ <i>Strict discipline: Close position on broker immediately. Never carry intraday losses overnight!</i>"
+    )
+
+def format_310_square_off_warning_msg(symbols: List[str]) -> str:
+    symbols_str = ", ".join(symbols)
+    return (
+        f"⏰ <b>3:10 PM MANDATORY INTRADAY SQUARE-OFF WARNING!</b>\n\n"
+        f"You have active 5x MIS Intraday positions in: <b>{symbols_str}</b>.\n\n"
+        f"⚠️ <b>Action Required:</b> Close all positions on Zerodha / Groww before 3:15 PM IST to avoid broker auto-square off fees (₹50+GST/order)!"
+    )
+

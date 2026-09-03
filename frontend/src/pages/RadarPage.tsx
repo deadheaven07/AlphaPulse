@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { RealTimeRadarKPIs } from "../components/RealTimeRadarKPIs";
 import { PennyStocksRadar } from "../components/PennyStocksRadar";
 import { InsiderDealsRadar } from "../components/InsiderDealsRadar";
-import { Radar, Coins, UserCheck } from "lucide-react";
+import { IntradayTerminal } from "../components/IntradayTerminal";
+import { Radar, Coins, UserCheck, Zap } from "lucide-react";
 
 interface RadarPageProps {
   onSelectStock: (symbol: string, budget?: number) => void;
@@ -15,7 +16,7 @@ export const RadarPage: React.FC<RadarPageProps> = ({
   capital,
   onCapitalChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<"leaders" | "penny" | "insider">("leaders");
+  const [activeTab, setActiveTab] = useState<"leaders" | "intraday" | "insider" | "penny">("leaders");
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -31,7 +32,7 @@ export const RadarPage: React.FC<RadarPageProps> = ({
                 Quantitative Stock Screeners & Radar
               </h1>
               <p className="text-xs text-muted dark:text-muted-dark">
-                Institutional 5-factor scoring, promoter insider buys & vetted small-cap turnaround filter
+                Institutional 5-factor scoring, 15M ORB intraday MIS 5x, promoter insider buys & small-cap turnarounds
               </p>
             </div>
           </div>
@@ -49,6 +50,18 @@ export const RadarPage: React.FC<RadarPageProps> = ({
           >
             <Radar className="w-3.5 h-3.5" />
             <span>5-Factor Leaders</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("intraday")}
+            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+              activeTab === "intraday"
+                ? "bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-600 dark:text-muted-dark hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-500 dark:text-amber-300" />
+            <span>⚡ 15M Intraday (5x MIS)</span>
           </button>
 
           <button
@@ -88,7 +101,17 @@ export const RadarPage: React.FC<RadarPageProps> = ({
         </section>
       )}
 
-      {/* Tab 2: Trendlyne-Style Insider Buying & Bulk Deals */}
+      {/* Tab 2: Intraday 15M ORB + VWAP 5x MIS Terminal */}
+      {activeTab === "intraday" && (
+        <section className="space-y-4">
+          <IntradayTerminal
+            onSelectStock={(sym) => onSelectStock(sym)}
+            defaultCapital={capital}
+          />
+        </section>
+      )}
+
+      {/* Tab 3: Trendlyne-Style Insider Buying & Bulk Deals */}
       {activeTab === "insider" && (
         <section className="space-y-4">
           <InsiderDealsRadar
@@ -97,7 +120,7 @@ export const RadarPage: React.FC<RadarPageProps> = ({
         </section>
       )}
 
-      {/* Tab 3: Vetted Sub-₹150 Opportunities */}
+      {/* Tab 4: Vetted Sub-₹150 Opportunities */}
       {activeTab === "penny" && (
         <section className="space-y-4">
           <PennyStocksRadar
@@ -108,3 +131,4 @@ export const RadarPage: React.FC<RadarPageProps> = ({
     </div>
   );
 };
+

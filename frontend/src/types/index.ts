@@ -598,6 +598,100 @@ export interface TelegramConfig {
   chat_id?: string;
 }
 
+// --- Intraday MIS 5x Terminal Types ---
+
+export interface IntradayCandidate {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  direction: "LONG" | "SHORT";
+  ltp: number;
+  day_change: number;
+  orb_high: number;
+  orb_low: number;
+  vwap: number;
+  volume_multiplier: number;
+  momentum_score: number;
+  entry_zone_low: number;
+  entry_zone_high: number;
+  target_price: number;
+  stop_loss: number;
+  shares: number;
+  total_exposure: number;
+  margin_capital: number;
+  expected_net_profit: number;
+  expected_roi_pct: number;
+  max_risk_inr: number;
+  max_risk_pct: number;
+  setup_thesis: string;
+}
+
+export interface IntradaySessionStatus {
+  is_market_open: boolean;
+  is_orb_active: boolean;
+  is_square_off_warning: boolean;
+  seconds_to_square_off: number;
+  formatted_countdown: string;
+  session_phase: string;
+  current_time_str: string;
+}
+
+export interface IntradayScannerResponse {
+  session_status: IntradaySessionStatus;
+  long_candidates: IntradayCandidate[];
+  short_candidates: IntradayCandidate[];
+  top_pick?: IntradayCandidate;
+  scanned_universe_count: number;
+  leverage_multiplier: number;
+}
+
+export interface IntradayTrade {
+  id: number;
+  symbol: string;
+  company_name?: string;
+  direction: "LONG" | "SHORT";
+  entry_price: number;
+  live_price?: number;
+  shares: number;
+  margin_capital: number;
+  total_exposure: number;
+  leverage_multiplier: number;
+  target_price: number;
+  stop_loss: number;
+  orb_high?: number;
+  orb_low?: number;
+  vwap?: number;
+  status: "ACTIVE" | "TARGET_HIT" | "SL_HIT" | "SQUARED_OFF" | "MANUAL_SQUARE_OFF" | string;
+  gross_pnl?: number;
+  roi_pct?: number;
+  progress_pct?: number;
+  day_change?: number;
+  exit_price?: number;
+  net_pnl?: number;
+  created_at?: string;
+  closed_at?: string;
+}
+
+export interface IntradayLeverageCalculation {
+  symbol: string;
+  direction: string;
+  entry_price: number;
+  margin_capital: number;
+  total_exposure: number;
+  leverage_multiplier: number;
+  shares: number;
+  target_price: number;
+  stop_loss: number;
+  gross_profit: number;
+  net_profit: number;
+  net_roi_pct: number;
+  gross_loss: number;
+  net_loss: number;
+  net_risk_pct: number;
+  risk_reward_ratio: string;
+}
+
+
 
 
 

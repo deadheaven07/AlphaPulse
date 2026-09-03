@@ -82,7 +82,24 @@ graph TD
 
 ---
 
-### 2. 🏛️ 3 Free Institutional Superpowers (Zero-Subscription Pro Tools)
+### 2. ⚡ Intraday Tactical Terminal (9:15 AM – 3:20 PM MIS 5x Engine)
+- **SEBI 5x Broker Leverage (MIS Margin)**:
+  - Supports retail broker 5x leverage: with ₹20,000 cash margin, trade ₹1,00,000 worth of shares.
+  - **1:2.25 Risk-to-Reward Math**: A +1.8% move with 5x leverage yields **+9.0% on cash margin** in a single morning!
+  - Tight **-0.8% stop-loss floor** strictly protects capital against sudden intraday spikes (-4.0% max loss).
+- **15-Minute Opening Range Breakout (ORB) + Live VWAP Screener**:
+  - **🟢 Bullish Breakouts (LONG / Buy First)**: $Price > 15M\text{ High} \land Price > VWAP$ with $Volume > 1.8\times$.
+  - **🔴 Bearish Breakdowns (SHORT / Sell First)**: $Price < 15M\text{ Low} \land Price < VWAP$ with $Volume > 1.8\times$.
+- **Budget 2024 Intraday STT & Brokerage Solver**:
+  - Automatically calculates statutory charges: intraday STT (0.025% on sell leg only) + ₹40 roundtrip brokerage + GST + stamp duty to present true Net In-Hand Take-Home Cash.
+- **3:10 PM Mandatory Square-Off Guardian**:
+  - Real-time countdown timer to 3:15 PM broker auto square-off cut-off.
+  - Urgent alarm banner and instant **Telegram screen-OFF phone alerts** before brokers charge ₹50+GST forced square-off penalties.
+  - 1-Click `[⚡ Square Off Position]` button with celebratory sound synthesis.
+
+---
+
+### 3. 🏛️ 3 Free Institutional Superpowers (Zero-Subscription Pro Tools)
 - **📱 1. Free Phone Alerts via Private Telegram Bot (Screen-OFF Notifications)**:
   - Delivers instant notifications & audio signals directly to your phone via a private Telegram Bot.
   - Rings with **Buy Trigger Entry**, **Target 1 Hit (+5.5%)**, and **Hard Stop-Loss Sirens** even when your computer is asleep or closed.

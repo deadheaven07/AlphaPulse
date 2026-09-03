@@ -28,7 +28,10 @@ import type {
   CategorizedTacticalSwings,
   InsiderDealItem,
   OptionChainPcrResult,
-  TelegramConfig
+  TelegramConfig,
+  IntradayScannerResponse,
+  IntradayTrade,
+  IntradayLeverageCalculation
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -482,6 +485,88 @@ export async function fetchTelegramConfig(): Promise<TelegramConfig> {
   if (!res.ok) throw new Error("Failed to fetch Telegram config");
   return res.json();
 }
+
+// --- Intraday MIS 5x Terminal Endpoints ---
+
+export async function fetchIntradayScanner(marginCapital: number = 20000): Promise<IntradayScannerResponse> {
+  const res = await fetch(`${API_BASE}/intraday/scanner?margin_capital=${marginCapital}`);
+  if (!res.ok) throw new Error("Failed to fetch intraday scanner data");
+  return res.json();
+}
+
+export async function calculateIntradayLeverage(payload: {
+  symbol: string;
+  entry_price: number;
+  margin_capital: number;
+  direction: string;
+  leverage_multiplier?: number;
+}): Promise<IntradayLeverageCalculation> {
+  const res = await fetch(`${API_BASE}/intraday/calculate-leverage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to calculate intraday leverage math");
+  return res.json();
+}
+
+export async function armIntradayTrade(payload: {
+  symbol: string;
+  company_name?: string;
+  direction: string;
+  entry_price: number;
+  shares: number;
+  margin_capital: number;
+  total_exposure: number;
+  leverage_multiplier?: number;
+  target_price: number;
+  stop_loss: number;
+  orb_high?: number;
+  orb_low?: number;
+  vwap?: number;
+}): Promise<{ status: string; trade_id: number; message: string }> {
+  const res = await fetch(`${API_BASE}/intraday/arm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to arm intraday MIS position");
+  return res.json();
+}
+
+export async function fetchActiveIntradayTrades(): Promise<IntradayTrade[]> {
+  const res = await fetch(`${API_BASE}/intraday/active`);
+  if (!res.ok) throw new Error("Failed to fetch active intraday positions");
+  return res.json();
+}
+
+export async function fetchAllIntradayTrades(): Promise<IntradayTrade[]> {
+  const res = await fetch(`${API_BASE}/intraday/all`);
+  if (!res.ok) throw new Error("Failed to fetch intraday trades history");
+  return res.json();
+}
+
+export async function squareOffIntradayTrade(
+  tradeId: number,
+  exitPrice?: number,
+  reason: string = "MANUAL_SQUARE_OFF"
+): Promise<{ status: string; trade_id: number; net_pnl: number; message: string }> {
+  const res = await fetch(`${API_BASE}/intraday/square-off/${tradeId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ exit_price: exitPrice, reason })
+  });
+  if (!res.ok) throw new Error("Failed to square off intraday trade");
+  return res.json();
+}
+
+export async function deleteIntradayTrade(tradeId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/intraday/${tradeId}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to delete intraday trade");
+}
+
 
 
 

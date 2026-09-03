@@ -79,6 +79,30 @@ def init_db() -> None:
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS intraday_trades (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                company_name TEXT,
+                direction TEXT NOT NULL,
+                entry_price REAL NOT NULL,
+                shares INTEGER NOT NULL,
+                margin_capital REAL NOT NULL,
+                total_exposure REAL NOT NULL,
+                leverage_multiplier REAL DEFAULT 5.0,
+                target_price REAL NOT NULL,
+                stop_loss REAL NOT NULL,
+                orb_high REAL DEFAULT 0,
+                orb_low REAL DEFAULT 0,
+                vwap REAL DEFAULT 0,
+                status TEXT DEFAULT 'ACTIVE',
+                exit_price REAL,
+                net_pnl REAL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                closed_at TIMESTAMP
+            )
+        """)
         
         # Schema migration check for existing columns
         cursor.execute("PRAGMA table_info(tactical_swings)")
@@ -394,3 +418,96 @@ def delete_tactical_swing(swing_id: int) -> bool:
         cursor.execute("DELETE FROM tactical_swings WHERE id = ?", (swing_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+# --- Intraday MIS 5x Trades CRUD ---
+
+def create_intraday_trade(data: Dict[str, Any]) -> int:
+    """Inserts a new intraday MIS position with 5x leverage parameters."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO intraday_trades (
+                symbol, company_name, direction, entry_price, shares,
+                margin_capital, total_exposure, leverage_multiplier,
+                target_price, stop_loss, orb_high, orb_low, vwap, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data["symbol"].upper(),
+            data.get("company_name", data["symbol"]),
+            data["direction"].upper(),
+            float(data["entry_price"]),
+            int(data["shares"]),
+            float(data["margin_capital"]),
+            float(data["total_exposure"]),
+            float(data.get("leverage_multiplier", 5.0)),
+            float(data["target_price"]),
+            float(data["stop_loss"]),
+            float(data.get("orb_high", 0.0)),
+            float(data.get("orb_low", 0.0)),
+            float(data.get("vwap", 0.0)),
+            data.get("status", "ACTIVE")
+        ))
+        conn.commit()
+        return cursor.lastrowid
+
+def get_active_intraday_trades() -> List[Dict[str, Any]]:
+    """Returns currently active intraday trades awaiting target, SL, or 3:10 PM square-off."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM intraday_trades WHERE status = 'ACTIVE' ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def get_all_intraday_trades() -> List[Dict[str, Any]]:
+    """Returns all intraday trades including historical squared-off trades."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM intraday_trades ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def get_intraday_trade_by_id(trade_id: int) -> Optional[Dict[str, Any]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM intraday_trades WHERE id = ?", (trade_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def square_off_intraday_trade(trade_id: int, exit_price: float, net_pnl: float, reason: str = "MANUAL_SQUARE_OFF") -> bool:
+    """Closes an active intraday trade and logs the exit price, net PnL, and timestamp."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE intraday_trades
+            SET status = ?, exit_price = ?, net_pnl = ?, closed_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (reason, float(exit_price), float(net_pnl), trade_id))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def update_intraday_trade_status(
+    trade_id: int,
+    status: str,
+    exit_price: Optional[float] = None,
+    net_pnl: Optional[float] = None
+) -> bool:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if exit_price is not None and net_pnl is not None:
+            cursor.execute("""
+                UPDATE intraday_trades
+                SET status = ?, exit_price = ?, net_pnl = ?, closed_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (status, float(exit_price), float(net_pnl), trade_id))
+        else:
+            cursor.execute("UPDATE intraday_trades SET status = ? WHERE id = ?", (status, trade_id))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def delete_intraday_trade(trade_id: int) -> bool:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM intraday_trades WHERE id = ?", (trade_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
