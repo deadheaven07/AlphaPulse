@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { runProfitSimulation } from "../services/api";
 import type { RiskTolerance, SimulationResult } from "../types";
@@ -24,7 +24,7 @@ interface ProfitSimulatorProps {
   onSaveSimulation?: (sim: SimulationResult) => void;
 }
 
-const CAPITAL_PRESETS = [10000, 25000, 50000, 100000, 250000, 500000];
+const CAPITAL_PRESETS = [10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2500000];
 const HORIZON_SEGMENTS = [
   { label: "1M", months: 1, title: "Tactical" },
   { label: "3M", months: 3, title: "Quarterly" },
@@ -46,6 +46,14 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   const [riskTolerance, setRiskTolerance] = useState<RiskTolerance>("Moderate");
   const [isSaved, setIsSaved] = useState(false);
   const [showTaxBreakdown, setShowTaxBreakdown] = useState(false);
+
+  useEffect(() => {
+    setCapital(initialCapital);
+  }, [initialCapital]);
+
+  useEffect(() => {
+    setHorizonMonths(initialHorizon);
+  }, [initialHorizon]);
 
   const { data: simData } = useQuery({
     queryKey: ["profit-sim-mc", symbol, capital, horizonMonths, riskTolerance],

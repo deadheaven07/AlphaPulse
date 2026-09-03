@@ -174,6 +174,7 @@ export function App() {
             <RealTimeRadarKPIs
               onSelectStock={handleSelectFromRadar}
               referenceCapital={simCapital}
+              onCapitalChange={setSimCapital}
             />
           </section>
 

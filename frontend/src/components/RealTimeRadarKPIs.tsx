@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchKpiRadar } from "../services/api";
 import { formatINR, formatPct } from "../utils/formatters";
@@ -6,31 +6,74 @@ import {
   Radar,
   Award,
   Truck,
-  Sparkles,
   ArrowRight,
   Zap,
-  Flame
+  Flame,
+  Coins,
+  Edit3,
+  Check
 } from "lucide-react";
 
 interface RealTimeRadarKPIsProps {
   onSelectStock: (symbol: string) => void;
   referenceCapital?: number;
+  onCapitalChange?: (newCapital: number) => void;
 }
+
+const CAPITAL_SHORTCUTS = [
+  { label: "₹50K", value: 50000 },
+  { label: "₹1 Lakh", value: 100000 },
+  { label: "₹2.5 Lakh", value: 250000 },
+  { label: "₹5 Lakh", value: 500000 },
+  { label: "₹10 Lakh", value: 1000000 },
+  { label: "₹25 Lakh", value: 2500000 },
+];
 
 export const RealTimeRadarKPIs: React.FC<RealTimeRadarKPIsProps> = ({
   onSelectStock,
   referenceCapital = 100000,
+  onCapitalChange,
 }) => {
+  const [capital, setCapital] = useState<number>(referenceCapital);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [inputVal, setInputVal] = useState<string>(referenceCapital.toString());
+
+  useEffect(() => {
+    setCapital(referenceCapital);
+    setInputVal(referenceCapital.toString());
+  }, [referenceCapital]);
+
   const { data: radarStocks, isLoading } = useQuery({
-    queryKey: ["kpi-radar", referenceCapital],
-    queryFn: () => fetchKpiRadar(referenceCapital),
+    queryKey: ["kpi-radar", capital],
+    queryFn: () => fetchKpiRadar(capital),
     refetchInterval: 30000,
   });
 
+  const handleSelectCapital = (val: number) => {
+    setCapital(val);
+    setInputVal(val.toString());
+    setIsEditing(false);
+    if (onCapitalChange) {
+      onCapitalChange(val);
+    }
+  };
+
+  const handleInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseFloat(inputVal.replace(/[^0-9.]/g, ""));
+    if (!isNaN(num) && num > 0) {
+      setCapital(num);
+      setIsEditing(false);
+      if (onCapitalChange) {
+        onCapitalChange(num);
+      }
+    }
+  };
+
   return (
     <div className="glass-panel-3d rounded-2xl p-5 space-y-4 transition-all duration-300">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 dark:border-border-dark pb-3">
+      {/* Top Header & Interactive Capital Base Controller */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-border/80 dark:border-border-dark pb-4">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shadow-xs">
             <Radar className="w-5 h-5 animate-pulse" />
@@ -50,9 +93,61 @@ export const RealTimeRadarKPIs: React.FC<RealTimeRadarKPIsProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-muted-dark self-start sm:self-auto bg-slate-100 dark:bg-canvas-dark px-3 py-1 rounded-full border border-slate-200 dark:border-border-dark">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-          <span>Capital Base: {formatINR(referenceCapital)}</span>
+        {/* Fully Editable Capital Base Control */}
+        <div className="flex items-center gap-2 flex-wrap bg-slate-100/90 dark:bg-canvas-dark p-1.5 sm:p-2 rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xs">
+          <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+            <Coins className="w-4 h-4 text-emerald-500" />
+            <span className="hidden sm:inline">Capital Base:</span>
+          </div>
+
+          {isEditing ? (
+            <form onSubmit={handleInputSubmit} className="flex items-center gap-1">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-2 flex items-center text-xs font-bold text-slate-400">₹</span>
+                <input
+                  type="text"
+                  value={inputVal}
+                  onChange={(e) => setInputVal(e.target.value)}
+                  autoFocus
+                  className="w-28 sm:w-32 pl-5 pr-2 py-1 bg-white dark:bg-surface-dark border border-emerald-500 rounded-lg text-xs font-mono font-bold text-slate-900 dark:text-white focus:outline-none"
+                  placeholder="100000"
+                />
+              </div>
+              <button
+                type="submit"
+                className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
+                title="Apply Capital"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+            </form>
+          ) : (
+            <div
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-1 px-2.5 py-1 bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark font-mono font-extrabold text-xs text-emerald-600 dark:text-emerald-400 cursor-pointer hover:border-emerald-400 dark:hover:border-emerald-500 transition-all shadow-2xs group"
+              title="Click to edit capital amount"
+            >
+              <span>{formatINR(capital)}</span>
+              <Edit3 className="w-3 h-3 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+            </div>
+          )}
+
+          {/* Quick-Select Capital Chips */}
+          <div className="hidden sm:flex items-center gap-1">
+            {CAPITAL_SHORTCUTS.map((sc) => (
+              <button
+                key={sc.value}
+                onClick={() => handleSelectCapital(sc.value)}
+                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer ${
+                  capital === sc.value
+                    ? "bg-emerald-600 text-white shadow-2xs"
+                    : "bg-white/80 dark:bg-surface-dark/80 text-slate-600 dark:text-muted-dark hover:bg-slate-200 dark:hover:bg-surface-elevated"
+                }`}
+              >
+                {sc.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -60,7 +155,9 @@ export const RealTimeRadarKPIs: React.FC<RealTimeRadarKPIsProps> = ({
       {isLoading ? (
         <div className="py-8 text-center space-y-2">
           <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs text-slate-500 dark:text-muted-dark font-medium">Scanning live NSE universe across 5 quantitative factors...</p>
+          <p className="text-xs text-slate-500 dark:text-muted-dark font-medium">
+            Recalculating live multi-factor ranking & post-tax ROI for {formatINR(capital)} capital base...
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ultrawide:grid-cols-6 gap-4">
@@ -106,11 +203,11 @@ export const RealTimeRadarKPIs: React.FC<RealTimeRadarKPIsProps> = ({
                   </div>
                 </div>
 
-                {/* Post-Tax Projected Gain & Conviction */}
+                {/* Post-Tax Projected Gain & Conviction (Live updated for editable Capital Base) */}
                 <div className="p-3 rounded-xl bg-profit-50/80 dark:bg-profit-950/40 border border-profit-200/80 dark:border-profit-800/60 flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-bold text-profit-800 dark:text-profit-300 uppercase tracking-wider block">
-                      Post-Tax 1Y Net Gain
+                      Post-Tax 1Y Net Gain ({formatINR(capital)})
                     </span>
                     <span className="text-sm font-extrabold font-mono text-profit-700 dark:text-profit-400">
                       +{formatINR(stock.post_tax_net_gain_inr)}
