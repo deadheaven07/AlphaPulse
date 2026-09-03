@@ -31,6 +31,20 @@ def init_db() -> None:
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS goal_plans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                target_amount REAL NOT NULL,
+                starting_capital REAL NOT NULL,
+                monthly_sip REAL DEFAULT 0,
+                horizon_months INTEGER NOT NULL,
+                risk_level TEXT NOT NULL,
+                planned_basket TEXT,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
 
 def get_holdings() -> List[Dict[str, Any]]:
@@ -96,3 +110,40 @@ def delete_watchlist(symbol: str) -> bool:
         cursor.execute("DELETE FROM watchlist WHERE symbol = ?", (sym,))
         conn.commit()
         return cursor.rowcount > 0
+
+def get_goals() -> List[Dict[str, Any]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM goal_plans ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def save_goal(
+    title: str,
+    target_amount: float,
+    starting_capital: float,
+    monthly_sip: float = 0.0,
+    horizon_months: int = 12,
+    risk_level: str = "Moderate",
+    planned_basket: Optional[str] = None,
+    notes: Optional[str] = None
+) -> Dict[str, Any]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO goal_plans (title, target_amount, starting_capital, monthly_sip, horizon_months, risk_level, planned_basket, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (title.strip(), target_amount, starting_capital, monthly_sip, horizon_months, risk_level, planned_basket, notes))
+        conn.commit()
+        goal_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM goal_plans WHERE id = ?", (goal_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else {}
+
+def delete_goal(goal_id: int) -> bool:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM goal_plans WHERE id = ?", (goal_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+

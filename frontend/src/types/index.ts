@@ -386,3 +386,54 @@ export interface TickerItem {
   is_index?: boolean;
 }
 
+export interface GoalBasketStock {
+  symbol: string;
+  name: string;
+  sector?: string;
+  allocation_pct: number;
+  rationale?: string;
+  expected_cagr_pct?: number;
+}
+
+export interface GoalPlan {
+  id?: number;
+  title: string;
+  target_amount: number;
+  starting_capital: number;
+  monthly_sip: number;
+  horizon_months: number;
+  risk_level: "Conservative" | "Moderate" | "Aggressive" | string;
+  planned_basket: GoalBasketStock[];
+  notes?: string;
+  created_at?: string;
+}
+
+export interface GoalNewsItem {
+  symbol: string;
+  company_name: string;
+  title: string;
+  publisher: string;
+  link: string;
+  published: string;
+  sentiment: string;
+  score: number;
+  threat_level: "LOW" | "MODERATE" | "HIGH" | string;
+  risk_of_loss_pct: number;
+  summary: string;
+}
+
+export interface GoalAiCopilotResponse {
+  target_amount: number;
+  starting_capital: number;
+  monthly_sip: number;
+  horizon_months: number;
+  risk_level: string;
+  required_cagr_pct: number;
+  total_invested: number;
+  growth_required: number;
+  strategy_summary: string;
+  ai_thesis: string;
+  recommended_basket: GoalBasketStock[];
+}
+
+

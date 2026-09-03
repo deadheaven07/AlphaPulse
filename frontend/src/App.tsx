@@ -24,6 +24,7 @@ import { RadarPage } from "./pages/RadarPage";
 import { StockStudioPage } from "./pages/StockStudioPage";
 import { SimulatorPage } from "./pages/SimulatorPage";
 import { DividendPage } from "./pages/DividendPage";
+import { GoalPlannerPage } from "./pages/GoalPlannerPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 
 export function App() {
@@ -239,6 +240,15 @@ export function App() {
             <DividendPage
               symbol={selectedSymbol}
               onSelectStock={(sym) => setSelectedSymbol(sym)}
+            />
+          )}
+
+          {activePage === "planner" && (
+            <GoalPlannerPage
+              onNavigateToStudio={(sym: string) => {
+                setSelectedSymbol(sym);
+                setActivePage("studio");
+              }}
             />
           )}
 

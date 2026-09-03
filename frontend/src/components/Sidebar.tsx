@@ -8,6 +8,7 @@ import {
   LineChart,
   Calculator,
   Coins,
+  Target,
   Briefcase,
   Sparkles,
   Sun,
@@ -18,7 +19,7 @@ import {
   ShieldCheck
 } from "lucide-react";
 
-export type NavPage = "overview" | "radar" | "studio" | "simulator" | "dividend" | "portfolio";
+export type NavPage = "overview" | "radar" | "studio" | "simulator" | "dividend" | "planner" | "portfolio";
 
 interface SidebarProps {
   activePage: NavPage;
@@ -60,6 +61,12 @@ const NAV_ITEMS: { id: NavPage; label: string; icon: React.ComponentType<{ class
     label: "Dividend Income",
     icon: Coins,
     description: "High-yield timings & bank cash flow"
+  },
+  {
+    id: "planner",
+    label: "Goal Planner",
+    icon: Target,
+    description: "Milestone targets, risk radar & live news"
   },
   {
     id: "portfolio",

@@ -8,6 +8,7 @@ from backend.app.api.routes_ai import router as ai_router
 from backend.app.api.routes_dividend import router as dividend_router
 from backend.app.api.routes_diagnostics import router as diagnostics_router
 from backend.app.api.routes_portfolio import router as portfolio_router
+from backend.app.api.routes_planner import router as planner_router
 from backend.app.db.database import init_db
 
 # Initialize persistent SQLite database
@@ -34,6 +35,7 @@ app.include_router(simulator_router)
 app.include_router(ai_router)
 app.include_router(dividend_router)
 app.include_router(portfolio_router)
+app.include_router(planner_router)
 app.include_router(diagnostics_router, prefix="/api")
 
 @app.get("/api/health")

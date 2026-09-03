@@ -14,7 +14,10 @@ import type {
   PennyStockCandidate,
   BreakoutCandidate,
   DbHolding,
-  TickerItem
+  TickerItem,
+  GoalPlan,
+  GoalNewsItem,
+  GoalAiCopilotResponse
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -207,4 +210,52 @@ export async function fetchTickerFeed(): Promise<TickerItem[]> {
   if (!res.ok) throw new Error("Failed to fetch ticker tape feed");
   return res.json();
 }
+
+export async function fetchSavedGoals(): Promise<GoalPlan[]> {
+  const res = await fetch(`${API_BASE}/planner/goals`);
+  if (!res.ok) throw new Error("Failed to fetch saved goals");
+  return res.json();
+}
+
+export async function saveGoalPlan(goal: GoalPlan): Promise<GoalPlan> {
+  const res = await fetch(`${API_BASE}/planner/goals`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(goal)
+  });
+  if (!res.ok) throw new Error("Failed to save goal plan");
+  return res.json();
+}
+
+export async function deleteGoalPlan(goalId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/planner/goals/${goalId}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to delete goal plan");
+}
+
+export async function askPlanCopilot(payload: {
+  query: string;
+  target_amount: number;
+  starting_capital: number;
+  monthly_sip: number;
+  horizon_months: number;
+  risk_level: string;
+}): Promise<GoalAiCopilotResponse> {
+  const res = await fetch(`${API_BASE}/planner/ai-copilot`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to query AI goal advisor");
+  return res.json();
+}
+
+export async function fetchGoalBasketNews(symbols: string): Promise<GoalNewsItem[]> {
+  if (!symbols) return [];
+  const res = await fetch(`${API_BASE}/planner/basket-news?symbols=${encodeURIComponent(symbols)}`);
+  if (!res.ok) throw new Error("Failed to fetch basket news");
+  return res.json();
+}
+
 
