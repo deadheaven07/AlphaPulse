@@ -109,6 +109,33 @@ export class SoundManager {
       console.warn("AudioContext playBreakoutBeep prevented:", e);
     }
   }
+
+  // Upbeat rising two-tone chime when market dips into Pre-Buy Zone (520Hz -> 784Hz)
+  playBuyTriggerChime() {
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(784, now + 0.20);
+
+      gain.gain.setValueAtTime(0.32, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.55);
+    } catch (e) {
+      console.warn("AudioContext playBuyTriggerChime prevented:", e);
+    }
+  }
 }
 
 export const soundManager = new SoundManager();

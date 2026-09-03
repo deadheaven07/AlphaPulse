@@ -7,9 +7,13 @@ import {
   clearAllDbHoldings,
   fetchTickerFeed,
   fetchActiveTacticalSwings,
+  fetchPreBuyTacticalSwings,
+  confirmTacticalEntry,
+  evaluateHoldingExtension,
+  applyHoldingExtension,
   disarmTacticalSwing
 } from "../services/api";
-import type { DbHolding, TickerItem, TacticalSwingItem } from "../types";
+import type { DbHolding, TickerItem, TacticalSwingItem, HoldingExtensionEvaluation } from "../types";
 import { formatINR, formatPct } from "../utils/formatters";
 import {
   Briefcase,
@@ -22,7 +26,11 @@ import {
   TrendingDown,
   Radio,
   Clock,
-  Flame
+  Flame,
+  Bell,
+  CheckCircle2,
+  Sparkles,
+  Hourglass
 } from "lucide-react";
 
 interface PortfolioPageProps {
@@ -36,6 +44,10 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
+  const [tacticalTab, setTacticalTab] = useState<"active" | "prebuy">("active");
+  const [extensionEvaluations, setExtensionEvaluations] = useState<Record<number, HoldingExtensionEvaluation>>({});
+  const [evaluatingId, setEvaluatingId] = useState<number | null>(null);
+
   const [newSymbol, setNewSymbol] = useState("");
   const [newEntryPrice, setNewEntryPrice] = useState("");
   const [newShares, setNewShares] = useState("");
@@ -57,18 +69,56 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   });
 
   // 3. Fetch active 1-Week Tactical Swings
-  const { data: tacticalSwings = [] } = useQuery({
+  const { data: activeTacticalSwings = [] } = useQuery({
     queryKey: ["active-tactical-swings"],
     queryFn: fetchActiveTacticalSwings,
     refetchInterval: 15000,
+  });
+
+  // 4. Fetch pre-buy tactical setups
+  const { data: prebuyTacticalSwings = [] } = useQuery({
+    queryKey: ["prebuy-tactical-swings"],
+    queryFn: fetchPreBuyTacticalSwings,
+    refetchInterval: 15000,
+  });
+
+  const confirmEntryMutation = useMutation({
+    mutationFn: ({ swingId, price }: { swingId: number; price?: number }) => confirmTacticalEntry(swingId, price),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-tactical-swings"] });
+      queryClient.invalidateQueries({ queryKey: ["prebuy-tactical-swings"] });
+      setTacticalTab("active");
+    }
+  });
+
+  const applyExtensionMutation = useMutation({
+    mutationFn: ({ swingId, extraDays, newStopLoss }: { swingId: number; extraDays: number; newStopLoss?: number }) =>
+      applyHoldingExtension(swingId, extraDays, newStopLoss),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-tactical-swings"] });
+    }
   });
 
   const disarmMutation = useMutation({
     mutationFn: disarmTacticalSwing,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["active-tactical-swings"] });
+      queryClient.invalidateQueries({ queryKey: ["prebuy-tactical-swings"] });
     }
   });
+
+  const handleEvaluateExtension = async (swing: TacticalSwingItem) => {
+    if (!swing.id) return;
+    setEvaluatingId(swing.id);
+    try {
+      const res = await evaluateHoldingExtension(swing.id);
+      setExtensionEvaluations((prev) => ({ ...prev, [swing.id!]: res }));
+    } catch (err) {
+      console.error("Failed to evaluate holding extension:", err);
+    } finally {
+      setEvaluatingId(null);
+    }
+  };
 
   // Map symbols to live ticker quotes
   const livePriceMap = useMemo(() => {
@@ -303,120 +353,359 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
         </div>
       </div>
 
-      {/* Active 1-Week Tactical Sprints (Guru Watchdog) */}
-      {tacticalSwings.length > 0 && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-emerald-950 text-white border border-emerald-500/40 shadow-xl space-y-3 animate-fade-in">
-          <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <Flame className="w-4 h-4 animate-pulse" />
+      {/* Two-Tab Tactical Sprints & Pre-Buy Watchdog */}
+      {(activeTacticalSwings.length > 0 || prebuyTacticalSwings.length > 0) && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-emerald-950 text-white border border-emerald-500/40 shadow-xl space-y-4 animate-fade-in">
+          {/* Header & Tab Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-800/40 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <Flame className="w-5 h-5 animate-pulse" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-black text-white tracking-tight">
-                    Active 1-Week Tactical Sprints
+                  <h3 className="text-sm sm:text-base font-black text-white tracking-tight">
+                    Stock Market Guru Tactical Center
                   </h3>
                   <span className="font-mono font-bold text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/30">
-                    {tacticalSwings.length} Armed Guru Trade{tacticalSwings.length > 1 ? "s" : ""}
+                    24/7 Two-Way Watchdog
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-300">
-                  24/7 automated price surveillance, 2-tier profit targets, and crowd psychology news protection.
+                  Pre-buy dip chimes, active 7-day profit execution, and dynamic holding extensions.
                 </p>
               </div>
             </div>
+
+            {/* Tab Switcher */}
+            <div className="flex items-center p-1 rounded-xl bg-slate-900/90 border border-slate-800 self-start sm:self-auto">
+              <button
+                onClick={() => setTacticalTab("active")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  tacticalTab === "active"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Active Holdings ({activeTacticalSwings.length})</span>
+              </button>
+
+              <button
+                onClick={() => setTacticalTab("prebuy")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  tacticalTab === "prebuy"
+                    ? "bg-cyan-600 text-white shadow-xs font-black"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                <Bell className="w-3.5 h-3.5" />
+                <span>Pre-Buy Triggers ({prebuyTacticalSwings.length})</span>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {tacticalSwings.map((swing: TacticalSwingItem) => {
-              const live = livePriceMap.get(swing.symbol.toUpperCase());
-              const ltp = live?.price ?? swing.current_price ?? swing.entry_price;
-              const invested = swing.allocated_capital;
-              const curVal = ltp * swing.shares;
-              const pnl = curVal - invested;
-              const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
-              const isPos = pnl >= 0;
-
-              const range = Math.max(1, swing.target_1 - swing.stop_loss);
-              const progressPct = Math.min(100, Math.max(0, ((ltp - swing.stop_loss) / range) * 100));
-
-              return (
-                <div
-                  key={swing.id}
-                  className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5 shadow-md"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-black font-mono text-sm text-emerald-400">{swing.symbol}</span>
-                        <span className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{swing.company_name}</span>
-                      </div>
-                      <div className="text-[11px] font-mono text-slate-300">
-                        {swing.shares} Shares @ {formatINR(swing.entry_price)} ({formatINR(invested)})
-                      </div>
-                    </div>
-
-                    <div className="text-right font-mono">
-                      <div className="text-xs font-black text-white">{formatINR(ltp)}</div>
-                      <div className={`text-[10px] font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}>
-                        {isPos ? "+" : ""}{formatINR(pnl)} ({formatPct(pnlPct)})
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Target & Stop Loss Levels Bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[9px] font-mono text-slate-400">
-                      <span className="text-rose-400">Hard SL: {formatINR(swing.stop_loss)}</span>
-                      <span className="text-emerald-300">Target 1: {formatINR(swing.target_1)}</span>
-                      <span className="text-emerald-400">Target 2: {formatINR(swing.target_2)}</span>
-                    </div>
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          progressPct < 20 ? "bg-rose-500" : progressPct > 80 ? "bg-emerald-500" : "bg-teal-500"
-                        }`}
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Footer & Actions */}
-                  <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
-                    <div className="flex items-center gap-1 text-slate-400 font-mono">
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      <span>{swing.remaining_days ?? 7} Days Left</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          onSelectStock(swing.symbol);
-                          onNavigateToStudio();
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        <LineChart className="w-3 h-3" />
-                        <span>Inspect</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (swing.id && confirm(`Disarm 1-week watchdog for ${swing.symbol}?`)) {
-                            disarmMutation.mutate(swing.id);
-                          }
-                        }}
-                        className="px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[10px] font-bold transition-all cursor-pointer"
-                        title="Disarm Watchdog"
-                      >
-                        Disarm
-                      </button>
-                    </div>
-                  </div>
+          {/* TAB 1: ACTIVE HOLDINGS */}
+          {tacticalTab === "active" && (
+            <div className="space-y-3">
+              {activeTacticalSwings.length === 0 ? (
+                <div className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
+                  <Clock className="w-8 h-8 text-slate-500 mx-auto" />
+                  <div className="text-xs font-bold text-slate-300">No active 1-week holdings armed right now.</div>
+                  <p className="text-[11px] text-slate-400">
+                    Check your Pre-Buy Triggers tab or ask the AI Guru in chat (<span className="font-mono text-emerald-400">⌘K</span>) to screen a high-conviction trade.
+                  </p>
                 </div>
-              );
-            })}
-          </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {activeTacticalSwings.map((swing: TacticalSwingItem) => {
+                    const live = livePriceMap.get(swing.symbol.toUpperCase());
+                    const ltp = live?.price ?? swing.current_price ?? swing.entry_price;
+                    const invested = swing.allocated_capital;
+                    const curVal = ltp * swing.shares;
+                    const pnl = curVal - invested;
+                    const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+                    const isPos = pnl >= 0;
+
+                    const range = Math.max(1, swing.target_1 - swing.stop_loss);
+                    const progressPct = Math.min(100, Math.max(0, ((ltp - swing.stop_loss) / range) * 100));
+
+                    const evaluation = swing.id ? extensionEvaluations[swing.id] : undefined;
+                    const isEvaluating = evaluatingId === swing.id;
+
+                    return (
+                      <div
+                        key={swing.id}
+                        className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-md transition-all"
+                      >
+                        {/* Top Row Header */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black font-mono text-sm text-emerald-400">{swing.symbol}</span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{swing.company_name}</span>
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-300">
+                              {swing.shares} Shares @ {formatINR(swing.entry_price)} ({formatINR(invested)})
+                            </div>
+                          </div>
+
+                          <div className="text-right font-mono">
+                            <div className="text-xs font-black text-white">{formatINR(ltp)}</div>
+                            <div className={`text-[10px] font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}>
+                              {isPos ? "+" : ""}{formatINR(pnl)} ({formatPct(pnlPct)})
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Target & Hard SL Range Bar */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                            <span className="text-rose-400">Hard SL: {formatINR(swing.stop_loss)}</span>
+                            <span className="text-emerald-300">Target 1: {formatINR(swing.target_1)}</span>
+                            <span className="text-emerald-400">Target 2: {formatINR(swing.target_2)}</span>
+                          </div>
+                          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all duration-300 ${
+                                progressPct < 20 ? "bg-rose-500" : progressPct > 80 ? "bg-emerald-500" : "bg-teal-500"
+                              }`}
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Days Left & Extension Controls */}
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
+                          <div className="flex items-center gap-1.5 text-slate-300 font-mono">
+                            <Clock className="w-3.5 h-3.5 text-amber-400" />
+                            <span className="font-bold">{swing.remaining_days ?? 7} Days Left</span>
+                            {swing.extended_days && swing.extended_days > 0 ? (
+                              <span className="px-1.5 py-0.2 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40 text-[9px]">
+                                +{swing.extended_days}d Extended
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleEvaluateExtension(swing)}
+                              disabled={isEvaluating}
+                              className="px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-600/40 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <Hourglass className="w-3 h-3" />
+                              <span>{isEvaluating ? "Evaluating..." : "⏳ Can I Hold More Days?"}</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                onSelectStock(swing.symbol);
+                                onNavigateToStudio();
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              title="Inspect in Stock Studio"
+                            >
+                              <LineChart className="w-3 h-3" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (swing.id && confirm(`Disarm 1-week watchdog for ${swing.symbol}?`)) {
+                                  disarmMutation.mutate(swing.id);
+                                }
+                              }}
+                              className="px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[10px] font-bold transition-all cursor-pointer"
+                              title="Disarm Watchdog"
+                            >
+                              Disarm
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Inline Guru Dynamic Extension Advisory Card */}
+                        {evaluation && (
+                          <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/40 space-y-2 animate-fade-in">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1">
+                                <Sparkles className="w-3 h-3 text-amber-400" /> Guru Holding Extension Advisory
+                              </span>
+                              <span
+                                className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${
+                                  evaluation.can_extend
+                                    ? "bg-emerald-950 text-emerald-300 border border-emerald-600/40"
+                                    : "bg-rose-950 text-rose-300 border border-rose-600/40"
+                                }`}
+                              >
+                                {evaluation.can_extend ? `+${evaluation.recommended_extra_days} Days Safe to Hold` : "Exit at Original Plan"}
+                              </span>
+                            </div>
+
+                            <p className="text-[10px] text-slate-300 leading-relaxed">
+                              {evaluation.guru_rationale}
+                            </p>
+
+                            {evaluation.can_extend && (
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1.5 border-t border-slate-800 text-[10px] font-mono">
+                                <div className="text-slate-400">
+                                  <span>Trailing SL: <strong className="text-amber-300">{formatINR(evaluation.trailing_stop_loss)}</strong></span>
+                                  <span className="mx-1">•</span>
+                                  <span>Stretch T2: <strong className="text-emerald-300">{formatINR(evaluation.stretch_target)}</strong></span>
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    if (swing.id) {
+                                      applyExtensionMutation.mutate({
+                                        swingId: swing.id,
+                                        extraDays: evaluation.recommended_extra_days,
+                                        newStopLoss: evaluation.trailing_stop_loss
+                                      });
+                                      setExtensionEvaluations((prev) => {
+                                        const copy = { ...prev };
+                                        delete copy[swing.id!];
+                                        return copy;
+                                      });
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-[10px] font-black transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Apply +{evaluation.recommended_extra_days} Days to Countdown</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 2: PRE-BUY TARGET TRIGGERS */}
+          {tacticalTab === "prebuy" && (
+            <div className="space-y-3">
+              {prebuyTacticalSwings.length === 0 ? (
+                <div className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
+                  <Bell className="w-8 h-8 text-cyan-400 mx-auto" />
+                  <div className="text-xs font-bold text-slate-300">No Pre-Buy Target Triggers active.</div>
+                  <p className="text-[11px] text-slate-400">
+                    Ask the AI Guru for a 1-week setup in chat (<span className="font-mono text-emerald-400">⌘K</span>) and click <strong className="text-cyan-300">"Arm Pre-Buy on Watchlist"</strong> to receive an audio chime the instant the price dips into the buy zone!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  {prebuyTacticalSwings.map((swing: TacticalSwingItem) => {
+                    const live = livePriceMap.get(swing.symbol.toUpperCase());
+                    const ltp = live?.price ?? swing.current_price ?? swing.entry_price;
+                    const entryLow = swing.entry_low ?? (swing.entry_price * 0.995);
+                    const entryHigh = swing.entry_high ?? (swing.entry_price * 1.008);
+                    const inZone = ltp <= entryHigh && ltp >= (entryLow * 0.985);
+                    const diffPct = ((ltp - entryLow) / entryLow) * 100;
+
+                    return (
+                      <div
+                        key={swing.id}
+                        className={`p-4 rounded-xl border space-y-3 shadow-md transition-all ${
+                          inZone
+                            ? "bg-cyan-950/90 border-cyan-400 ring-2 ring-cyan-400/30"
+                            : "bg-slate-900/90 border-slate-800"
+                        }`}
+                      >
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-black font-mono text-sm text-cyan-400">{swing.symbol}</span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{swing.company_name}</span>
+                            </div>
+                            <div className="text-[11px] font-mono text-slate-300">
+                              Planned: {swing.shares} Shares ({formatINR(swing.allocated_capital)})
+                            </div>
+                          </div>
+
+                          <div className="text-right font-mono">
+                            <div className="text-xs font-black text-white">LTP: {formatINR(ltp)}</div>
+                            <span
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                inZone
+                                  ? "bg-cyan-400 text-slate-950 font-black animate-pulse"
+                                  : "bg-slate-800 text-amber-300"
+                              }`}
+                            >
+                              {inZone ? "🔔 INSIDE BUY ZONE!" : `⏳ ${diffPct > 0 ? "+" : ""}${diffPct.toFixed(1)}% to low`}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Buy Zone Pocket Box */}
+                        <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs font-mono">
+                          <div>
+                            <span className="text-[9px] text-slate-400 uppercase tracking-wider block font-bold">
+                              Target Buy Pocket:
+                            </span>
+                            <span className="text-xs font-black text-amber-300">
+                              {formatINR(entryLow)} – {formatINR(entryHigh)}
+                            </span>
+                          </div>
+                          <div className="text-right text-[10px] text-slate-400">
+                            <div>Target 1: <strong className="text-emerald-300">{formatINR(swing.target_1)}</strong></div>
+                            <div>Hard SL: <strong className="text-rose-400">{formatINR(swing.stop_loss)}</strong></div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                            <Bell className="w-3 h-3 text-cyan-400" /> Audio Chime Armed
+                          </span>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                if (swing.id) {
+                                  confirmEntryMutation.mutate({ swingId: swing.id, price: ltp });
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 text-[10px] font-black transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Mark as Bought @ {formatINR(ltp)}</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                onSelectStock(swing.symbol);
+                                onNavigateToStudio();
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              title="Inspect in Stock Studio"
+                            >
+                              <LineChart className="w-3 h-3" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (swing.id && confirm(`Disarm pre-buy trigger for ${swing.symbol}?`)) {
+                                  disarmMutation.mutate(swing.id);
+                                }
+                              }}
+                              className="px-2 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[10px] font-bold transition-all cursor-pointer"
+                              title="Disarm Pre-Buy Trigger"
+                            >
+                              Disarm
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

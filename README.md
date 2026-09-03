@@ -57,7 +57,14 @@ graph TD
   2. **Target 1 (+5.5% in 3–4 Days)**: Mandatory 50% profit booking to eliminate trade risk.
   3. **Target 2 (+8.5% in 7 Days)**: Squeeze remaining 50% position with stop-loss trailed to breakeven entry price.
   4. **Hard Stop-Loss (-2.5%)**: Automated risk cutoff for immediate capital preservation.
-- **In-Chat Tactical Blueprint Action Cards**: Click `[🛡️ Arm Stock Market Guru 24/7 Watchdog]` to launch 7-day automated surveillance.
+- **1-Click Pre-Buy Target Watchlist (`WAITING_FOR_ENTRY`)**:
+  - Click `[🔔 Arm Pre-Buy on Watchlist]` from in-chat AI Guru cards to place a 24/7 background watchdog before purchasing.
+  - Fires an upbeat rising **Buy Trigger Chime** (520Hz $\to$ 784Hz) the moment live market LTP dips into the accumulation pocket.
+  - 1-Click `[✓ Mark as Bought at ₹X]` transitions trade directly into **Active Holdings** and starts the 7-day execution clock.
+- **Dynamic Holding Extension Engine ("Can I hold for more days?")**:
+  - Click `[⏳ Can I Hold More Days?]` on any active 1-week sprint to receive a quantitative trend evaluation from the Guru.
+  - Recommends +3 to +4 extra holding days with a dynamic **Trailing Stop-Loss** and **Stretch Target 2**.
+  - 1-Click `[Apply +X Days to Countdown]` automatically updates the 7-day clock and stop-loss floor in SQLite.
 
 ---
 
@@ -79,15 +86,17 @@ graph TD
 
 ---
 
-### 4. 💼 Demat Portfolio Vault with Live LTP & 24/7 Watchdog
+### 4. 💼 Demat Portfolio Vault & Two-Tab Tactical Center
 - **Real-Time Market Valuation & P&L**:
   - Synchronizes live market LTP, day change %, current valuation, and color-coded net profit/loss badges.
-- **Active 1-Week Tactical Sprints**:
-  - Dedicated surveillance deck with a **7-day countdown clock**, level-by-level progress bar, and 1-click stock inspection.
-- **Institutional Audio Alerts**:
-  - `PROFIT_TARGET` $\rightarrow$ Victory chime.
-  - `STOP_LOSS_BREACH` $\rightarrow$ Discipline buzzer.
-  - `FATAL_RISK` $\rightarrow$ Emergency siren.
+- **Two-Tab Tactical Center**:
+  - **Tab 1: ⚡ Active Holdings** — Live PnL, progress meter, 7-day countdown clock, and dynamic holding extension evaluation.
+  - **Tab 2: 🔔 Pre-Buy Triggers** — Real-time proximity alerts (`INSIDE BUY ZONE` vs `% above zone`) and instant mark-as-bought execution.
+- **Two-Way Web Audio Alerts**:
+  - `BUY_TRIGGER_HIT` $\rightarrow$ Rising pre-buy entry chime (520Hz $\to$ 784Hz triangle wave).
+  - `PROFIT_TARGET` $\rightarrow$ Harmonious victory chime (D5 $\to$ A5 $\to$ D6 sine wave).
+  - `STOP_LOSS_BREACH` / `FATAL_RISK` $\rightarrow$ Pulsing discipline warning buzzer (180Hz $\to$ 130Hz sawtooth wave).
+  - `CONSOLIDATION_BREAKOUT` $\rightarrow$ Double ascending breakout beep.
 
 ---
 

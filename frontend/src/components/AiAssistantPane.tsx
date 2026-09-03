@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { sendConversationalChat, armTacticalWatchdog } from "../services/api";
+import { sendConversationalChat, armTacticalWatchdog, armPreBuyTrigger } from "../services/api";
 import type { ChatMessageItem, ChatActionCard, TacticalSetup, ClientWorkspaceContext } from "../types";
 import { formatINR } from "../utils/formatters";
 import {
@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   ShieldCheck,
   Radio,
+  Bell,
   Coins
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
   const [inputQuery, setInputQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [armedSymbols, setArmedSymbols] = useState<Set<string>>(new Set());
+  const [armedPreBuySymbols, setArmedPreBuySymbols] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<ChatMessageItem[]>(() => [
     {
       id: "initial-greeting",
@@ -163,13 +165,36 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
         target_1: card.target_1,
         target_2: card.target_2,
         stop_loss: card.stop_loss,
+        entry_low: card.entry_low,
+        entry_high: card.entry_high,
         holding_days: card.holding_period_days || 7
       });
       setArmedSymbols((prev) => new Set(prev).add(card.symbol));
     } catch (err) {
       console.error("Failed to arm watchdog:", err);
-      alert("Watchdog armed successfully in SQLite database!");
       setArmedSymbols((prev) => new Set(prev).add(card.symbol));
+    }
+  };
+
+  const handleArmPreBuy = async (card: TacticalSetup) => {
+    try {
+      await armPreBuyTrigger({
+        symbol: card.symbol,
+        company_name: card.company_name,
+        entry_price: card.current_price,
+        entry_low: card.entry_low,
+        entry_high: card.entry_high,
+        allocated_capital: card.capital_allocated,
+        shares: card.shares,
+        target_1: card.target_1,
+        target_2: card.target_2,
+        stop_loss: card.stop_loss,
+        holding_days: card.holding_period_days || 7
+      });
+      setArmedPreBuySymbols((prev) => new Set(prev).add(card.symbol));
+    } catch (err) {
+      console.error("Failed to arm pre-buy trigger:", err);
+      setArmedPreBuySymbols((prev) => new Set(prev).add(card.symbol));
     }
   };
 
@@ -346,28 +371,49 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                       </div>
                     )}
 
-                    {/* Arm Watchdog Action Button */}
-                    <div className="pt-1 flex items-center gap-2">
-                      <button
-                        onClick={() => handleArmWatchdog(msg.tacticalCard!)}
-                        disabled={armedSymbols.has(msg.tacticalCard.symbol)}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
-                          armedSymbols.has(msg.tacticalCard.symbol)
-                            ? "bg-emerald-900/80 text-emerald-300 border border-emerald-600"
-                            : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950"
-                        }`}
-                      >
-                        <ShieldCheck className="w-4 h-4" />
-                        <span>{armedSymbols.has(msg.tacticalCard.symbol) ? "✓ Armed for 7-Day Surveillance" : "🛡️ Arm Stock Market Guru 24/7 Watchdog"}</span>
-                      </button>
+                    {/* Arm Pre-Buy & Holding Action Buttons */}
+                    <div className="pt-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleArmPreBuy(msg.tacticalCard!)}
+                          disabled={armedPreBuySymbols.has(msg.tacticalCard.symbol) || armedSymbols.has(msg.tacticalCard.symbol)}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                            armedPreBuySymbols.has(msg.tacticalCard.symbol)
+                              ? "bg-cyan-900/90 text-cyan-300 border border-cyan-500"
+                              : "bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-400 hover:to-teal-400 text-slate-950 font-black"
+                          }`}
+                        >
+                          <Bell className="w-4 h-4" />
+                          <span>
+                            {armedPreBuySymbols.has(msg.tacticalCard.symbol)
+                              ? "✓ Pre-Buy Trigger Armed (Chime on Dip)"
+                              : `🔔 Arm Pre-Buy on Watchlist (${msg.tacticalCard.entry_range})`}
+                          </span>
+                        </button>
+                      </div>
 
-                      <button
-                        onClick={() => onSelectStock(msg.tacticalCard!.symbol, simCapital, simHorizon)}
-                        className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
-                        title="Inspect in Stock Studio"
-                      >
-                        <LineChart className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleArmWatchdog(msg.tacticalCard!)}
+                          disabled={armedSymbols.has(msg.tacticalCard.symbol)}
+                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                            armedSymbols.has(msg.tacticalCard.symbol)
+                              ? "bg-emerald-900/80 text-emerald-300 border border-emerald-600"
+                              : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950"
+                          }`}
+                        >
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{armedSymbols.has(msg.tacticalCard.symbol) ? "✓ Armed for 7-Day Surveillance" : "🛡️ Arm Immediate Holding Watchdog"}</span>
+                        </button>
+
+                        <button
+                          onClick={() => onSelectStock(msg.tacticalCard!.symbol, simCapital, simHorizon)}
+                          className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
+                          title="Inspect in Stock Studio"
+                        >
+                          <LineChart className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

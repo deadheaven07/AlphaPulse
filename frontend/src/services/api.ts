@@ -23,7 +23,9 @@ import type {
   ConversationalChatResponse,
   TacticalSetup,
   TacticalSwingItem,
-  CrowdPsychologyResult
+  CrowdPsychologyResult,
+  HoldingExtensionEvaluation,
+  CategorizedTacticalSwings
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -308,6 +310,8 @@ export async function armTacticalWatchdog(payload: {
   symbol: string;
   company_name: string;
   entry_price: number;
+  entry_low?: number;
+  entry_high?: number;
   allocated_capital: number;
   shares: number;
   target_1: number;
@@ -321,6 +325,78 @@ export async function armTacticalWatchdog(payload: {
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error("Failed to arm 24/7 tactical watchdog");
+  return res.json();
+}
+
+export async function armPreBuyTrigger(payload: {
+  symbol: string;
+  company_name: string;
+  entry_price: number;
+  entry_low: number;
+  entry_high: number;
+  allocated_capital: number;
+  shares: number;
+  target_1: number;
+  target_2: number;
+  stop_loss: number;
+  holding_days?: number;
+}): Promise<{ status: string; message: string; swing: TacticalSwingItem }> {
+  const res = await fetch(`${API_BASE}/tactical/arm-prebuy`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to arm pre-buy trigger");
+  return res.json();
+}
+
+export async function confirmTacticalEntry(
+  swingId: number,
+  actualEntryPrice?: number
+): Promise<{ status: string; message: string; swing: TacticalSwingItem }> {
+  const res = await fetch(`${API_BASE}/tactical/confirm-entry/${swingId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ actual_entry_price: actualEntryPrice })
+  });
+  if (!res.ok) throw new Error("Failed to confirm tactical entry");
+  return res.json();
+}
+
+export async function evaluateHoldingExtension(swingId: number): Promise<HoldingExtensionEvaluation> {
+  const res = await fetch(`${API_BASE}/tactical/evaluate-extension/${swingId}`, {
+    method: "POST"
+  });
+  if (!res.ok) throw new Error("Failed to evaluate holding extension");
+  return res.json();
+}
+
+export async function applyHoldingExtension(
+  swingId: number,
+  extraDays: number = 4,
+  newStopLoss?: number
+): Promise<{ status: string; message: string; swing: TacticalSwingItem }> {
+  const res = await fetch(`${API_BASE}/tactical/apply-extension/${swingId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      extra_days: extraDays,
+      new_stop_loss: newStopLoss
+    })
+  });
+  if (!res.ok) throw new Error("Failed to apply holding extension");
+  return res.json();
+}
+
+export async function fetchPreBuyTacticalSwings(): Promise<TacticalSwingItem[]> {
+  const res = await fetch(`${API_BASE}/tactical/prebuy`);
+  if (!res.ok) throw new Error("Failed to fetch pre-buy watchlist");
+  return res.json();
+}
+
+export async function fetchAllCategorizedTacticalSwings(): Promise<CategorizedTacticalSwings> {
+  const res = await fetch(`${API_BASE}/tactical/all`);
+  if (!res.ok) throw new Error("Failed to fetch categorized tactical swings");
   return res.json();
 }
 

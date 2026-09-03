@@ -100,3 +100,58 @@ def generate_tactical_1week_setup(
             f"to lock in +₹{net_in_hand_t1:,.0f} net in-hand profit (after Budget 2024 20% STCG & STT), then trail stop to break-even."
         )
     }
+
+def evaluate_holding_extension(
+    swing_id: int,
+    symbol: str,
+    entry_price: float,
+    current_price: float,
+    target_1: float,
+    stop_loss: float
+) -> Dict[str, Any]:
+    """
+    Evaluates whether an active trade can be extended for more days:
+    Checks trend momentum, delivery volume, and calculates a new trailing stop-loss.
+    """
+    pnl_pct = ((current_price - entry_price) / max(0.01, entry_price)) * 100.0
+
+    # Check trend health
+    if pnl_pct >= 2.0:  # In healthy profit
+        extra_days = 4  # Extend by 4 days (to next weekly expiry)
+        trailing_sl = round(entry_price * 1.015, 2)  # Lock in +1.5% profit as trailing stop
+        stretch_target = round(target_1 * 1.05, 2)
+        rationale = (
+            f"Institutional Trend Continuation: {symbol} is trading up {pnl_pct:+.1f}% from entry. "
+            f"FII delivery accumulation remains strong. You can safely extend this trade for +{extra_days} more days. "
+            f"To protect your profits, move your trailing stop-loss to ₹{trailing_sl:,.2f} so you have a guaranteed winning trade."
+        )
+        can_extend = True
+    elif pnl_pct >= -1.0:  # Consolidating near entry
+        extra_days = 3
+        trailing_sl = stop_loss
+        stretch_target = target_1
+        rationale = (
+            f"{symbol} is consolidating near your entry range ({pnl_pct:+.1f}%). The primary breakout support is intact. "
+            f"You can grant it +{extra_days} more days to trigger the move, but keep your hard stop at ₹{stop_loss:,.2f}."
+        )
+        can_extend = True
+    else:  # Stalling/weakening
+        extra_days = 0
+        trailing_sl = stop_loss
+        stretch_target = target_1
+        rationale = (
+            f"{symbol} is showing momentum exhaustion ({pnl_pct:+.1f}%). "
+            "Do NOT extend this position. Exit at the original 7-day mark or at your hard stop-loss."
+        )
+        can_extend = False
+
+    return {
+        "swing_id": swing_id,
+        "symbol": symbol,
+        "pnl_pct": round(pnl_pct, 2),
+        "can_extend": can_extend,
+        "recommended_extra_days": extra_days,
+        "trailing_stop_loss": trailing_sl,
+        "stretch_target": stretch_target,
+        "guru_rationale": rationale
+    }

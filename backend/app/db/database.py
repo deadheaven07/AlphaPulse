@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 from typing import List, Dict, Any, Optional
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "alphapulse.db")
@@ -56,17 +57,34 @@ def init_db() -> None:
                 symbol TEXT NOT NULL,
                 company_name TEXT,
                 entry_price REAL NOT NULL,
+                entry_low REAL NOT NULL DEFAULT 0,
+                entry_high REAL NOT NULL DEFAULT 0,
                 allocated_capital REAL NOT NULL,
                 shares INTEGER NOT NULL,
                 target_1 REAL NOT NULL,
                 target_2 REAL NOT NULL,
                 stop_loss REAL NOT NULL,
-                entry_date TEXT NOT NULL,
-                expiry_date TEXT NOT NULL,
-                status TEXT DEFAULT 'ACTIVE',
+                entry_date TEXT,
+                expiry_date TEXT,
+                holding_days INTEGER DEFAULT 7,
+                extended_days INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'WAITING_FOR_ENTRY',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # Schema migration check for existing columns
+        cursor.execute("PRAGMA table_info(tactical_swings)")
+        columns = [row["name"] for row in cursor.fetchall()]
+        if "entry_low" not in columns:
+            cursor.execute("ALTER TABLE tactical_swings ADD COLUMN entry_low REAL DEFAULT 0")
+        if "entry_high" not in columns:
+            cursor.execute("ALTER TABLE tactical_swings ADD COLUMN entry_high REAL DEFAULT 0")
+        if "holding_days" not in columns:
+            cursor.execute("ALTER TABLE tactical_swings ADD COLUMN holding_days INTEGER DEFAULT 7")
+        if "extended_days" not in columns:
+            cursor.execute("ALTER TABLE tactical_swings ADD COLUMN extended_days INTEGER DEFAULT 0")
+
         conn.commit()
 
 def get_holdings() -> List[Dict[str, Any]]:
@@ -169,6 +187,99 @@ def delete_goal(goal_id: int) -> bool:
         conn.commit()
         return cursor.rowcount > 0
 
+# --- TACTICAL SWINGS & PRE-BUY WATCHDOG LIFECYCLE ---
+
+def arm_prebuy_trigger(
+    symbol: str,
+    company_name: str,
+    entry_price: float,
+    entry_low: float,
+    entry_high: float,
+    allocated_capital: float,
+    shares: int,
+    target_1: float,
+    target_2: float,
+    stop_loss: float,
+    holding_days: int = 7
+) -> Dict[str, Any]:
+    """Saves high-probability setup into WAITING_FOR_ENTRY state with pre-buy trigger zone."""
+    now = datetime.datetime.now()
+    entry_date = now.strftime("%Y-%m-%d")
+    expiry_date = (now + datetime.timedelta(days=holding_days)).strftime("%Y-%m-%d")
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO tactical_swings (
+                symbol, company_name, entry_price, entry_low, entry_high,
+                allocated_capital, shares, target_1, target_2, stop_loss,
+                entry_date, expiry_date, holding_days, status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'WAITING_FOR_ENTRY')
+        """, (
+            symbol.upper().strip(), company_name.strip(), entry_price,
+            entry_low, entry_high, allocated_capital, shares,
+            target_1, target_2, stop_loss, entry_date, expiry_date,
+            holding_days
+        ))
+        conn.commit()
+        swing_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM tactical_swings WHERE id = ?", (swing_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else {}
+
+def confirm_tactical_entry(swing_id: int, actual_entry_price: Optional[float] = None) -> bool:
+    """Transitions from WAITING_FOR_ENTRY -> ACTIVE_HOLDING and starts the 7-day countdown clock."""
+    now = datetime.datetime.now()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT holding_days, entry_price FROM tactical_swings WHERE id = ?", (swing_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        h_days = row["holding_days"] or 7
+        e_price = actual_entry_price if (actual_entry_price and actual_entry_price > 0) else row["entry_price"]
+        expiry = now + datetime.timedelta(days=h_days)
+
+        cursor.execute("""
+            UPDATE tactical_swings
+            SET status = 'ACTIVE_HOLDING',
+                entry_price = ?,
+                entry_date = ?,
+                expiry_date = ?
+            WHERE id = ?
+        """, (e_price, now.strftime("%Y-%m-%d %H:%M:%S"), expiry.strftime("%Y-%m-%d %H:%M:%S"), swing_id))
+        conn.commit()
+        return True
+
+def extend_tactical_holding(swing_id: int, extra_days: int, new_stop_loss: Optional[float] = None) -> bool:
+    """Extends holding period by extra_days and updates trailing stop-loss in SQLite."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT expiry_date, extended_days, stop_loss FROM tactical_swings WHERE id = ?", (swing_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+
+        try:
+            current_expiry = datetime.datetime.strptime(row["expiry_date"], "%Y-%m-%d %H:%M:%S") if row["expiry_date"] else datetime.datetime.now()
+        except Exception:
+            current_expiry = datetime.datetime.now()
+
+        new_expiry = current_expiry + datetime.timedelta(days=extra_days)
+        new_ext_days = (row["extended_days"] or 0) + extra_days
+        updated_sl = new_stop_loss if (new_stop_loss and new_stop_loss > 0) else row["stop_loss"]
+
+        cursor.execute("""
+            UPDATE tactical_swings
+            SET expiry_date = ?,
+                extended_days = ?,
+                stop_loss = ?
+            WHERE id = ?
+        """, (new_expiry.strftime("%Y-%m-%d %H:%M:%S"), new_ext_days, updated_sl, swing_id))
+        conn.commit()
+        return True
+
 def save_tactical_swing(
     symbol: str,
     company_name: str,
@@ -180,24 +291,52 @@ def save_tactical_swing(
     stop_loss: float,
     entry_date: str,
     expiry_date: str,
-    status: str = "ACTIVE"
+    status: str = "ACTIVE_HOLDING",
+    entry_low: float = 0.0,
+    entry_high: float = 0.0,
+    holding_days: int = 7
 ) -> Dict[str, Any]:
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO tactical_swings (symbol, company_name, entry_price, allocated_capital, shares, target_1, target_2, stop_loss, entry_date, expiry_date, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (symbol.upper().strip(), company_name.strip(), entry_price, allocated_capital, shares, target_1, target_2, stop_loss, entry_date, expiry_date, status))
+            INSERT INTO tactical_swings (
+                symbol, company_name, entry_price, entry_low, entry_high,
+                allocated_capital, shares, target_1, target_2, stop_loss,
+                entry_date, expiry_date, holding_days, status
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            symbol.upper().strip(), company_name.strip(), entry_price,
+            entry_low or (entry_price * 0.995), entry_high or (entry_price * 1.008),
+            allocated_capital, shares, target_1, target_2, stop_loss,
+            entry_date, expiry_date, holding_days, status
+        ))
         conn.commit()
         swing_id = cursor.lastrowid
         cursor.execute("SELECT * FROM tactical_swings WHERE id = ?", (swing_id,))
         row = cursor.fetchone()
         return dict(row) if row else {}
 
-def get_active_tactical_swings() -> List[Dict[str, Any]]:
+def get_tactical_swing_by_id(swing_id: int) -> Optional[Dict[str, Any]]:
     with get_connection() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tactical_swings WHERE status = 'ACTIVE' ORDER BY created_at DESC")
+        cursor.execute("SELECT * FROM tactical_swings WHERE id = ?", (swing_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def get_active_tactical_swings() -> List[Dict[str, Any]]:
+    """Returns active holdings where status is ACTIVE or ACTIVE_HOLDING."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tactical_swings WHERE status IN ('ACTIVE', 'ACTIVE_HOLDING') ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def get_prebuy_tactical_swings() -> List[Dict[str, Any]]:
+    """Returns tactical setups waiting for entry dip."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tactical_swings WHERE status = 'WAITING_FOR_ENTRY' ORDER BY created_at DESC")
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
 
@@ -221,5 +360,3 @@ def delete_tactical_swing(swing_id: int) -> bool:
         cursor.execute("DELETE FROM tactical_swings WHERE id = ?", (swing_id,))
         conn.commit()
         return cursor.rowcount > 0
-
-

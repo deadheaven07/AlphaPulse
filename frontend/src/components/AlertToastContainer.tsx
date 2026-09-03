@@ -7,6 +7,7 @@ import {
   AlertOctagon,
   AlertTriangle,
   Zap,
+  Bell,
   X,
   ArrowRight
 } from "lucide-react";
@@ -30,11 +31,13 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
     alerts.forEach((alert) => {
       if (!playedSessionAlertIds.has(alert.id)) {
         playedSessionAlertIds.add(alert.id);
-        if (alert.alert_type === "PROFIT_TARGET") {
+        if (alert.alert_type === "BUY_TRIGGER_HIT") {
+          soundManager.playBuyTriggerChime();
+        } else if (alert.alert_type === "PROFIT_TARGET") {
           soundManager.playProfitChime();
-        } else if (alert.alert_type === "STOP_LOSS_BREACH" || alert.alert_type === "NEWS_THREAT") {
+        } else if (alert.alert_type === "STOP_LOSS_BREACH" || alert.alert_type === "FATAL_RISK" || alert.alert_type === "NEWS_THREAT") {
           soundManager.playWarningBuzzer();
-        } else if (alert.alert_type === "CONSOLIDATION_BREAKOUT") {
+        } else if (alert.alert_type === "CONSOLIDATION_BREAKOUT" || alert.alert_type === "BEAR_TRAP_NOISE") {
           soundManager.playBreakoutBeep();
         }
       }
@@ -59,15 +62,18 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
   return (
     <div className="fixed top-20 right-4 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
       {alerts.map((alert) => {
+        const isBuyTrigger = alert.alert_type === "BUY_TRIGGER_HIT";
         const isProfit = alert.alert_type === "PROFIT_TARGET";
-        const isStopLoss = alert.alert_type === "STOP_LOSS_BREACH";
-        const isNewsThreat = alert.alert_type === "NEWS_THREAT";
+        const isStopLoss = alert.alert_type === "STOP_LOSS_BREACH" || alert.alert_type === "FATAL_RISK";
+        const isNewsThreat = alert.alert_type === "NEWS_THREAT" || alert.alert_type === "BEAR_TRAP_NOISE";
 
         return (
           <div
             key={alert.id}
             className={`pointer-events-auto p-4 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-300 animate-slide-in-right relative overflow-hidden ${
-              isProfit
+              isBuyTrigger
+                ? "bg-cyan-950/95 border-cyan-400 text-white shadow-cyan-950/60 ring-2 ring-cyan-400/30"
+                : isProfit
                 ? "bg-emerald-950/90 dark:bg-emerald-950/95 border-emerald-500 text-white shadow-emerald-950/50"
                 : isStopLoss
                 ? "bg-rose-950/90 dark:bg-rose-950/95 border-rose-500 text-white shadow-rose-950/50 animate-pulse"
@@ -81,7 +87,9 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
               <div className="flex items-center gap-2">
                 <div
                   className={`p-1.5 rounded-lg flex items-center justify-center shrink-0 ${
-                    isProfit
+                    isBuyTrigger
+                      ? "bg-cyan-500 text-slate-950"
+                      : isProfit
                       ? "bg-emerald-500 text-white"
                       : isStopLoss
                       ? "bg-rose-600 text-white"
@@ -90,7 +98,9 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
                       : "bg-emerald-600 text-white"
                   }`}
                 >
-                  {isProfit ? (
+                  {isBuyTrigger ? (
+                    <Bell className="w-4 h-4 animate-bounce" />
+                  ) : isProfit ? (
                     <Target className="w-4 h-4" />
                   ) : isStopLoss ? (
                     <AlertOctagon className="w-4 h-4" />

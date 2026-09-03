@@ -310,7 +310,7 @@ export interface DiagnosticSuiteResult {
   checks: DiagnosticCheck[];
 }
 
-export type AlertType = "PROFIT_TARGET" | "STOP_LOSS_BREACH" | "NEWS_THREAT" | "CONSOLIDATION_BREAKOUT";
+export type AlertType = "BUY_TRIGGER_HIT" | "PROFIT_TARGET" | "STOP_LOSS_BREACH" | "FATAL_RISK" | "NEWS_THREAT" | "BEAR_TRAP_NOISE" | "CONSOLIDATION_BREAKOUT";
 export type AlertSeverity = "SUCCESS" | "CRITICAL" | "WARNING" | "INFO";
 
 export interface PortfolioAlert {
@@ -477,6 +477,8 @@ export interface TacticalSwingItem {
   symbol: string;
   company_name: string;
   entry_price: number;
+  entry_low?: number;
+  entry_high?: number;
   current_price?: number;
   day_change_pct?: number;
   allocated_capital: number;
@@ -487,14 +489,36 @@ export interface TacticalSwingItem {
   target_1: number;
   target_2: number;
   stop_loss: number;
-  entry_date: string;
-  expiry_date: string;
+  entry_date?: string;
+  expiry_date?: string;
+  holding_days?: number;
+  extended_days?: number;
   remaining_days?: number;
   progress_pct?: number;
+  in_buy_zone?: boolean;
+  distance_to_low_pct?: number;
   target_1_hit?: boolean;
   stop_loss_hit?: boolean;
-  status: "ACTIVE" | "TARGET_HIT" | "SL_HIT" | "EXPIRED" | string;
+  status: "WAITING_FOR_ENTRY" | "ACTIVE" | "ACTIVE_HOLDING" | "TARGET_HIT" | "SL_HIT" | "EXPIRED" | string;
   created_at?: string;
+}
+
+export interface HoldingExtensionEvaluation {
+  swing_id: number;
+  symbol: string;
+  pnl_pct: number;
+  can_extend: boolean;
+  recommended_extra_days: number;
+  trailing_stop_loss: number;
+  stretch_target: number;
+  guru_rationale: string;
+}
+
+export interface CategorizedTacticalSwings {
+  prebuy_count: number;
+  active_count: number;
+  prebuy: TacticalSwingItem[];
+  active: TacticalSwingItem[];
 }
 
 export interface ChatActionCard {

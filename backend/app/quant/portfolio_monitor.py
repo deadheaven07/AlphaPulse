@@ -3,7 +3,7 @@ from .data_engine import fetch_live_quotes_batch, fetch_historical_dataframe
 from .news_engine import analyze_stock_news_sentiment
 from .technicals import detect_breakout
 from .crowd_psychology_engine import analyze_news_crowd_psychology
-from backend.app.db.database import get_active_tactical_swings
+from backend.app.db.database import get_active_tactical_swings, get_prebuy_tactical_swings
 
 DANGER_KEYWORDS = [
     "investigation", "penalty", "fraud", "litigation", "probe",
@@ -13,16 +13,17 @@ DANGER_KEYWORDS = [
 
 def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Inspect user portfolio holdings and active 1-week tactical swings against real-time NSE prices,
-    stop-loss triggers, target profits, crowd psychology news reactions, and breakout continuation.
+    Inspect user portfolio holdings, active 1-week tactical holdings, and pre-buy triggers against
+    real-time NSE prices, stop-loss floors, buy-zone triggers, crowd psychology shocks, and breakouts.
     """
-    combined_items: List[Dict[str, Any]] = list(holdings) if holdings else []
+    active_items: List[Dict[str, Any]] = list(holdings) if holdings else []
+    prebuy_items: List[Dict[str, Any]] = []
 
-    # Include active tactical swings from SQLite into the watchdog stream
+    # 1. Fetch active tactical swings from SQLite
     try:
         tactical_swings = get_active_tactical_swings()
         for ts in tactical_swings:
-            combined_items.append({
+            active_items.append({
                 "symbol": ts["symbol"],
                 "company_name": ts.get("company_name", ts["symbol"]),
                 "entry_price": ts["entry_price"],
@@ -36,15 +37,65 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
     except Exception:
         pass
 
-    if not combined_items:
+    # 2. Fetch pre-buy triggers from SQLite
+    try:
+        prebuy_swings = get_prebuy_tactical_swings()
+        for ps in prebuy_swings:
+            prebuy_items.append({
+                "symbol": ps["symbol"],
+                "company_name": ps.get("company_name", ps["symbol"]),
+                "entry_price": ps["entry_price"],
+                "entry_low": ps.get("entry_low") or (ps["entry_price"] * 0.995),
+                "entry_high": ps.get("entry_high") or (ps["entry_price"] * 1.008),
+                "shares": ps["shares"],
+                "swing_id": ps["id"]
+            })
+    except Exception:
+        pass
+
+    all_symbols = list(set(
+        [item.get("symbol", "").strip().upper() for item in (active_items + prebuy_items) if item.get("symbol")]
+    ))
+    if not all_symbols:
         return []
 
-    symbols = list(set([item.get("symbol", "").strip().upper() for item in combined_items if item.get("symbol")]))
-    quotes_map = fetch_live_quotes_batch(symbols)
-
+    quotes_map = fetch_live_quotes_batch(all_symbols)
     alerts: List[Dict[str, Any]] = []
 
-    for item in combined_items:
+    # --- Pre-Buy Zone Triggers Surveillance ---
+    for pb in prebuy_items:
+        sym = pb.get("symbol", "").strip().upper()
+        if not sym:
+            continue
+        try:
+            quote = quotes_map.get(sym) or {}
+            current_price = quote.get("price", 0.0)
+            if current_price <= 0:
+                continue
+
+            entry_low = pb["entry_low"]
+            entry_high = pb["entry_high"]
+
+            # Trigger condition: market price is at or below entry_high and above safety floor (entry_low * 0.985)
+            if current_price <= entry_high and current_price >= (entry_low * 0.985):
+                alerts.append({
+                    "id": f"buy-trigger-{sym}-{int(current_price)}",
+                    "symbol": sym,
+                    "company_name": quote.get("company_name", sym),
+                    "alert_type": "BUY_TRIGGER_HIT",
+                    "severity": "SUCCESS",
+                    "current_price": current_price,
+                    "entry_low": entry_low,
+                    "entry_high": entry_high,
+                    "title": f"🔔 BUY TRIGGER HIT: {sym} Entered Buy Zone!",
+                    "message": f"ENTRY DISCIPLINE: {sym} is trading at ₹{current_price:,.2f} (Inside your ₹{entry_low:,.2f} – ₹{entry_high:,.2f} target pocket). Open Zerodha/Groww and BUY NOW!",
+                    "recommended_action": "BUY_NOW"
+                })
+        except Exception:
+            continue
+
+    # --- Active Holdings & Demat Surveillance ---
+    for item in active_items:
         sym = item.get("symbol", "").strip().upper()
         if not sym:
             continue
