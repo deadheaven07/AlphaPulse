@@ -291,3 +291,21 @@ export interface KpiRadarStock {
     post_tax_roi: boolean;
   };
 }
+
+export interface DiagnosticCheck {
+  name: string;
+  status: "PASS" | "FAIL";
+  latency_ms: number;
+  details?: string;
+  error?: string;
+}
+
+export interface DiagnosticSuiteResult {
+  overall_status: "HEALTHY" | "DEGRADED";
+  timestamp: string;
+  total_checks: number;
+  passed: number;
+  failed: number;
+  total_duration_ms: number;
+  checks: DiagnosticCheck[];
+}

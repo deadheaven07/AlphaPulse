@@ -6,6 +6,7 @@ from backend.app.api.routes_stocks import router as stocks_router
 from backend.app.api.routes_simulator import router as simulator_router
 from backend.app.api.routes_ai import router as ai_router
 from backend.app.api.routes_dividend import router as dividend_router
+from backend.app.api.routes_diagnostics import router as diagnostics_router
 
 app = FastAPI(
     title="AlphaPulse India Pro (Real-Time Equity & Post-Tax ROI Engine)",
@@ -27,6 +28,7 @@ app.include_router(stocks_router)
 app.include_router(simulator_router)
 app.include_router(ai_router)
 app.include_router(dividend_router)
+app.include_router(diagnostics_router, prefix="/api")
 
 @app.get("/api/health")
 def health_check():

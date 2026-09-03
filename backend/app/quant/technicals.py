@@ -1,12 +1,26 @@
 import pandas as pd
 import numpy as np
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
-def calculate_rsi(series: pd.Series, period: int = 14) -> float:
+def calculate_rsi(data: Union[pd.Series, pd.DataFrame], period: int = 14) -> float:
     """
     Standard Relative Strength Index (RSI) using Wilder's Smoothing.
-    Adapted from pkjmesra/PKScreener.
+    Adapted from pkjmesra/PKScreener. Supports both pd.Series and pd.DataFrame.
     """
+    if data is None:
+        return 50.0
+
+    if isinstance(data, pd.DataFrame):
+        if data.empty or "Close" not in data.columns:
+            return 50.0
+        series = data["Close"]
+    elif isinstance(data, pd.Series):
+        if data.empty:
+            return 50.0
+        series = data
+    else:
+        return 50.0
+
     if len(series) < period + 1:
         return 50.0
 
@@ -32,7 +46,7 @@ def detect_breakout(df: pd.DataFrame) -> Dict[str, Any]:
     Detect 20-day High Price Breakout with Volume Confirmation (>1.5x 20-day SMA Volume).
     Adapted from PKScreener scan rules.
     """
-    if len(df) < 22:
+    if df is None or df.empty or len(df) < 22:
         return {"is_breakout": False, "volume_surge": 1.0, "high_20d": 0.0}
 
     recent = df.iloc[-1]
@@ -61,10 +75,20 @@ def calculate_ema_cross(df: pd.DataFrame) -> Dict[str, Any]:
     """
     Compute 50-day and 200-day Exponential Moving Averages & Trend Alignment.
     """
-    if len(df) < 50:
+    if df is None or df.empty or len(df) == 0:
         return {
-            "ema_50": round(float(df["Close"].iloc[-1]), 2),
-            "ema_200": round(float(df["Close"].iloc[-1]), 2),
+            "ema_50": 1000.0,
+            "ema_200": 1000.0,
+            "trend": "NEUTRAL",
+            "is_golden_cross": False,
+            "above_200_ema": True
+        }
+
+    if len(df) < 50:
+        last_close = round(float(df["Close"].iloc[-1]), 2) if "Close" in df.columns and len(df) > 0 else 1000.0
+        return {
+            "ema_50": last_close,
+            "ema_200": last_close,
             "trend": "NEUTRAL",
             "is_golden_cross": False,
             "above_200_ema": True

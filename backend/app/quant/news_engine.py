@@ -95,38 +95,38 @@ def fetch_live_stock_news(symbol: str) -> List[Dict[str, Any]]:
             ticker = yf.Ticker(f"{sym}.NS")
             yf_news = ticker.news
             if yf_news and isinstance(yf_news, list):
-            for item in yf_news[:6]:
-                content = item.get("content") or {}
-                title = item.get("title") or content.get("title")
-                if not title:
-                    continue
+                for item in yf_news[:6]:
+                    content = item.get("content") or {}
+                    title = item.get("title") or content.get("title")
+                    if not title:
+                        continue
 
-                link = item.get("link") or content.get("canonicalUrl", {}).get("url") or item.get("url") or "https://finance.yahoo.com"
-                publisher = item.get("publisher") or (content.get("provider") or {}).get("displayName") or "Financial Wire"
-                summary = item.get("summary") or content.get("summary") or ""
-                
-                # Parse publish time
-                pub_time = item.get("providerPublishTime") or content.get("pubDate")
-                time_str = "Recent"
-                if isinstance(pub_time, (int, float)):
-                    dt = datetime.fromtimestamp(pub_time)
-                    time_str = dt.strftime("%d %b %Y, %H:%M")
-                elif isinstance(pub_time, str):
-                    time_str = pub_time[:16]
+                    link = item.get("link") or content.get("canonicalUrl", {}).get("url") or item.get("url") or "https://finance.yahoo.com"
+                    publisher = item.get("publisher") or (content.get("provider") or {}).get("displayName") or "Financial Wire"
+                    summary = item.get("summary") or content.get("summary") or ""
+                    
+                    # Parse publish time
+                    pub_time = item.get("providerPublishTime") or content.get("pubDate")
+                    time_str = "Recent"
+                    if isinstance(pub_time, (int, float)):
+                        dt = datetime.fromtimestamp(pub_time)
+                        time_str = dt.strftime("%d %b %Y, %H:%M")
+                    elif isinstance(pub_time, str):
+                        time_str = pub_time[:16]
 
-                score = _score_headline_sentiment(title, summary)
-                impact = "Strong Bullish" if score >= 0.7 else ("Bullish" if score >= 0.4 else ("Neutral" if score >= -0.1 else "Bearish"))
+                    score = _score_headline_sentiment(title, summary)
+                    impact = "Strong Bullish" if score >= 0.7 else ("Bullish" if score >= 0.4 else ("Neutral" if score >= -0.1 else "Bearish"))
 
-                articles.append({
-                    "title": title,
-                    "source": publisher,
-                    "time_ago": time_str,
-                    "published_at": time_str,
-                    "impact": impact,
-                    "summary": summary or f"Live institutional market news report for {sym} on NSE.",
-                    "sentiment_score": score,
-                    "url": link
-                })
+                    articles.append({
+                        "title": title,
+                        "source": publisher,
+                        "time_ago": time_str,
+                        "published_at": time_str,
+                        "impact": impact,
+                        "summary": summary or f"Live institutional market news report for {sym} on NSE.",
+                        "sentiment_score": score,
+                        "url": link
+                    })
     except Exception:
         articles = []
 

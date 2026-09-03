@@ -297,3 +297,6 @@ def get_top_dividend_yielders() -> List[Dict[str, Any]]:
 
     ranked.sort(key=lambda x: x["dividend_yield_pct"], reverse=True)
     return ranked
+
+# Alias for backwards compatibility
+analyze_dividend_intelligence = analyze_stock_dividend

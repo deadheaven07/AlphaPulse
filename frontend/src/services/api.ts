@@ -8,7 +8,8 @@ import type {
   NewsSentimentData,
   DividendAnalysisData,
   TopDividendYielder,
-  KpiRadarStock
+  KpiRadarStock,
+  DiagnosticSuiteResult
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -112,5 +113,11 @@ export async function fetchTopDividendYielders(): Promise<TopDividendYielder[]> 
 export async function fetchKpiRadar(capital = 100000): Promise<KpiRadarStock[]> {
   const res = await fetch(`${API_BASE}/stocks/kpi-radar?capital=${capital}`);
   if (!res.ok) throw new Error("Failed to fetch KPI radar");
+  return res.json();
+}
+
+export async function fetchSystemDiagnostics(): Promise<DiagnosticSuiteResult> {
+  const res = await fetch(`${API_BASE}/diagnostics/self-test`);
+  if (!res.ok) throw new Error("Failed to run system diagnostics self-test");
   return res.json();
 }
