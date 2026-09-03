@@ -15,7 +15,7 @@ import { SectorRrgMap } from "./components/SectorRrgMap";
 import { DividendAnalyzer } from "./components/DividendAnalyzer";
 import { ProfitSimulator } from "./components/ProfitSimulator";
 import { LiveNewsAndThesis } from "./components/LiveNewsAndThesis";
-import { WatchlistVaultModal } from "./components/WatchlistVaultModal";
+import { PortfolioSideDrawer } from "./components/PortfolioSideDrawer";
 import { SettingsModal } from "./components/SettingsModal";
 import { Sparkles, Globe, LineChart, Coins } from "lucide-react";
 
@@ -48,7 +48,7 @@ export function App() {
   const [simHorizon, setSimHorizon] = useState<number>(12);
   const [activeTab, setActiveTab] = useState<"studio" | "dividend">("studio");
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isVaultOpen, setIsVaultOpen] = useState<boolean>(false);
+  const [isPortfolioOpen, setIsPortfolioOpen] = useState<boolean>(false);
 
   // Local Storage Strategy Vault & Watchlist
   const [savedSimulations, setSavedSimulations] = useState<SimulationResult[]>(() => {
@@ -137,6 +137,12 @@ export function App() {
     setSavedSimulations((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleClearAllSimulations = () => {
+    if (window.confirm("Are you sure you want to clear all saved strategy simulations?")) {
+      setSavedSimulations([]);
+    }
+  };
+
   const handleRemoveWatchlist = (symbol: string) => {
     setWatchlist((prev) => prev.filter((s) => s !== symbol));
   };
@@ -154,7 +160,7 @@ export function App() {
         {/* Top Navigation */}
         <Navbar
           onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenVault={() => setIsVaultOpen(true)}
+          onOpenVault={() => setIsPortfolioOpen(true)}
           vaultCount={savedSimulations.length}
           geminiConfigured={Boolean(health?.gemini_api_configured)}
           isDarkMode={isDarkMode}
@@ -324,17 +330,18 @@ export function App() {
           </div>
         </footer>
 
-        {/* Watchlist & Saved Strategy Vault Modal */}
-        <WatchlistVaultModal
-          isOpen={isVaultOpen}
-          onClose={() => setIsVaultOpen(false)}
+        {/* Animated Portfolio & Strategy Vault Side Drawer */}
+        <PortfolioSideDrawer
+          isOpen={isPortfolioOpen}
+          onClose={() => setIsPortfolioOpen(false)}
           savedSimulations={savedSimulations}
           watchlistSymbols={watchlist}
           onRemoveSimulation={handleRemoveSimulation}
           onRemoveWatchlist={handleRemoveWatchlist}
+          onClearAll={handleClearAllSimulations}
           onSelectSymbol={(sym) => {
             setSelectedSymbol(sym);
-            setIsVaultOpen(false);
+            setIsPortfolioOpen(false);
           }}
         />
 

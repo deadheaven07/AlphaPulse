@@ -9,7 +9,7 @@ import {
   TrendingUp,
   TrendingDown,
   Layers,
-  BookmarkCheck,
+  Briefcase,
   Sun,
   Moon
 } from "lucide-react";
@@ -158,15 +158,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
 
-            {/* Strategy Vault Button */}
+            {/* My Portfolio & Strategy Vault Button */}
             <button
               onClick={onOpenVault}
-              className="relative p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              className="relative p-2 sm:px-3.5 sm:py-1.5 rounded-xl bg-slate-900 hover:bg-black dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer group"
             >
-              <BookmarkCheck className="w-4 h-4" />
-              <span className="hidden sm:inline">Vault</span>
+              <Briefcase className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">My Portfolio</span>
               {vaultCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-emerald-500 dark:bg-slate-900 text-white dark:text-emerald-300 text-[10px] font-bold flex items-center justify-center">
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 dark:bg-slate-900 text-white dark:text-emerald-300 text-[10px] font-mono font-bold">
                   {vaultCount}
                 </span>
               )}
