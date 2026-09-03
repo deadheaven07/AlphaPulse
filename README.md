@@ -15,7 +15,65 @@
 
 **AlphaPulse India Pro** is a modern, modular institutional quantitative equity workstation and AI copilot designed for Indian stock market investors (NSE / BSE). 
 
-Engineered with a **6-Page Dedicated Workstation Architecture**, an **Interactive Left-Pane "Ask Alpha AI" Copilot (`⌘K`)**, a **65+ Stock Dynamic Live Market Momentum Scanner (72 NSE equities across 10 sectors)**, a **3D Deep-Space Asteroid Belt Canvas Engine**, and a **1-Week Tactical Momentum Engine with a Personal "Stock Market Guru" & Crowd Psychology Watchdog**, AlphaPulse provides end-to-end mathematical rigor from live market discovery to post-tax bank account realization.
+Engineered with a **6-Page Dedicated Workstation Architecture**, an **Interactive Left-Pane "Ask Alpha AI" Copilot (`⌘K`)**, a **65+ Stock Dynamic Live Market Momentum Scanner (72 NSE equities across 10 sectors)**, a **3D Deep-Space Asteroid Belt Canvas Engine**, a **15M ORB Intraday MIS 5x Terminal**, and a **1-Week Tactical Momentum Engine with a Personal "Stock Market Guru" & Crowd Psychology Watchdog**, AlphaPulse provides end-to-end mathematical rigor from live market discovery to post-tax bank account realization.
+
+---
+
+## 🎬 Live Workstation Walkthrough Demo
+
+![AlphaPulse Pro Complete Workstation Walkthrough](assets/walkthrough_demo.gif)
+
+---
+
+## 📸 Visual Workstation Gallery & Feature Tour
+
+### 1. ⚡ Intraday Tactical Terminal (9:15 AM – 3:20 PM MIS Engine)
+*Features SEBI 5x Broker Leverage Calculator, 15-Minute ORB + Live VWAP Long & Short Breakouts, and 3:10 PM Square-Off Guardian with countdown clock.*
+
+| Bullish Breakouts (LONG) & 5x MIS Calculator | Bearish Breakdowns (SHORT / Sell First) |
+| :---: | :---: |
+| ![Intraday Longs & Calculator](assets/screenshots/02_intraday_terminal_5x_longs.png) | ![Intraday Shorts](assets/screenshots/03_intraday_terminal_shorts.png) |
+
+---
+
+### 2. 🌊 Overview Hub & Market Tide Option Chain PCR Barometer
+*Displays real-time NIFTY Put-Call Ratio (PCR), Open Interest (OI) support floors vs overhead resistance ceilings, and weekly Max Pain strike magnets.*
+
+![Overview & Option Chain PCR](assets/screenshots/01_overview_derivatives_pcr.png)
+
+---
+
+### 3. 📊 Daily Promoter Insider Buying & Bulk Deals Radar
+*Tracks daily exchange Form C disclosures, sovereign promoter stake increases, and institutional mutual fund block deals with +15 momentum boost.*
+
+![Insider & Bulk Deals Radar](assets/screenshots/04_radar_insider_bulk_deals.png)
+
+---
+
+### 4. 🧙‍♂️ Dalal Street AI Guru & 65+ Stock Dynamic Scanner
+*Conversational proprietary mentor enforcing 'Rule #1: Protect Principal' with dynamic ATR holding periods and 65+ stock live breakout ranking.*
+
+| AI Guru Tactical Advisory & Pre-Buy Trigger | 65+ Stock Dynamic Momentum Scanner |
+| :---: | :---: |
+| ![AI Guru Tactical Card](assets/screenshots/05_tactical_guru_ai_copilot.png) | ![65+ Stock Scanner](assets/screenshots/06_dynamic_65stock_scanner.png) |
+
+---
+
+### 5. 💼 Portfolio Vault & Goal Planner
+*Monitors Demat holdings, active sprint countdowns, and exact actuarial monthly compounding SIP trajectories.*
+
+| Portfolio Vault & Active Tactical Sprints | Goal Planner Actuarial SIP Solver |
+| :---: | :---: |
+| ![Portfolio Sprints](assets/screenshots/07_portfolio_tactical_sprints.png) | ![Goal Planner SIP](assets/screenshots/08_goal_planner_actuarial_sip.png) |
+
+---
+
+### 6. 📱 Free Telegram Phone Alerts & Deep-Space Dark Mode
+*Instant screen-OFF audio chimes & stop-loss buzzers sent to your phone, paired with 3D polygon asteroid belt physics.*
+
+| Free Telegram Bot Configuration | Galaxy Dark Mode Terminal |
+| :---: | :---: |
+| ![Telegram Settings](assets/screenshots/10_telegram_phone_alerts.png) | ![Dark Mode Terminal](assets/screenshots/11_dark_mode_galaxy_terminal.png) |
 
 ---
 
