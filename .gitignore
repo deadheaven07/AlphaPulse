@@ -23,6 +23,8 @@ backend/data/*.db
 backend/data/*.sqlite
 backend/data/*.sqlite3
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 
