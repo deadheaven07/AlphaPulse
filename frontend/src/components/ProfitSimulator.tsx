@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { runProfitSimulation } from "../services/api";
 import type { RiskTolerance, SimulationResult } from "../types";
-import { formatINR, formatPct, formatHorizon } from "../utils/formatters";
+import { formatINR, formatHorizon } from "../utils/formatters";
 import { ProjectionChart } from "./ProjectionChart";
 import confetti from "canvas-confetti";
 import {
@@ -10,11 +10,7 @@ import {
   Coins,
   Clock,
   Shield,
-  TrendingUp,
-  TrendingDown,
-  Zap,
   BookmarkPlus,
-  Calendar,
   Check,
   ChevronDown,
   ChevronUp,
@@ -85,57 +81,55 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   return (
     <div className="space-y-6">
       {/* Control Deck Card */}
-      <div className="bg-white rounded-2xl border border-border shadow-card p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-brand-50 text-brand-600 border border-brand-100">
+      <div className="glass-panel-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 dark:border-slate-800/80 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800">
               <Calculator className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-slate-900 tracking-tight">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white tracking-tight">
                   Monte Carlo & Post-Tax Profit Engine
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                   1,000 Stochastic Paths
                 </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                  Budget 2024 Tax Net
+                </span>
               </div>
-              <p className="text-xs text-muted">
-                Statistically disciplined 90% VaR confidence modeling with Indian STT, GST, and STCG/LTCG tax deduction
+              <p className="text-xs text-muted dark:text-slate-400">
+                Holding-period ROI modeling with STT, Stamp Duty, GST, and STCG/LTCG capital gains friction for {symbol}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              Target: {targetDateStr} ({formatHorizon(horizonMonths)})
-            </span>
-
-            <button
-              onClick={handleSave}
-              className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
-                isSaved
-                  ? "bg-profit-50 text-profit-700 border-profit-300"
-                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
-              }`}
-            >
-              {isSaved ? <Check className="w-3.5 h-3.5 text-profit-600" /> : <BookmarkPlus className="w-3.5 h-3.5 text-brand-600" />}
-              <span>{isSaved ? "Saved!" : "Save Strategy"}</span>
-            </button>
-          </div>
+          {/* Save to Vault Action Button */}
+          <button
+            onClick={handleSave}
+            disabled={!simData}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 self-start sm:self-auto cursor-pointer ${
+              isSaved
+                ? "bg-profit-600 text-white"
+                : "bg-slate-900 hover:bg-black dark:bg-brand-600 dark:hover:bg-brand-500 text-white"
+            }`}
+          >
+            {isSaved ? <Check className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
+            <span>{isSaved ? "Saved to Vault!" : "Save Strategy"}</span>
+          </button>
         </div>
 
-        {/* Inputs Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Input 1: Capital */}
+        {/* Input Parameters Form (Responsive 3-column layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 1. Capital Input */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <Coins className="w-4 h-4 text-brand-500" />
-                Capital to Invest (₹)
+                Capital (₹)
               </label>
-              <span className="text-sm font-extrabold font-mono text-brand-600">
+              <span className="text-sm font-extrabold font-mono text-brand-600 dark:text-brand-400">
                 {formatINR(capital)}
               </span>
             </div>
@@ -146,25 +140,24 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
               </span>
               <input
                 type="number"
-                min={1000}
+                min={500}
                 step={5000}
                 value={capital}
-                onChange={(e) => setCapital(Math.max(1000, Number(e.target.value)))}
-                className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 bg-slate-50/50"
+                onChange={(e) => setCapital(Math.max(500, Number(e.target.value)))}
+                className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/80 text-sm font-mono font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 dark:focus:ring-brand-500/40 focus:border-brand-500 transition-all shadow-2xs"
               />
             </div>
 
-            {/* Quick Presets */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {CAPITAL_PRESETS.map((amt) => (
                 <button
                   key={amt}
                   type="button"
                   onClick={() => setCapital(amt)}
-                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold font-mono transition-all ${
+                  className={`py-1 px-2.5 rounded-lg text-xs font-semibold font-mono transition-all cursor-pointer ${
                     capital === amt
-                      ? "bg-brand-600 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      ? "bg-slate-900 dark:bg-brand-500 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
                   {amt >= 100000 ? `₹${amt / 100000}L` : `₹${amt / 1000}K`}
@@ -173,297 +166,276 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
 
-          {/* Input 2: Holding Horizon */}
+          {/* 2. Horizon Segment Selectors */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-brand-500" />
-                Holding Period (Tax Rate: {horizonMonths < 12 ? "20% STCG" : "12.5% LTCG"})
+                Target Horizon
               </label>
-              <span className="text-sm font-extrabold text-brand-600">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 {formatHorizon(horizonMonths)}
               </span>
             </div>
 
-            <div className="grid grid-cols-4 sm:grid-cols-7 gap-1">
-              {HORIZON_SEGMENTS.map((seg) => (
+            <div className="grid grid-cols-4 gap-1.5">
+              {HORIZON_SEGMENTS.slice(0, 4).map((seg) => (
                 <button
                   key={seg.months}
                   type="button"
                   onClick={() => setHorizonMonths(seg.months)}
-                  className={`py-2 px-1 rounded-xl text-center border transition-all ${
+                  className={`py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer ${
                     horizonMonths === seg.months
-                      ? "bg-brand-50 border-brand-500 text-brand-700 font-extrabold shadow-sm"
-                      : "bg-slate-50 border-slate-200/70 text-slate-600 hover:bg-slate-100"
+                      ? "bg-brand-600 dark:bg-brand-500 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
-                  <div className="text-xs">{seg.label}</div>
+                  <span>{seg.label}</span>
                 </button>
               ))}
             </div>
 
-            <p className="text-[11px] text-muted">
-              {horizonMonths < 12
-                ? "STCG applies @ 20% on short-term equity capital gains."
-                : "LTCG applies @ 12.5% only on gains above the ₹1.25 Lakh annual exemption."}
-            </p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {HORIZON_SEGMENTS.slice(4).map((seg) => (
+                <button
+                  key={seg.months}
+                  type="button"
+                  onClick={() => setHorizonMonths(seg.months)}
+                  className={`py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    horizonMonths === seg.months
+                      ? "bg-brand-600 dark:bg-brand-500 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  <span>{seg.label}</span>
+                  <span className="text-[9px] opacity-80">({seg.months / 12}Y)</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Input 3: Risk Tolerance */}
+          {/* 3. Risk Tolerance */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <Shield className="w-4 h-4 text-brand-500" />
-                Volatility & Drift Bias
+                Risk Appetite
               </label>
-              <span className="text-xs font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                 {riskTolerance}
               </span>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
-              {(["Conservative", "Moderate", "Aggressive"] as RiskTolerance[]).map((mode) => (
+              {(["Conservative", "Moderate", "Aggressive"] as RiskTolerance[]).map((r) => (
                 <button
-                  key={mode}
+                  key={r}
                   type="button"
-                  onClick={() => setRiskTolerance(mode)}
-                  className={`py-2 px-2 rounded-xl text-xs font-bold transition-all border ${
-                    riskTolerance === mode
-                      ? "bg-brand-600 border-brand-600 text-white shadow-sm"
-                      : "bg-slate-50 border-slate-200/70 text-slate-600 hover:bg-slate-100"
+                  onClick={() => setRiskTolerance(r)}
+                  className={`py-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                    riskTolerance === r
+                      ? "bg-slate-900 dark:bg-brand-500 text-white shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                   }`}
                 >
-                  {mode}
+                  <span>{r}</span>
+                  <span className="text-[10px] opacity-75 font-mono">
+                    {r === "Conservative" ? "Low Beta" : r === "Moderate" ? "Market Drift" : "High Beta"}
+                  </span>
                 </button>
               ))}
             </div>
 
-            <p className="text-[11px] text-muted">
-              Adjusts stochastic drift and annual price diffusion across 1,000 paths.
-            </p>
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between pt-1">
+              <span>Target Milestone:</span>
+              <strong className="text-slate-800 dark:text-slate-200 font-mono">{targetDateStr}</strong>
+            </div>
           </div>
         </div>
 
-        {/* Live Allocation HUD */}
+        {/* Share Allocation Badge */}
         {simData && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                Execution Shares
-              </span>
-              <div className="text-base font-extrabold text-slate-900 font-mono">
-                {simData.shares.toLocaleString("en-IN")}{" "}
-                <span className="text-xs font-normal text-slate-500 font-sans">Shares</span>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-4 flex-wrap">
+              <div>
+                <span className="text-muted dark:text-slate-400 font-medium">Spot Entry Price: </span>
+                <strong className="font-mono text-slate-900 dark:text-white font-bold">{formatINR(simData.current_price)}</strong>
               </div>
-              <span className="text-[10px] text-muted">@ {formatINR(simData.current_price)}</span>
+              <div>
+                <span className="text-muted dark:text-slate-400 font-medium">Exact Share Allocation: </span>
+                <strong className="font-mono text-slate-900 dark:text-white font-bold">{simData.shares} Shares</strong>
+              </div>
+              <div>
+                <span className="text-muted dark:text-slate-400 font-medium">Deployed Capital: </span>
+                <strong className="font-mono text-slate-900 dark:text-white font-bold">{formatINR(simData.deployed_capital)}</strong>
+              </div>
+              <div>
+                <span className="text-muted dark:text-slate-400 font-medium">Uninvested Cash: </span>
+                <strong className="font-mono text-slate-900 dark:text-white font-bold">{formatINR(simData.cash_buffer)}</strong>
+              </div>
             </div>
-
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                Deployed Capital
-              </span>
-              <div className="text-base font-extrabold text-slate-900 font-mono">
-                {formatINR(simData.deployed_capital)}
-              </div>
-              <span className="text-[10px] text-muted">Buffer: {formatINR(simData.cash_buffer)}</span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-profit-50 border border-profit-200">
-              <span className="text-[10px] font-bold text-profit-700 uppercase tracking-wider block mb-0.5">
-                Expected Net In-Hand ROI
-              </span>
-              <div className="text-base font-extrabold text-profit-700 font-mono">
-                {formatPct(simData.expected_value.expected_roi_pct)}
-              </div>
-              <span className="text-[10px] text-profit-600 font-medium">
-                +{formatINR(simData.expected_value.expected_net_profit)} Post-Tax
-              </span>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
-                Value at Risk (90% VaR)
-              </span>
-              <div className="text-base font-extrabold text-slate-900 font-mono">
-                {formatINR(simData.expected_value.var_90_pct)}
-              </div>
-              <span className="text-[10px] text-slate-500 font-medium">10th Percentile Floor</span>
+            <div className="text-[11px] font-mono text-brand-700 dark:text-brand-300 font-bold">
+              Annualized Drift: {(simData.annual_drift_pct || 14.5).toFixed(1)}% | Volatility: {(simData.annual_volatility_pct || 22.0).toFixed(1)}%
             </div>
           </div>
         )}
       </div>
 
-      {/* 3 Dynamic Post-Tax Scenario Forecast Cards */}
+      {/* 3 Outcome Forecast Cards (Bull / Base / Bear) */}
       {simData && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Base Target (50th Percentile Median) */}
-          <div className="bg-white rounded-2xl border-2 border-brand-400 shadow-hover p-6 flex flex-col justify-between space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 px-3 py-1 bg-brand-600 text-white text-[10px] font-extrabold uppercase tracking-wider rounded-bl-xl">
-              50th %tile (Base)
+          {/* 1. 🚀 Bull Case Card */}
+          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-emerald-200 dark:border-emerald-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-glow-emerald" />
+                <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                  Bull Case (90th %ile)
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                +{simData.bull_case.roi_pct.toFixed(1)}% Gain
+              </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-brand-600">
-                <Zap className="w-5 h-5" />
-                <h3 className="font-extrabold text-base tracking-tight text-slate-900">
-                  Base Scenario (Median Path)
-                </h3>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-xs text-slate-500 font-semibold">Target Price:</div>
-                <div className="text-2xl font-extrabold font-mono text-brand-600">
-                  {formatINR(simData.base_case.target_price)}
-                </div>
-                <div className="text-xs font-bold text-brand-700">
-                  +{simData.base_case.roi_pct.toFixed(1)}% Real In-Hand ROI
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-brand-50 border border-brand-100 space-y-1">
-                <div className="text-[11px] text-brand-900 font-medium">Real In-Hand Net Profit:</div>
-                <div className="text-xl font-extrabold text-brand-700 font-mono">
-                  +{formatINR(simData.base_case.net_in_hand_profit)}
-                </div>
-                <div className="text-[10px] text-brand-700/80 font-mono">
-                  Gross: +{formatINR(simData.base_case.gross_profit)} | Post-Tax Final: {formatINR(simData.base_case.total_value)}
-                </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                Target Spot Price
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                {formatINR(simData.bull_case.target_price)}
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-              ⚖️ Median stochastic path after deducting STT, GST, and {simData.base_case.taxes_and_charges.tax_type}.
+            <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 space-y-1">
+              <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">
+                In-Hand Net Profit (Post-Tax)
+              </span>
+              <div className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
+                +{formatINR(simData.bull_case.net_in_hand_profit)}
+              </div>
+              <span className="text-[10px] text-emerald-800/80 dark:text-emerald-400/80 block">
+                Portfolio Net: {formatINR(simData.bull_case.total_value)}
+              </span>
             </div>
           </div>
 
-          {/* Bull Target (90th Percentile Ceiling) */}
-          <div className="bg-white rounded-2xl border-2 border-profit-200 shadow-profit p-6 flex flex-col justify-between space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 px-3 py-1 bg-profit-500 text-white text-[10px] font-extrabold uppercase tracking-wider rounded-bl-xl">
-              90th %tile (Bull)
+          {/* 2. ⚖️ Base Case (Consensus / Median 50th %ile) */}
+          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-brand-200 dark:border-brand-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-brand-500 shadow-glow-cyan" />
+                <span className="text-xs font-extrabold uppercase tracking-wider text-brand-800 dark:text-brand-300">
+                  Base Case (50th %ile Median)
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-300">
+                +{simData.base_case.roi_pct.toFixed(1)}% Gain
+              </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-profit-600">
-                <TrendingUp className="w-5 h-5" />
-                <h3 className="font-extrabold text-base tracking-tight text-slate-900">
-                  Bull Scenario (Ceiling)
-                </h3>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-xs text-slate-500 font-semibold">Target Price:</div>
-                <div className="text-2xl font-extrabold font-mono text-profit-600">
-                  {formatINR(simData.bull_case.target_price)}
-                </div>
-                <div className="text-xs font-bold text-profit-700">
-                  +{simData.bull_case.roi_pct.toFixed(1)}% Real In-Hand ROI
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-profit-50/70 border border-profit-100 space-y-1">
-                <div className="text-[11px] text-profit-800 font-medium">Real In-Hand Net Profit:</div>
-                <div className="text-xl font-extrabold text-profit-700 font-mono">
-                  +{formatINR(simData.bull_case.net_in_hand_profit)}
-                </div>
-                <div className="text-[10px] text-profit-700/80 font-mono">
-                  Gross: +{formatINR(simData.bull_case.gross_profit)} | Post-Tax Final: {formatINR(simData.bull_case.total_value)}
-                </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                Target Spot Price
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                {formatINR(simData.base_case.target_price)}
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-              🚀 90th percentile upside expansion after all Indian statutory levies and taxes.
+            <div className="p-3 rounded-xl bg-brand-50/80 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900 space-y-1">
+              <span className="text-[10px] font-bold text-brand-800 dark:text-brand-300 uppercase tracking-wider block">
+                In-Hand Net Profit (Post-Tax)
+              </span>
+              <div className="text-xl font-extrabold font-mono text-brand-700 dark:text-brand-400">
+                +{formatINR(simData.base_case.net_in_hand_profit)}
+              </div>
+              <span className="text-[10px] text-brand-800/80 dark:text-brand-400/80 block">
+                Portfolio Net: {formatINR(simData.base_case.total_value)}
+              </span>
             </div>
           </div>
 
-          {/* Bear / 10th Percentile VaR */}
-          <div className="bg-white rounded-2xl border-2 border-risk-200 shadow-risk p-6 flex flex-col justify-between space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 px-3 py-1 bg-risk-500 text-white text-[10px] font-extrabold uppercase tracking-wider rounded-bl-xl">
-              10th %tile (VaR)
+          {/* 3. 🛡️ Bear Case (10th %ile / VaR Drawdown) */}
+          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-rose-200 dark:border-rose-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-glow-rose" />
+                <span className="text-xs font-extrabold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                  Bear Case (10th %ile / VaR)
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300">
+                {simData.bear_case.roi_pct.toFixed(1)}% Drawdown
+              </span>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-risk-600">
-                <TrendingDown className="w-5 h-5" />
-                <h3 className="font-extrabold text-base tracking-tight text-slate-900">
-                  Bear / Value at Risk Floor
-                </h3>
-              </div>
-
-              <div className="space-y-1">
-                <div className="text-xs text-slate-500 font-semibold">Stop Loss Floor:</div>
-                <div className="text-2xl font-extrabold font-mono text-risk-600">
-                  {formatINR(simData.bear_case.target_price)}
-                </div>
-                <div className="text-xs font-bold text-risk-700">
-                  {simData.bear_case.roi_pct.toFixed(1)}% Maximum Expected Drawdown
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-risk-50/70 border border-risk-100 space-y-1">
-                <div className="text-[11px] text-risk-800 font-medium">Net Drawdown Level:</div>
-                <div className="text-xl font-extrabold text-risk-700 font-mono">
-                  {formatINR(simData.bear_case.net_in_hand_profit)}
-                </div>
-                <div className="text-[10px] text-risk-700/80 font-mono">
-                  Preserved Capital: {formatINR(simData.bear_case.total_value)}
-                </div>
+            <div>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                Trailing Floor / Stop-Loss
+              </span>
+              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                {formatINR(simData.bear_case.target_price)}
               </div>
             </div>
 
-            <div className="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl">
-              🛡️ 10th percentile empirical floor modeling severe multi-quarter market correction.
+            <div className="p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900 space-y-1">
+              <span className="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider block">
+                Estimated Capital At Risk
+              </span>
+              <div className="text-xl font-extrabold font-mono text-rose-700 dark:text-rose-400">
+                {formatINR(simData.bear_case.net_in_hand_profit)}
+              </div>
+              <span className="text-[10px] text-rose-800/80 dark:text-rose-400/80 block">
+                Preserved Capital: {formatINR(simData.bear_case.total_value)}
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Statutory & Tax Deduction Drawer */}
+      {/* Statutory Taxes & Charges Friction Drawer (Budget 2024 Breakdown) */}
       {baseTax && (
-        <div className="bg-white rounded-2xl border border-border shadow-card p-5 space-y-3">
-          <button
-            onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}
-            className="w-full flex items-center justify-between text-xs font-bold text-slate-800 hover:text-brand-600 transition-colors"
-          >
+        <div className="glass-panel-3d rounded-2xl p-5 space-y-4">
+          <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}>
             <div className="flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-brand-600" />
-              <span>Indian Tax & Statutory Friction Breakdown (Base Case)</span>
-              <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600 font-mono">
-                Total Friction: {formatINR(baseTax.total_statutory_friction + baseTax.capital_gains_tax)}
-              </span>
+              <Receipt className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+              <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                Statutory Levies & Capital Gains Tax Friction Breakdown ({baseTax.tax_type})
+              </h4>
             </div>
-            {showTaxBreakdown ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-          </button>
+            <button className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 cursor-pointer">
+              <span>{showTaxBreakdown ? "Hide Breakdown" : "View Breakdown"}</span>
+              {showTaxBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
 
           {showTaxBreakdown && (
-            <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">STT (0.1% Exit)</span>
-                <span className="font-mono font-bold text-slate-900">{formatINR(baseTax.stt)}</span>
+            <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs border-t border-slate-100 dark:border-slate-800">
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">STT (0.1% Exit)</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stt.toFixed(2)}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Stamp Duty (0.015%)</span>
-                <span className="font-mono font-bold text-slate-900">{formatINR(baseTax.stamp_duty)}</span>
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Exchange Fees</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.exchange_fees.toFixed(2)}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">Exchange & SEBI Fee</span>
-                <span className="font-mono font-bold text-slate-900">{formatINR(baseTax.exchange_fees + baseTax.sebi_charges)}</span>
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Stamp Duty (0.015%)</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stamp_duty.toFixed(2)}</span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
-                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-0.5">GST (18% on Fees)</span>
-                <span className="font-mono font-bold text-slate-900">{formatINR(baseTax.gst)}</span>
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">SEBI & GST (18%)</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{(baseTax.sebi_charges + baseTax.gst).toFixed(2)}</span>
               </div>
-              <div className="col-span-2 sm:col-span-4 p-3.5 rounded-xl bg-brand-50/70 border border-brand-100 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-brand-900 block">
-                    Capital Gains Tax ({baseTax.tax_type})
-                  </span>
-                  <span className="text-[11px] text-brand-700/80">
-                    {horizonMonths < 12 ? "20% STCG flat rate" : "12.5% LTCG on net gains above ₹1.25 Lakh exemption limit"}
-                  </span>
-                </div>
-                <span className="font-mono font-extrabold text-brand-800 text-sm">
-                  {formatINR(baseTax.capital_gains_tax)}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">{baseTax.tax_type}</span>
+                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">₹{baseTax.capital_gains_tax.toFixed(2)}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Friction</span>
+                <span className="font-mono font-extrabold text-slate-900 dark:text-white">
+                  ₹{(baseTax.total_statutory_friction + baseTax.capital_gains_tax).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -471,11 +443,12 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
         </div>
       )}
 
-      {/* Interactive Monte Carlo Projection Chart */}
-      {simData && (
+      {/* Trajectory Timeline Chart */}
+      {simData?.trajectory && (
         <ProjectionChart
           trajectory={simData.trajectory}
-          horizonMonths={horizonMonths}
+          symbol={simData.symbol}
+          capital={simData.capital}
         />
       )}
     </div>

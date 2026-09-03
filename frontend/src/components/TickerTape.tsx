@@ -26,6 +26,7 @@ const LIVE_TICKERS: TickerItem[] = [
   { symbol: "HAL", name: "Hindustan Aeronautics", price: 4765.60, change: 88.00, change_pct: 1.88 },
   { symbol: "RELIANCE", name: "Reliance Ind.", price: 1302.50, change: 14.20, change_pct: 1.10 },
   { symbol: "TCS", name: "Tata Consultancy", price: 4180.25, change: -12.40, change_pct: -0.30 },
+  { symbol: "COALINDIA", name: "Coal India", price: 485.40, change: 11.20, change_pct: 2.36 },
   { symbol: "HDFCBANK", name: "HDFC Bank", price: 1640.80, change: 14.50, change_pct: 0.89 },
   { symbol: "LT", name: "Larsen & Toubro", price: 3620.50, change: 38.00, change_pct: 1.06 },
   { symbol: "TATAPOWER", name: "Tata Power", price: 435.60, change: 8.90, change_pct: 2.09 },
@@ -35,10 +36,10 @@ const LIVE_TICKERS: TickerItem[] = [
 
 export const TickerTape: React.FC<TickerTapeProps> = ({ onSelectSymbol }) => {
   return (
-    <div className="w-full bg-white border-b border-border/80 overflow-hidden py-1.5 select-none relative z-30 shadow-xs">
+    <div className="w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-md border-b border-border dark:border-slate-800/80 overflow-hidden py-1.5 select-none relative z-30 shadow-xs transition-colors duration-300">
       <div className="flex items-center">
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-extrabold uppercase tracking-wider rounded-r-md shrink-0 border-r border-slate-200">
-          <Activity className="w-3 h-3 text-brand-600 animate-pulse" />
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] font-extrabold uppercase tracking-wider rounded-r-md shrink-0 border-r border-slate-200 dark:border-slate-800">
+          <Activity className="w-3 h-3 text-brand-600 dark:text-brand-400 animate-pulse" />
           <span>NSE/BSE Feeds</span>
         </div>
 
@@ -50,26 +51,36 @@ export const TickerTape: React.FC<TickerTapeProps> = ({ onSelectSymbol }) => {
                 <div
                   key={`${item.symbol}-${idx}`}
                   onClick={() => !item.isIndex && onSelectSymbol(item.symbol)}
-                  className={`inline-flex items-center gap-2 text-xs font-semibold px-2 py-0.5 rounded-lg transition-colors ${
-                    !item.isIndex ? "cursor-pointer hover:bg-slate-100" : ""
+                  className={`inline-flex items-center gap-2 text-xs font-semibold px-2 py-0.5 rounded-lg transition-all ${
+                    !item.isIndex
+                      ? "cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 hover:scale-105"
+                      : ""
                   }`}
                   title={!item.isIndex ? `Click to simulate ${item.symbol}` : undefined}
                 >
-                  <span className={`font-mono ${item.isIndex ? "font-bold text-slate-800" : "font-extrabold text-slate-900"}`}>
-                    {item.symbol}
-                  </span>
-                  <span className="font-mono text-slate-700 font-medium">
-                    {formatINR(item.price)}
-                  </span>
                   <span
-                    className={`inline-flex items-center gap-0.5 text-[11px] font-bold font-mono ${
-                      isPos ? "text-emerald-600" : "text-rose-600"
+                    className={`font-mono ${
+                      item.isIndex
+                        ? "font-bold text-slate-800 dark:text-slate-200"
+                        : "font-extrabold text-slate-900 dark:text-white"
                     }`}
                   >
-                    {isPos ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
+                    {item.symbol}
+                  </span>
+
+                  <span className="font-mono text-slate-600 dark:text-slate-400">
+                    {formatINR(item.price)}
+                  </span>
+
+                  <span
+                    className={`inline-flex items-center gap-0.5 text-[10px] font-bold ${
+                      isPos ? "text-profit-600 dark:text-profit-400" : "text-risk-600 dark:text-risk-400"
+                    }`}
+                  >
+                    {isPos ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {isPos ? "+" : ""}
                     {formatPct(item.change_pct)}
                   </span>
-                  <span className="text-slate-300 ml-2">•</span>
                 </div>
               );
             })}
