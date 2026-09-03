@@ -27,6 +27,7 @@ class CopilotQueryRequest(BaseModel):
     monthly_sip: float = 10000.0
     horizon_months: int = 24
     risk_level: str = "Moderate"
+    api_key: Optional[str] = None
 
 @router.get("/goals")
 def list_goals():
@@ -187,27 +188,44 @@ def ask_plan_copilot(req: CopilotQueryRequest):
         ]
         strategy_summary = f"Balanced Wealth Compounder Strategy: Institutional mix of capex powerhouses (L&T, Tata Motors) anchored by HDFC Bank and Coal India's cash dividend floor."
 
-    # Gemini 2.5 Call if API key configured
-    api_key = os.environ.get("GEMINI_API_KEY", "")
+    # API Key Resolution (Frontend override or environment variable)
+    api_key = (req.api_key or os.environ.get("GEMINI_API_KEY", "")).strip()
+
+    # Intent Detection: Greeting vs Financial Query
+    q_clean = req.query.strip().lower()
+    is_greeting = q_clean in ["hi", "hello", "hey", "namaste", "good morning", "good evening", "help", "who are you", "hi!", "hello!"]
+
     ai_thesis = None
     if api_key:
         try:
             from google import genai
             client = genai.Client(api_key=api_key)
-            prompt = f"""You are AlphaPulse India Pro's Lead Quantitative Wealth Strategist.
-The user has the following wealth target in the Indian Stock Market:
+
+            if is_greeting:
+                prompt = f"""You are AlphaPulse India Pro's Lead Quantitative Wealth Strategist & AI Copilot.
+The user just greeted you with: "{req.query}".
+Respond with a warm, professional, institutional welcome (1-2 short paragraphs).
+Explain that you can help them formulate high-probability wealth roadmaps in the Indian Stock Market (NSE/BSE).
+Briefly mention their current settings (Target: ₹{target:,.0f} in {req.horizon_months} months with {req.risk_level} risk) and invite them to ask a specific goal question or tweak the sliders above!
+"""
+            else:
+                prompt = f"""You are AlphaPulse India Pro's Lead Quantitative Wealth Strategist.
+The user asked: "{req.query}"
+Current Portfolio Plan Context:
 - Target Corpus: ₹{target:,.0f}
 - Starting Capital: ₹{req.starting_capital:,.0f}
 - Monthly SIP: ₹{req.monthly_sip:,.0f}
-- Time Horizon: {req.horizon_months} Months ({years:.1f} Years)
-- Risk Appetite: {req.risk_level}
-- User Query / Focus: "{req.query}"
+- Horizon: {req.horizon_months} Months ({years:.1f} Years)
+- Risk Level: {req.risk_level}
+- Required Actuarial CAGR: {required_return_pct}%
+- Recommended Basket: {', '.join([b['symbol'] for b in basket])}
 
-Provide a crisp, professional, institutional analysis (3-4 concise paragraphs) answering:
-1. Feasibility analysis of reaching ₹{target:,.0f} with the required ~{required_return_pct}% CAGR.
-2. Recommended asset allocation thesis for the recommended basket: {', '.join([b['symbol'] for b in basket])}.
-3. Tactical execution roadmap: Optimal entry strategy, dividend reinvestment, and Budget 2024 tax optimization (LTCG 12.5% after ₹1.25L exemption).
+Provide a direct, conversational, institutional answer addressing their exact query:
+1. Directly answer what the user asked about.
+2. Relate it to their target of ₹{target:,.0f} and the required {required_return_pct}% CAGR.
+3. Suggest concrete next steps or portfolio adjustments under Budget 2024 tax rules (STCG 20%, LTCG 12.5%).
 """
+
             resp = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt
@@ -218,17 +236,33 @@ Provide a crisp, professional, institutional analysis (3-4 concise paragraphs) a
             ai_thesis = None
 
     if not ai_thesis:
-        ai_thesis = f"""### 🎯 Wealth Milestone Roadmap: ₹{target:,.0f} Target
+        if is_greeting:
+            ai_thesis = f"""👋 **Hello! I am your Alpha Wealth Copilot.**
 
-To achieve your target corpus of **₹{target:,.0f}** in **{req.horizon_months} months** with a starting capital of **₹{req.starting_capital:,.0f}** and monthly SIP of **₹{req.monthly_sip:,.0f}**, you require an annualized compounding rate (CAGR) of approximately **{required_return_pct}%**.
+I analyze Indian equity compounders, calculate actuarial CAGR requirements, and structure risk-mitigated portfolios under Budget 2024 statutory tax rules.
 
-**1. Allocation Thesis**:
-We recommend structuring your capital across our high-conviction **{req.risk_level} Basket** ({', '.join([b['symbol'] for b in basket])}). This balances core cyclical tailwinds (infrastructure capex, auto revival) with high-dividend sovereign cash payouts to protect against index volatility.
+Your current active plan is targeting **₹{target:,.0f}** over **{req.horizon_months} months** ({req.risk_level} Risk).
 
-**2. Tactical Rebalancing & Tax Strategy**:
-- Under Budget 2024, hold positions longer than 12 months to qualify for **12.5% LTCG** (with the first ₹1,25,000 yearly capital gain completely exempt).
-- Reinvest all quarterly dividends directly back into the lowest-weighted holding to compound your yield.
-- Use a **-8% trailing stop-loss** on volatile components to lock in gains and safeguard your capital.
+💡 **How to use me**:
+- Adjust the **Target, Capital, and Monthly SIP sliders** above to see your exact required return.
+- Type any question below, such as:
+  - *"How can I reach ₹5 Lakhs in 1 year?"*
+  - *"Is Tata Motors good for long-term compounding?"*
+  - *"Which high-dividend PSU can de-risk my basket?"*
+"""
+        else:
+            ai_thesis = f"""### 🎯 Wealth Milestone Roadmap: ₹{target:,.0f} Target
+
+Addressing your query: *"{req.query}"*
+
+To reach your target corpus of **₹{target:,.0f}** in **{req.horizon_months} months** with a starting capital of **₹{req.starting_capital:,.0f}** and monthly SIP of **₹{req.monthly_sip:,.0f}**, your portfolio requires an exact actuarial compounding rate (CAGR) of **{required_return_pct}%**.
+
+**1. Strategy Allocation**:
+We recommend deploying across your **{req.risk_level} Basket** ({', '.join([b['symbol'] for b in basket])}). This balances core cyclical capex momentum with sovereign cash dividend floors.
+
+**2. Tactical Discipline & Tax Net**:
+- Hold positions for $>12$ months to qualify for **12.5% LTCG** (with the ₹1,25,000 yearly capital gain tax exemption).
+- Maintain an active **-8% trailing stop-loss** on volatile components to safeguard your principal.
 """
 
     return {

@@ -242,10 +242,14 @@ export async function askPlanCopilot(payload: {
   horizon_months: number;
   risk_level: string;
 }): Promise<GoalAiCopilotResponse> {
+  const apiKey = getCustomApiKey();
   const res = await fetch(`${API_BASE}/planner/ai-copilot`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      ...payload,
+      api_key: apiKey || undefined
+    })
   });
   if (!res.ok) throw new Error("Failed to query AI goal advisor");
   return res.json();
