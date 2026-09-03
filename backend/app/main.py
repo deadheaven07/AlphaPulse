@@ -8,6 +8,10 @@ from backend.app.api.routes_ai import router as ai_router
 from backend.app.api.routes_dividend import router as dividend_router
 from backend.app.api.routes_diagnostics import router as diagnostics_router
 from backend.app.api.routes_portfolio import router as portfolio_router
+from backend.app.db.database import init_db
+
+# Initialize persistent SQLite database
+init_db()
 
 app = FastAPI(
     title="AlphaPulse India Pro (Real-Time Equity & Post-Tax ROI Engine)",

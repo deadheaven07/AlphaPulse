@@ -12,7 +12,8 @@ import type {
   DiagnosticSuiteResult,
   PortfolioAlert,
   PennyStockCandidate,
-  BreakoutCandidate
+  BreakoutCandidate,
+  DbHolding
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -145,4 +146,57 @@ export async function fetchSidewaysBreakouts(): Promise<BreakoutCandidate[]> {
   const res = await fetch(`${API_BASE}/stocks/sideways-breakouts`);
   if (!res.ok) throw new Error("Failed to fetch sideways breakouts");
   return res.json();
+}
+
+// Persistent SQLite Portfolio & Watchlist API
+export async function fetchDbHoldings(): Promise<DbHolding[]> {
+  const res = await fetch(`${API_BASE}/portfolio/holdings`);
+  if (!res.ok) throw new Error("Failed to fetch portfolio holdings from database");
+  return res.json();
+}
+
+export async function createDbHolding(holding: DbHolding): Promise<DbHolding> {
+  const res = await fetch(`${API_BASE}/portfolio/holdings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(holding)
+  });
+  if (!res.ok) throw new Error("Failed to save holding to database");
+  return res.json();
+}
+
+export async function deleteDbHolding(id: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/portfolio/holdings/${id}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to delete holding from database");
+}
+
+export async function clearAllDbHoldings(): Promise<void> {
+  const res = await fetch(`${API_BASE}/portfolio/holdings`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to clear holdings from database");
+}
+
+export async function fetchDbWatchlist(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/portfolio/watchlist`);
+  if (!res.ok) throw new Error("Failed to fetch watchlist from database");
+  return res.json();
+}
+
+export async function addDbWatchlist(symbol: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/portfolio/watchlist`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ symbol })
+  });
+  if (!res.ok) throw new Error("Failed to pin symbol to database watchlist");
+}
+
+export async function deleteDbWatchlist(symbol: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/portfolio/watchlist/${encodeURIComponent(symbol)}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to unpin symbol from database watchlist");
 }

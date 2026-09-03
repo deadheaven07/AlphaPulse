@@ -11,7 +11,15 @@ _QUOTE_CACHE: Dict[str, Dict[str, Any]] = {}
 _CANDLE_CACHE: Dict[str, Dict[str, Any]] = {}
 _FII_DII_CACHE: Dict[str, Any] = {"timestamp": 0, "data": {}}
 
-CACHE_TTL_QUOTE = 30  # seconds
+def get_quote_cache_ttl() -> int:
+    """Dynamic cache TTL: 60s during market hours (09:15-15:30 IST), 300s off-market."""
+    now_dt = datetime.now()
+    hour = now_dt.hour
+    minute = now_dt.minute
+    if (hour == 9 and minute >= 15) or (10 <= hour < 15) or (hour == 15 and minute <= 30):
+        return 60
+    return 300
+
 CACHE_TTL_CANDLES = 300  # seconds
 CACHE_TTL_FII = 120  # seconds
 
@@ -329,8 +337,9 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
     """Fetch live stock quote with fundamental and valuation metrics."""
     symbol = clean_symbol(raw_symbol)
     now = time.time()
+    ttl = get_quote_cache_ttl()
 
-    if symbol in _QUOTE_CACHE and (now - _QUOTE_CACHE[symbol]["cached_at"]) < CACHE_TTL_QUOTE:
+    if symbol in _QUOTE_CACHE and (now - _QUOTE_CACHE[symbol]["cached_at"]) < ttl:
         return _QUOTE_CACHE[symbol]["data"]
 
     quote_data = None
@@ -410,6 +419,27 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
 
     _QUOTE_CACHE[symbol] = {"cached_at": now, "data": quote_data}
     return quote_data
+
+def fetch_live_quotes_batch(raw_symbols: List[str]) -> Dict[str, Dict[str, Any]]:
+    """Batch fetch quotes across multiple symbols minimizing network round-trips."""
+    results: Dict[str, Dict[str, Any]] = {}
+    now = time.time()
+    ttl = get_quote_cache_ttl()
+    uncached: List[str] = []
+
+    for raw in raw_symbols:
+        sym = clean_symbol(raw)
+        if sym in _QUOTE_CACHE and (now - _QUOTE_CACHE[sym]["cached_at"]) < ttl:
+            results[sym] = _QUOTE_CACHE[sym]["data"]
+        else:
+            uncached.append(sym)
+
+    if uncached:
+        # Fetch uncached
+        for s in uncached:
+            results[s] = fetch_live_quote(s)
+
+    return results
 
 def fetch_historical_dataframe(raw_symbol: str, period: str = "1y", interval: str = "1d") -> pd.DataFrame:
     """Fetch daily OHLCV dataframe for technical indicator processing."""

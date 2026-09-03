@@ -1,6 +1,16 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchHealth, fetchStockQuote, askGeminiAi, inspectPortfolioThreats } from "./services/api";
+import {
+  fetchHealth,
+  fetchStockQuote,
+  askGeminiAi,
+  inspectPortfolioThreats,
+  fetchDbWatchlist,
+  addDbWatchlist,
+  deleteDbWatchlist,
+  createDbHolding,
+  clearAllDbHoldings
+} from "./services/api";
 import type { AiAnalysisResponse, SimulationResult, PortfolioAlert } from "./types";
 import { ThreeBackground } from "./components/ThreeBackground";
 import { Navbar } from "./components/Navbar";
@@ -55,7 +65,7 @@ export function App() {
   // Live Watchdog Alerts State
   const [activeAlerts, setActiveAlerts] = useState<PortfolioAlert[]>([]);
 
-  // Strategy Vault (Saved Simulations) in LocalStorage
+  // Strategy Vault (Saved Simulations) in LocalStorage & SQLite
   const [savedSimulations, setSavedSimulations] = useState<SimulationResult[]>(() => {
     try {
       const stored = localStorage.getItem("alphapulse_vault");
@@ -65,7 +75,7 @@ export function App() {
     }
   });
 
-  // Pinned Watchlist
+  // Pinned Watchlist in SQLite / LocalStorage
   const [watchlist, setWatchlist] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem("alphapulse_watchlist");
@@ -74,6 +84,17 @@ export function App() {
       return ["TATAMOTORS", "RELIANCE", "BEL", "COALINDIA"];
     }
   });
+
+  // Sync SQLite Watchlist on startup
+  useEffect(() => {
+    fetchDbWatchlist()
+      .then((dbList) => {
+        if (dbList && dbList.length > 0) {
+          setWatchlist(dbList);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const { data: health, refetch: refetchHealth } = useQuery({
     queryKey: ["health"],
@@ -165,6 +186,16 @@ export function App() {
       localStorage.setItem("alphapulse_vault", JSON.stringify(updated));
       return updated;
     });
+
+    // Persist holding into SQLite database
+    createDbHolding({
+      symbol: sim.symbol,
+      company_name: sim.company_name,
+      entry_price: sim.current_price,
+      shares: sim.shares,
+      target_price: sim.bull_case.target_price,
+      stop_loss: sim.bear_case.target_price
+    }).catch(() => {});
   };
 
   const handleRemoveSimulation = (index: number) => {
@@ -178,6 +209,7 @@ export function App() {
   const handleClearAllSimulations = () => {
     setSavedSimulations([]);
     localStorage.removeItem("alphapulse_vault");
+    clearAllDbHoldings().catch(() => {});
   };
 
   const handleToggleWatchlist = (symbol: string) => {
@@ -185,8 +217,10 @@ export function App() {
       let updated: string[];
       if (prev.includes(symbol)) {
         updated = prev.filter((s) => s !== symbol);
+        deleteDbWatchlist(symbol).catch(() => {});
       } else {
         updated = [...prev, symbol];
+        addDbWatchlist(symbol).catch(() => {});
       }
       localStorage.setItem("alphapulse_watchlist", JSON.stringify(updated));
       return updated;
@@ -197,6 +231,7 @@ export function App() {
     setWatchlist((prev) => {
       const updated = prev.filter((s) => s !== symbol);
       localStorage.setItem("alphapulse_watchlist", JSON.stringify(updated));
+      deleteDbWatchlist(symbol).catch(() => {});
       return updated;
     });
   };

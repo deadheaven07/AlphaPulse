@@ -334,6 +334,7 @@ export interface PennyStockCandidate {
   symbol: string;
   company_name: string;
   sector: string;
+  category: string;
   price: number;
   change: number;
   change_pct: number;
@@ -344,6 +345,10 @@ export interface PennyStockCandidate {
   target_price: number;
   potential_upside_pct: number;
   trailing_stop_loss: number;
+  lower_circuit?: number;
+  upper_circuit?: number;
+  circuit_risk?: "NORMAL" | "CRITICAL_LOWER_CIRCUIT";
+  circuit_warning?: string | null;
   budget_allocation: number;
   shares_purchasable: number;
   catalyst: string;
@@ -359,4 +364,15 @@ export interface BreakoutCandidate {
   volume_surge: number;
   high_20d: number;
   signal: string;
+}
+
+export interface DbHolding {
+  id?: number;
+  symbol: string;
+  company_name?: string;
+  entry_price: number;
+  shares: number;
+  target_price?: number;
+  stop_loss?: number;
+  created_at?: string;
 }

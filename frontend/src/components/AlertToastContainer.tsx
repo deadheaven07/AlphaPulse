@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import type { PortfolioAlert } from "../types";
 import { soundManager } from "../utils/audioAlerts";
 import { formatINR } from "../utils/formatters";
@@ -17,17 +17,19 @@ interface AlertToastContainerProps {
   onSelectSymbol?: (symbol: string) => void;
 }
 
+// Module-level session memory so sound never repeats on identical deterministic IDs
+const playedSessionAlertIds = new Set<string>();
+
 export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
   alerts,
   onDismiss,
   onSelectSymbol,
 }) => {
-  const [playedIds, setPlayedIds] = useState<Set<string>>(new Set());
-
-  // Play audio buzzer / chime sound whenever a new alert arrives
+  // Play audio buzzer / chime sound EXACTLY ONCE per unique deterministic alert fingerprint
   useEffect(() => {
     alerts.forEach((alert) => {
-      if (!playedIds.has(alert.id)) {
+      if (!playedSessionAlertIds.has(alert.id)) {
+        playedSessionAlertIds.add(alert.id);
         if (alert.alert_type === "PROFIT_TARGET") {
           soundManager.playProfitChime();
         } else if (alert.alert_type === "STOP_LOSS_BREACH" || alert.alert_type === "NEWS_THREAT") {
@@ -35,10 +37,22 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
         } else if (alert.alert_type === "CONSOLIDATION_BREAKOUT") {
           soundManager.playBreakoutBeep();
         }
-        setPlayedIds((prev) => new Set([...prev, alert.id]));
       }
     });
-  }, [alerts, playedIds]);
+  }, [alerts]);
+
+  // Auto-dismiss individual alerts after 10 seconds
+  useEffect(() => {
+    if (!alerts || alerts.length === 0) return;
+    const timers = alerts.map((alert) =>
+      setTimeout(() => {
+        onDismiss(alert.id);
+      }, 10000)
+    );
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+    };
+  }, [alerts, onDismiss]);
 
   if (!alerts || alerts.length === 0) return null;
 
@@ -138,7 +152,7 @@ export const AlertToastContainer: React.FC<AlertToastContainerProps> = ({
 
             {/* Visual Shrinking Progress Bar */}
             <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 overflow-hidden">
-              <div className="h-full bg-white animate-toast-timer" style={{ animationDuration: "12s" }} />
+              <div className="h-full bg-white animate-toast-timer" style={{ animationDuration: "10s" }} />
             </div>
           </div>
         );
