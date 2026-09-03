@@ -61,6 +61,18 @@ export function App() {
     }
   }, [isDarkMode]);
 
+  // Global Keyboard Shortcut: Cmd+K / Ctrl+K to toggle AI Copilot pane
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsAiPaneOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const toggleTheme = () => setIsDarkMode((prev) => !prev);
 
   // Live Watchdog Alerts State
@@ -176,9 +188,18 @@ export function App() {
       <AiAssistantPane
         isOpen={isAiPaneOpen}
         onClose={() => setIsAiPaneOpen(false)}
+        currentPage={activePage}
+        activeSymbol={selectedSymbol}
+        simCapital={simCapital}
+        simHorizon={simHorizon}
         onSelectStock={(sym, cap, horiz) => {
           handleSelectStock(sym, cap, horiz);
           setActivePage("studio");
+          setIsAiPaneOpen(false);
+        }}
+        onNavigateToSimulator={(sym, cap, horiz) => {
+          handleSelectStock(sym, cap, horiz);
+          setActivePage("simulator");
           setIsAiPaneOpen(false);
         }}
         geminiConfigured={Boolean(health?.gemini_api_configured)}

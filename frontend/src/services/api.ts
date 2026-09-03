@@ -17,7 +17,10 @@ import type {
   TickerItem,
   GoalPlan,
   GoalNewsItem,
-  GoalAiCopilotResponse
+  GoalAiCopilotResponse,
+  ChatMessageItem,
+  ClientWorkspaceContext,
+  ConversationalChatResponse
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -259,6 +262,24 @@ export async function fetchGoalBasketNews(symbols: string): Promise<GoalNewsItem
   if (!symbols) return [];
   const res = await fetch(`${API_BASE}/planner/basket-news?symbols=${encodeURIComponent(symbols)}`);
   if (!res.ok) throw new Error("Failed to fetch basket news");
+  return res.json();
+}
+
+export async function sendConversationalChat(payload: {
+  messages: ChatMessageItem[];
+  context?: ClientWorkspaceContext;
+}): Promise<ConversationalChatResponse> {
+  const apiKey = getCustomApiKey();
+  const res = await fetch(`${API_BASE}/ai/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: payload.messages.map((m) => ({ role: m.role, content: m.content })),
+      context: payload.context,
+      api_key: apiKey || undefined
+    })
+  });
+  if (!res.ok) throw new Error("Failed to communicate with Alpha AI Copilot");
   return res.json();
 }
 

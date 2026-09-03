@@ -436,4 +436,40 @@ export interface GoalAiCopilotResponse {
   recommended_basket: GoalBasketStock[];
 }
 
+export interface ChatActionCard {
+  type: string;
+  symbol: string;
+  company_name: string;
+  price: number;
+  change_pct: number;
+  sector?: string;
+}
+
+export interface ChatMessageItem {
+  id?: string;
+  role: "user" | "model";
+  content: string;
+  actionCards?: ChatActionCard[];
+  followUpChips?: string[];
+  timestamp?: number;
+}
+
+export interface ClientWorkspaceContext {
+  current_page: string;
+  active_symbol?: string;
+  capital?: number;
+  horizon_months?: number;
+  goal_target?: number;
+  goal_sip?: number;
+  goal_starting?: number;
+  risk_level?: string;
+}
+
+export interface ConversationalChatResponse {
+  reply: string;
+  action_cards: ChatActionCard[];
+  follow_up_chips: string[];
+}
+
+
 

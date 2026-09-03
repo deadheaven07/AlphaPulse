@@ -156,14 +156,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="flex items-center justify-center gap-2 relative z-10">
             <Sparkles className="w-4 h-4 text-amber-300 animate-pulse shrink-0" />
             {!isCollapsed && (
-              <div className="text-left flex-1 min-w-0">
-                <div className="font-extrabold text-xs tracking-tight flex items-center gap-1">
-                  <span>Ask Alpha AI</span>
-                  <span className="text-[9px] px-1 py-0.2 rounded bg-white/20 text-white font-mono">Gemini</span>
+              <div className="text-left flex-1 min-w-0 flex items-center justify-between">
+                <div>
+                  <div className="font-extrabold text-xs tracking-tight flex items-center gap-1">
+                    <span>Ask Alpha AI</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-white/20 text-white font-mono">Gemini</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-100 truncate opacity-90">
+                    Instant conversational copilot
+                  </div>
                 </div>
-                <div className="text-[10px] text-emerald-100 truncate opacity-90">
-                  Instant natural language stock theses
-                </div>
+                <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-black/25 text-white text-[9px] font-mono font-bold">
+                  ⌘K
+                </kbd>
               </div>
             )}
           </div>
