@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchHealth, fetchStockQuote, askGeminiAi } from "./services/api";
-import type { AiAnalysisResponse } from "./types";
+import type { AiAnalysisResponse, SimulationResult } from "./types";
 import { Navbar } from "./components/Navbar";
+import { TickerTape } from "./components/TickerTape";
 import { AskAIBar } from "./components/AskAIBar";
 import { StockOverviewCard } from "./components/StockOverviewCard";
 import { TechnicalSignals } from "./components/TechnicalSignals";
+import { SectorRrgMap } from "./components/SectorRrgMap";
 import { ProfitSimulator } from "./components/ProfitSimulator";
 import { AIThesisCard } from "./components/AIThesisCard";
+import { WatchlistVaultModal } from "./components/WatchlistVaultModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { Sparkles } from "lucide-react";
 
@@ -16,6 +19,34 @@ export function App() {
   const [simCapital, setSimCapital] = useState<number>(100000);
   const [simHorizon, setSimHorizon] = useState<number>(12);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isVaultOpen, setIsVaultOpen] = useState<boolean>(false);
+
+  // Local Storage Strategy Vault & Watchlist
+  const [savedSimulations, setSavedSimulations] = useState<SimulationResult[]>(() => {
+    try {
+      const stored = localStorage.getItem("alphapulse_vault");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    try {
+      const stored = localStorage.getItem("alphapulse_watchlist");
+      return stored ? JSON.parse(stored) : ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL"];
+    } catch {
+      return ["TATAMOTORS", "RELIANCE", "BEL", "TCS", "HAL"];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("alphapulse_vault", JSON.stringify(savedSimulations));
+  }, [savedSimulations]);
+
+  useEffect(() => {
+    localStorage.setItem("alphapulse_watchlist", JSON.stringify(watchlist));
+  }, [watchlist]);
 
   // AI Analysis Query State
   const [aiResponse, setAiResponse] = useState<AiAnalysisResponse | null>(null);
@@ -54,14 +85,39 @@ export function App() {
 
   const handleSimulateFromAi = (symbol: string) => {
     setSelectedSymbol(symbol);
-    window.scrollTo({ top: 400, behavior: "smooth" });
+    window.scrollTo({ top: 450, behavior: "smooth" });
+  };
+
+  const handleToggleWatchlist = (symbol: string) => {
+    if (watchlist.includes(symbol)) {
+      setWatchlist(watchlist.filter((s) => s !== symbol));
+    } else {
+      setWatchlist([...watchlist, symbol]);
+    }
+  };
+
+  const handleSaveSimulation = (sim: SimulationResult) => {
+    setSavedSimulations((prev) => [sim, ...prev]);
+  };
+
+  const handleRemoveSimulation = (index: number) => {
+    setSavedSimulations((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveWatchlist = (symbol: string) => {
+    setWatchlist((prev) => prev.filter((s) => s !== symbol));
   };
 
   return (
     <div className="min-h-screen bg-canvas text-slate-900 flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+      {/* Top Live Ticker Tape */}
+      <TickerTape onSelectSymbol={(sym) => setSelectedSymbol(sym)} />
+
       {/* Top Navigation */}
       <Navbar
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenVault={() => setIsVaultOpen(true)}
+        vaultCount={savedSimulations.length}
         geminiConfigured={Boolean(health?.gemini_api_configured)}
       />
 
@@ -113,16 +169,25 @@ export function App() {
               <StockOverviewCard
                 quote={quote}
                 onSelectSymbol={(sym) => setSelectedSymbol(sym)}
+                isWatchlisted={watchlist.includes(quote.symbol)}
+                onToggleWatchlist={handleToggleWatchlist}
               />
 
               {/* Technical Signals (PKScreener Adapted) */}
               <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
+
+              {/* Relative Rotation Graph 2D Quadrant Map */}
+              <SectorRrgMap
+                currentSectorRrg={quote.sector_rrg}
+                activeStockSymbol={quote.symbol}
+              />
 
               {/* Module C: Profit Simulator & Projection Chart */}
               <ProfitSimulator
                 symbol={quote.symbol}
                 initialCapital={simCapital}
                 initialHorizon={simHorizon}
+                onSaveSimulation={handleSaveSimulation}
               />
             </>
           ) : (
@@ -151,6 +216,20 @@ export function App() {
           </div>
         </div>
       </footer>
+
+      {/* Watchlist & Saved Strategy Vault Modal */}
+      <WatchlistVaultModal
+        isOpen={isVaultOpen}
+        onClose={() => setIsVaultOpen(false)}
+        savedSimulations={savedSimulations}
+        watchlistSymbols={watchlist}
+        onRemoveSimulation={handleRemoveSimulation}
+        onRemoveWatchlist={handleRemoveWatchlist}
+        onSelectSymbol={(sym) => {
+          setSelectedSymbol(sym);
+          setIsVaultOpen(false);
+        }}
+      />
 
       {/* Settings Modal */}
       <SettingsModal

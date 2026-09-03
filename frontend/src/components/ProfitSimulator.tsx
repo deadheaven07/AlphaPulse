@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { runProfitSimulation } from "../services/api";
-import type { RiskTolerance } from "../types";
+import type { RiskTolerance, SimulationResult } from "../types";
 import { formatINR, formatPct, formatHorizon } from "../utils/formatters";
 import { ProjectionChart } from "./ProjectionChart";
+import confetti from "canvas-confetti";
 import {
   Calculator,
   Coins,
@@ -11,16 +12,20 @@ import {
   Shield,
   TrendingUp,
   TrendingDown,
-  Zap
+  Zap,
+  BookmarkPlus,
+  Calendar,
+  Check
 } from "lucide-react";
 
 interface ProfitSimulatorProps {
   symbol: string;
   initialCapital?: number;
   initialHorizon?: number;
+  onSaveSimulation?: (sim: SimulationResult) => void;
 }
 
-const CAPITAL_PRESETS = [10000, 25000, 50000, 100000, 500000];
+const CAPITAL_PRESETS = [10000, 25000, 50000, 100000, 250000, 500000];
 const HORIZON_SEGMENTS = [
   { label: "1M", months: 1, title: "Tactical" },
   { label: "3M", months: 3, title: "Quarterly" },
@@ -35,10 +40,12 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   symbol,
   initialCapital = 100000,
   initialHorizon = 12,
+  onSaveSimulation,
 }) => {
   const [capital, setCapital] = useState<number>(initialCapital);
   const [horizonMonths, setHorizonMonths] = useState<number>(initialHorizon);
   const [riskTolerance, setRiskTolerance] = useState<RiskTolerance>("Moderate");
+  const [isSaved, setIsSaved] = useState(false);
 
   const { data: simData } = useQuery({
     queryKey: ["profit-sim", symbol, capital, horizonMonths, riskTolerance],
@@ -46,11 +53,34 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
     enabled: Boolean(symbol) && capital > 0 && horizonMonths > 0,
   });
 
+  const handleSave = () => {
+    if (!simData) return;
+    confetti({
+      particleCount: 80,
+      spread: 60,
+      origin: { y: 0.75 },
+      colors: ["#6366F1", "#10B981", "#3B82F6"],
+    });
+    setIsSaved(true);
+    if (onSaveSimulation) {
+      onSaveSimulation(simData);
+    }
+    setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  // Compute Target Calendar Date
+  const targetDate = new Date();
+  targetDate.setMonth(targetDate.getMonth() + horizonMonths);
+  const targetDateStr = targetDate.toLocaleDateString("en-IN", {
+    month: "short",
+    year: "numeric",
+  });
+
   return (
     <div className="space-y-6">
       {/* Control Deck Card */}
       <div className="bg-white rounded-2xl border border-border shadow-card p-6 space-y-6">
-        <div className="flex items-center justify-between border-b border-border/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 pb-4">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-brand-50 text-brand-600 border border-brand-100">
               <Calculator className="w-5 h-5" />
@@ -65,9 +95,24 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
 
-          <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-            {formatHorizon(horizonMonths)} Horizon
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold font-mono px-3 py-1 rounded-full bg-slate-100 text-slate-700 flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              Target: {targetDateStr} ({formatHorizon(horizonMonths)})
+            </span>
+
+            <button
+              onClick={handleSave}
+              className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                isSaved
+                  ? "bg-profit-50 text-profit-700 border-profit-300"
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              }`}
+            >
+              {isSaved ? <Check className="w-3.5 h-3.5 text-profit-600" /> : <BookmarkPlus className="w-3.5 h-3.5 text-brand-600" />}
+              <span>{isSaved ? "Saved!" : "Save Strategy"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Inputs Grid */}

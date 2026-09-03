@@ -2,14 +2,21 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMarketStatus, getCustomApiKey } from "../services/api";
 import { formatINR, formatPct } from "../utils/formatters";
-import { Activity, Settings, Sparkles, TrendingUp, TrendingDown, Layers } from "lucide-react";
+import { Activity, Settings, Sparkles, TrendingUp, TrendingDown, Layers, BookmarkCheck } from "lucide-react";
 
 interface NavbarProps {
   onOpenSettings: () => void;
+  onOpenVault: () => void;
+  vaultCount: number;
   geminiConfigured: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings, geminiConfigured }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  onOpenSettings,
+  onOpenVault,
+  vaultCount,
+  geminiConfigured,
+}) => {
   const { data: market } = useQuery({
     queryKey: ["market-status"],
     queryFn: fetchMarketStatus,
@@ -22,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings, geminiConfigured
   const isNiftyPos = (market?.nifty_change_pct ?? 0) >= 0;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-soft">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-border shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
@@ -100,8 +107,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings, geminiConfigured
             )}
           </div>
 
-          {/* Right Action: Gemini Status & Settings */}
+          {/* Right Actions */}
           <div className="flex items-center gap-2.5">
+            {/* Strategy Vault Button */}
+            <button
+              onClick={onOpenVault}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800 transition-all shadow-xs"
+            >
+              <BookmarkCheck className="w-4 h-4 text-brand-600" />
+              <span className="hidden sm:inline">Vault</span>
+              {vaultCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full bg-brand-600 text-white text-[10px] font-mono">
+                  {vaultCount}
+                </span>
+              )}
+            </button>
+
+            {/* Gemini Status Pill */}
             <div
               onClick={onOpenSettings}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border cursor-pointer transition-all ${
@@ -113,10 +135,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSettings, geminiConfigured
             >
               <Sparkles className={`w-3.5 h-3.5 ${isAiActive ? "text-emerald-600" : "text-amber-500"}`} />
               <span className="text-[11px] font-bold">
-                {isAiActive ? "Gemini 2.5 Active" : "Quant Engine"}
+                {isAiActive ? "Gemini Active" : "Quant Engine"}
               </span>
             </div>
 
+            {/* Settings Button */}
             <button
               onClick={onOpenSettings}
               className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-border transition-colors"
