@@ -42,9 +42,9 @@ export const WatchlistVaultModal: React.FC<WatchlistVaultModalProps> = ({
       "Horizon_Months",
       "Risk_Mode",
       "Base_Target_Price",
-      "Base_Profit_INR",
+      "Base_Net_Profit_INR",
       "Bull_Target_Price",
-      "Bull_Profit_INR",
+      "Bull_Net_Profit_INR",
       "Stop_Loss_Price",
     ];
 
@@ -55,9 +55,9 @@ export const WatchlistVaultModal: React.FC<WatchlistVaultModalProps> = ({
       s.horizon_months,
       s.risk_tolerance,
       s.base_case.target_price,
-      s.base_case.absolute_profit,
+      s.base_case.net_in_hand_profit,
       s.bull_case.target_price,
-      s.bull_case.absolute_profit,
+      s.bull_case.net_in_hand_profit,
       s.bear_case.target_price,
     ]);
 
@@ -154,9 +154,9 @@ export const WatchlistVaultModal: React.FC<WatchlistVaultModalProps> = ({
                     {/* Projections */}
                     <div className="flex items-center gap-6 self-end sm:self-center">
                       <div className="text-right">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Base Profit</span>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Base Post-Tax</span>
                         <span className="text-sm font-extrabold font-mono text-brand-600">
-                          +{formatINR(sim.base_case.absolute_profit)}
+                          +{formatINR(sim.base_case.net_in_hand_profit)}
                         </span>
                         <span className="text-[10px] text-brand-700/80 block font-mono">
                           Target: {formatINR(sim.base_case.target_price)}
@@ -164,9 +164,9 @@ export const WatchlistVaultModal: React.FC<WatchlistVaultModalProps> = ({
                       </div>
 
                       <div className="text-right">
-                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Bull Target</span>
+                        <span className="text-[10px] font-bold uppercase text-slate-400 block">Bull Post-Tax</span>
                         <span className="text-sm font-extrabold font-mono text-profit-600">
-                          +{formatINR(sim.bull_case.absolute_profit)}
+                          +{formatINR(sim.bull_case.net_in_hand_profit)}
                         </span>
                         <span className="text-[10px] text-profit-700/80 block font-mono">
                           Target: {formatINR(sim.bull_case.target_price)}

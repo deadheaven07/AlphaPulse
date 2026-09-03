@@ -8,6 +8,7 @@ from backend.app.quant.data_engine import (
 )
 from backend.app.quant.technicals import get_technical_summary
 from backend.app.quant.sector_rrg import analyze_sector_rrg
+from backend.app.quant.quality_filters import evaluate_quality_filters
 
 router = APIRouter(prefix="/api/stocks", tags=["stocks"])
 
@@ -19,10 +20,12 @@ def get_quote(symbol: str = Query(..., description="Stock symbol (e.g. TATAMOTOR
     df = fetch_historical_dataframe(symbol)
     technicals = get_technical_summary(df)
     rrg = analyze_sector_rrg(quote.get("sector", "General"))
+    quality = evaluate_quality_filters(symbol, quote)
     
     quote_copy = dict(quote)
     quote_copy["technicals"] = technicals
     quote_copy["sector_rrg"] = rrg
+    quote_copy["quality_filters"] = quality
     return quote_copy
 
 @router.get("/search")
@@ -61,3 +64,8 @@ def get_stock_technicals(symbol: str = Query(..., description="Stock symbol")):
 @router.get("/sector-rrg")
 def get_rrg(sector: str = Query(..., description="Sector name")):
     return analyze_sector_rrg(sector)
+
+@router.get("/quality")
+def get_quality(symbol: str = Query(..., description="Stock symbol")):
+    quote = fetch_live_quote(symbol)
+    return evaluate_quality_filters(symbol, quote)

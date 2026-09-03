@@ -10,7 +10,9 @@ import {
   Sliders,
   Compass,
   ChevronDown,
-  Star
+  Star,
+  Award,
+  Truck
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -83,12 +85,14 @@ export const StockOverviewCard: React.FC<StockOverviewCardProps> = ({
     Lagging: "bg-risk-50 text-risk-700 border-risk-200",
   };
 
+  const quality = quote.quality_filters;
+
   return (
     <div className="bg-white rounded-2xl border border-border shadow-card p-6 space-y-6">
       {/* Top Header & Stock Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 pb-5">
         <div className="space-y-1">
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-sans tracking-tight">
               {quote.symbol}
             </h1>
@@ -98,6 +102,22 @@ export const StockOverviewCard: React.FC<StockOverviewCardProps> = ({
             <span className="px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 text-xs font-semibold border border-brand-100">
               {quote.sector}
             </span>
+
+            {/* Delivery % Badge */}
+            {quality && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1">
+                <Truck className="w-3.5 h-3.5 text-brand-600" />
+                {quality.delivery_pct}% Delivery
+              </span>
+            )}
+
+            {/* Piotroski Badge */}
+            {quality && (
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <Award className="w-3.5 h-3.5 text-emerald-600" />
+                Piotroski {quality.piotroski_score}/9
+              </span>
+            )}
 
             {/* RRG Sector Quadrant Badge */}
             {rrg && (

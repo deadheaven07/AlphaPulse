@@ -12,6 +12,7 @@ class AiQueryRequest(BaseModel):
     api_key_override: Optional[str] = Field(default=None, description="Custom API key from UI settings")
 
 @router.post("/analyze")
+@router.post("/ask")
 async def analyze_query(req: AiQueryRequest):
     return await generate_ai_analysis(
         query=req.query,
