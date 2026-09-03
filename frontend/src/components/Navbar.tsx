@@ -2,13 +2,13 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMarketStatus, getCustomApiKey } from "../services/api";
 import { formatINR, formatPct } from "../utils/formatters";
+import { AlphaLogo } from "./AlphaLogo";
 import {
   Activity,
   Settings,
   Sparkles,
   TrendingUp,
   TrendingDown,
-  Layers,
   Briefcase,
   Sun,
   Moon
@@ -46,25 +46,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-40 bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border-b border-border dark:border-border-dark shadow-soft transition-colors duration-300">
       <div className="max-w-7xl 3xl:max-w-[1900px] ultrawide:max-w-[2400px] mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-2">
-          {/* Brand Logo */}
-          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl gradient-emerald-gold flex items-center justify-center text-white shadow-md shadow-emerald-500/25">
-              <Layers className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white font-sans">
-                  Alpha<span className="text-emerald-600 dark:text-emerald-400">Pulse</span> India
-                </span>
-                <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider rounded bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  Pro 3D
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-muted dark:text-muted-dark -mt-0.5 font-medium hidden xs:block">
-                Institutional Equity & ROI Engine
-              </p>
-            </div>
-          </div>
+          {/* Redesigned Luxury Brand Logo */}
+          <AlphaLogo size="md" showText={true} className="shrink-0" />
 
           {/* Center Market & Institutional Sentiment */}
           <div className="hidden lg:flex items-center gap-3 xl:gap-4">
