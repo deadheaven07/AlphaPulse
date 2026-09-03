@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { RealTimeRadarKPIs } from "../components/RealTimeRadarKPIs";
 import { PennyStocksRadar } from "../components/PennyStocksRadar";
-import { Radar, Coins } from "lucide-react";
+import { InsiderDealsRadar } from "../components/InsiderDealsRadar";
+import { Radar, Coins, UserCheck } from "lucide-react";
 
 interface RadarPageProps {
   onSelectStock: (symbol: string, budget?: number) => void;
@@ -14,7 +15,7 @@ export const RadarPage: React.FC<RadarPageProps> = ({
   capital,
   onCapitalChange,
 }) => {
-  const [activeTab, setActiveTab] = useState<"leaders" | "penny">("leaders");
+  const [activeTab, setActiveTab] = useState<"leaders" | "penny" | "insider">("leaders");
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -30,17 +31,17 @@ export const RadarPage: React.FC<RadarPageProps> = ({
                 Quantitative Stock Screeners & Radar
               </h1>
               <p className="text-xs text-muted dark:text-muted-dark">
-                Institutional 5-factor scoring engine & vetted small-cap turnaround filter
+                Institutional 5-factor scoring, promoter insider buys & vetted small-cap turnaround filter
               </p>
             </div>
           </div>
         </div>
 
         {/* Screener Category Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-surface-elevated border border-slate-200 dark:border-border-dark self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-surface-elevated border border-slate-200 dark:border-border-dark self-start sm:self-auto overflow-x-auto">
           <button
             onClick={() => setActiveTab("leaders")}
-            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               activeTab === "leaders"
                 ? "bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-xs"
                 : "text-slate-600 dark:text-muted-dark hover:text-slate-900 dark:hover:text-white"
@@ -51,8 +52,20 @@ export const RadarPage: React.FC<RadarPageProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab("insider")}
+            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+              activeTab === "insider"
+                ? "bg-white dark:bg-emerald-600 text-slate-900 dark:text-white shadow-xs"
+                : "text-slate-600 dark:text-muted-dark hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>Insider & Bulk Deals</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("penny")}
-            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 rounded-lg text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
               activeTab === "penny"
                 ? "bg-white dark:bg-amber-600 text-slate-900 dark:text-white shadow-xs"
                 : "text-slate-600 dark:text-muted-dark hover:text-slate-900 dark:hover:text-white"
@@ -75,7 +88,16 @@ export const RadarPage: React.FC<RadarPageProps> = ({
         </section>
       )}
 
-      {/* Tab 2: Vetted Sub-₹150 Opportunities */}
+      {/* Tab 2: Trendlyne-Style Insider Buying & Bulk Deals */}
+      {activeTab === "insider" && (
+        <section className="space-y-4">
+          <InsiderDealsRadar
+            onSelectStock={(sym) => onSelectStock(sym)}
+          />
+        </section>
+      )}
+
+      {/* Tab 3: Vetted Sub-₹150 Opportunities */}
       {activeTab === "penny" && (
         <section className="space-y-4">
           <PennyStocksRadar

@@ -1,15 +1,39 @@
+import time
+import os
 from typing import Dict, Any, List
 from .data_engine import fetch_live_quotes_batch, fetch_historical_dataframe
 from .news_engine import analyze_stock_news_sentiment
 from .technicals import detect_breakout
 from .crowd_psychology_engine import analyze_news_crowd_psychology
-from backend.app.db.database import get_active_tactical_swings, get_prebuy_tactical_swings
+from backend.app.db.database import get_active_tactical_swings, get_prebuy_tactical_swings, get_setting
+from backend.app.core.telegram_notifier import (
+    send_telegram_alert,
+    format_buy_trigger_msg,
+    format_profit_target_msg,
+    format_emergency_exit_msg
+)
 
-DANGER_KEYWORDS = [
-    "investigation", "penalty", "fraud", "litigation", "probe",
-    "scam", "default", "downgrade", "sebi", "raids", "loss widens",
-    "resignation", "cyberattack", "hack"
-]
+# In-memory tracking of dispatched Telegram alerts (alert_id -> timestamp)
+_DISPATCHED_TELEGRAM_ALERTS: Dict[str, float] = {}
+
+def _try_dispatch_telegram(alert_id: str, message_text: str):
+    """Helper to dispatch screen-off Telegram phone alert once per trigger event."""
+    now = time.time()
+    # Clean up entries older than 1 hour
+    stale_keys = [k for k, t in _DISPATCHED_TELEGRAM_ALERTS.items() if now - t > 3600]
+    for k in stale_keys:
+        _DISPATCHED_TELEGRAM_ALERTS.pop(k, None)
+
+    if alert_id in _DISPATCHED_TELEGRAM_ALERTS:
+        return
+
+    bot_token = get_setting("telegram_bot_token") or os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = get_setting("telegram_chat_id") or os.environ.get("TELEGRAM_CHAT_ID", "")
+
+    if bot_token and chat_id:
+        success = send_telegram_alert(bot_token, chat_id, message_text)
+        if success:
+            _DISPATCHED_TELEGRAM_ALERTS[alert_id] = now
 
 def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -78,8 +102,9 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
 
             # Trigger condition: market price is at or below entry_high and above safety floor (entry_low * 0.985)
             if current_price <= entry_high and current_price >= (entry_low * 0.985):
+                alert_id = f"buy-trigger-{sym}-{int(current_price)}"
                 alerts.append({
-                    "id": f"buy-trigger-{sym}-{int(current_price)}",
+                    "id": alert_id,
                     "symbol": sym,
                     "company_name": quote.get("company_name", sym),
                     "alert_type": "BUY_TRIGGER_HIT",
@@ -91,6 +116,17 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                     "message": f"ENTRY DISCIPLINE: {sym} is trading at ₹{current_price:,.2f} (Inside your ₹{entry_low:,.2f} – ₹{entry_high:,.2f} target pocket). Open Zerodha/Groww and BUY NOW!",
                     "recommended_action": "BUY_NOW"
                 })
+                _try_dispatch_telegram(
+                    alert_id,
+                    format_buy_trigger_msg(
+                        symbol=sym,
+                        live_price=current_price,
+                        entry_low=entry_low,
+                        entry_high=entry_high,
+                        target_1=round(current_price * 1.055, 2),
+                        stop_loss=round(current_price * 0.975, 2)
+                    )
+                )
         except Exception:
             continue
 
@@ -118,8 +154,9 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
             # Trigger 1: Target Reached (Deterministic ID)
             if current_price >= target_price and target_price > entry_price:
                 target_fp = round(target_price, 2)
+                alert_id = f"target-{sym}-{target_fp}"
                 alerts.append({
-                    "id": f"target-{sym}-{target_fp}",
+                    "id": alert_id,
                     "symbol": sym,
                     "company_name": quote.get("company_name", sym),
                     "alert_type": "PROFIT_TARGET",
@@ -137,12 +174,23 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                     ),
                     "recommended_action": "LOCK_IN_PROFIT"
                 })
+                _try_dispatch_telegram(
+                    alert_id,
+                    format_profit_target_msg(
+                        symbol=sym,
+                        live_price=current_price,
+                        target_price=target_price,
+                        pnl_pct=pnl_pct,
+                        pnl_inr=pnl_inr
+                    )
+                )
 
             # Trigger 2: Stop-Loss Breach (Urgent Discipline, Deterministic ID)
             elif current_price <= stop_loss and stop_loss < entry_price:
                 sl_fp = round(stop_loss, 2)
+                alert_id = f"sl-{sym}-{sl_fp}"
                 alerts.append({
-                    "id": f"sl-{sym}-{sl_fp}",
+                    "id": alert_id,
                     "symbol": sym,
                     "company_name": quote.get("company_name", sym),
                     "alert_type": "STOP_LOSS_BREACH",
@@ -155,6 +203,15 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                     "message": f"DISCIPLINE ALERT: {sym} dropped to ₹{current_price:,.2f}, breaching stop-loss floor of ₹{stop_loss:,.2f} ({pnl_pct}%). Guru Rule #1: Exit immediately to preserve capital!",
                     "recommended_action": "EXIT_IMMEDIATELY"
                 })
+                _try_dispatch_telegram(
+                    alert_id,
+                    format_emergency_exit_msg(
+                        symbol=sym,
+                        reason=f"Price dropped to ₹{current_price:,.2f}, breaching stop-loss floor of ₹{stop_loss:,.2f} ({pnl_pct}%)",
+                        current_price=current_price,
+                        stop_loss=stop_loss
+                    )
+                )
 
             # Trigger 3: Breaking News Threat & Crowd Psychology Reaction
             news = analyze_stock_news_sentiment(sym, quote)
@@ -175,8 +232,9 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                 if psychology["sentiment_category"] == "FATAL_RISK":
                     threat_found = True
                     title_hash = abs(hash(title_str)) % 100000
+                    alert_id = f"fatal-{sym}-{title_hash}"
                     alerts.append({
-                        "id": f"fatal-{sym}-{title_hash}",
+                        "id": alert_id,
                         "symbol": sym,
                         "company_name": quote.get("company_name", sym),
                         "alert_type": "FATAL_RISK",
@@ -187,6 +245,15 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                         "message": psychology["guru_explanation"],
                         "recommended_action": "DUMP_IMMEDIATELY"
                     })
+                    _try_dispatch_telegram(
+                        alert_id,
+                        format_emergency_exit_msg(
+                            symbol=sym,
+                            reason=psychology["guru_explanation"],
+                            current_price=current_price,
+                            stop_loss=stop_loss
+                        )
+                    )
                     break
                 elif psychology["sentiment_category"] == "BEAR_TRAP_NOISE":
                     threat_found = True

@@ -48,6 +48,8 @@ Thumbs.db
 # Logs & Temporary Files
 logs/
 *.log
+scratch/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

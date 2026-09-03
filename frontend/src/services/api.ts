@@ -25,7 +25,10 @@ import type {
   TacticalSwingItem,
   CrowdPsychologyResult,
   HoldingExtensionEvaluation,
-  CategorizedTacticalSwings
+  CategorizedTacticalSwings,
+  InsiderDealItem,
+  OptionChainPcrResult,
+  TelegramConfig
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -427,5 +430,58 @@ export async function analyzeNewsCrowdPsychology(payload: {
   if (!res.ok) throw new Error("Failed to analyze crowd psychology");
   return res.json();
 }
+
+// --- Institutional Superpowers: Telegram, Insider Radar & Option Chain PCR ---
+
+export async function fetchInsiderDeals(): Promise<InsiderDealItem[]> {
+  const res = await fetch(`${API_BASE}/institutional/insider-deals`);
+  if (!res.ok) throw new Error("Failed to fetch insider & bulk deals");
+  return res.json();
+}
+
+export async function fetchOptionChainPcr(): Promise<OptionChainPcrResult> {
+  const res = await fetch(`${API_BASE}/institutional/option-chain-pcr`);
+  if (!res.ok) throw new Error("Failed to fetch NSE option chain PCR");
+  return res.json();
+}
+
+export async function testTelegramPing(
+  botToken: string,
+  chatId: string
+): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/institutional/test-telegram`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      bot_token: botToken,
+      chat_id: chatId
+    })
+  });
+  if (!res.ok) throw new Error("Failed to execute Telegram test");
+  return res.json();
+}
+
+export async function saveTelegramConfig(
+  botToken: string,
+  chatId: string
+): Promise<{ status: string }> {
+  const res = await fetch(`${API_BASE}/institutional/save-telegram-config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      bot_token: botToken,
+      chat_id: chatId
+    })
+  });
+  if (!res.ok) throw new Error("Failed to save Telegram config");
+  return res.json();
+}
+
+export async function fetchTelegramConfig(): Promise<TelegramConfig> {
+  const res = await fetch(`${API_BASE}/institutional/get-telegram-config`);
+  if (!res.ok) throw new Error("Failed to fetch Telegram config");
+  return res.json();
+}
+
 
 

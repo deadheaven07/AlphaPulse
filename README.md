@@ -82,7 +82,23 @@ graph TD
 
 ---
 
-### 2. 🧠 Crowd Psychology & Negative News Classifier
+### 2. 🏛️ 3 Free Institutional Superpowers (Zero-Subscription Pro Tools)
+- **📱 1. Free Phone Alerts via Private Telegram Bot (Screen-OFF Notifications)**:
+  - Delivers instant notifications & audio signals directly to your phone via a private Telegram Bot.
+  - Rings with **Buy Trigger Entry**, **Target 1 Hit (+5.5%)**, and **Hard Stop-Loss Sirens** even when your computer is asleep or closed.
+  - Zero cost, zero Twilio/SMS subscriptions — configured in 60 seconds with `@BotFather` & `@userinfobot`.
+- **📊 2. Free Daily Insider Buying & Institutional Bulk Deals Radar (Trendlyne Style)**:
+  - Scrapes exchange Form C insider disclosures and Mutual Fund/FII bulk block deals daily.
+  - Highlights promoter buying (Mazagon Dock, Coal India, Tata Power) and institutional accumulation (BEL, Trent, Dixon, Titagarh).
+  - Stocks with verified promoter accumulation receive a **+15 point boost** in the Tactical Momentum ranking algorithm.
+- **🌊 3. Free NSE Option Chain Put-Call Ratio (PCR) & Max Pain Barometer (Sensibull Style)**:
+  - Parses real-time Nifty Put & Call Open Interest (OI) contracts to gauge macro derivatives sentiment.
+  - Computes exact **Put-Call Ratio (PCR)**: $\ge 1.25$ indicates Oversold Market Floor / Bullish Support; $\le 0.75$ indicates Overbought Resistance.
+  - Pins the weekly Thursday **Max Pain Expiry Magnet Strike** directly on the Overview Dashboard.
+
+---
+
+### 3. 🧠 Crowd Psychology & Negative News Classifier
 - **Fatal Traps** (*SEBI raids, forensic audits, promoter dumping, CBI probes*):
   - Predicts **85–95% Retail Panic Dump & Circuit Lock** $\rightarrow$ **Guru Command: `DUMP_IMMEDIATELY`**.
 - **Overreaction Bear Trap Noise** (*Routine GST queries, single-quarter raw material cost dip in monopoly blue chips*):
@@ -90,7 +106,7 @@ graph TD
 
 ---
 
-### 3. 🎯 Goal Planner & Exact Actuarial SIP Solver
+### 4. 🎯 Goal Planner & Exact Actuarial SIP Solver
 - **True Monthly Compounding Formula**:
   Replaces naive linear approximations with the actuarial future-value solver:
   $$FV = P \cdot (1+r)^n + \text{SIP} \cdot \left[\frac{(1 + r_m)^{12n} - 1}{r_m}\right] \cdot (1 + r_m)$$
@@ -100,7 +116,7 @@ graph TD
 
 ---
 
-### 4. 💼 Demat Portfolio Vault & Two-Tab Tactical Center
+### 5. 💼 Demat Portfolio Vault & Two-Tab Tactical Center
 - **Real-Time Market Valuation & P&L**:
   - Synchronizes live market LTP, day change %, current valuation, and color-coded net profit/loss badges.
 - **Two-Tab Tactical Center**:
@@ -114,7 +130,7 @@ graph TD
 
 ---
 
-### 5. 🔬 1,000-Path Stochastic Monte Carlo Simulation
+### 6. 🔬 1,000-Path Stochastic Monte Carlo Simulation
 - **Geometric Brownian Motion (GBM)**:
   $$S_t = S_0 \exp\left(\left(\mu - \frac{\sigma^2}{2}\right)t + \sigma \sqrt{t} Z\right)$$
 - **Statistical Percentiles**:
@@ -124,7 +140,7 @@ graph TD
 
 ---
 
-### 6. 🇮🇳 Budget 2024 Statutory Post-Tax & Friction Engine
+### 7. 🇮🇳 Budget 2024 Statutory Post-Tax & Friction Engine
 Accurately accounts for every statutory levy on Indian exchanges:
 - **Securities Transaction Tax (STT)**: 0.1% on delivery turnover.
 - **Exchange Turnover Fees**: ~0.00345% (NSE).

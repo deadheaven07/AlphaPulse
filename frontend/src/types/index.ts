@@ -565,6 +565,40 @@ export interface ConversationalChatResponse {
   follow_up_chips: string[];
 }
 
+export interface InsiderDealItem {
+  symbol: string;
+  company_name: string;
+  deal_type: "PROMOTER_BUY" | "BULK_DEAL" | "BLOCK_DEAL" | string;
+  action: string;
+  entity: string;
+  shares: number;
+  value_crores: number;
+  price: number;
+  sentiment: string;
+  date: string;
+  notes: string;
+}
+
+export interface OptionChainPcrResult {
+  spot_price: number;
+  total_call_oi: number;
+  total_put_oi: number;
+  pcr: number;
+  sentiment: "BULLISH_OVERSOLD" | "BEARISH_OVERBOUGHT" | "NEUTRAL_EQUILIBRIUM" | string;
+  sentiment_color: "emerald" | "rose" | "teal" | string;
+  verdict: string;
+  max_pain_strike: number;
+  expiry_note: string;
+}
+
+export interface TelegramConfig {
+  is_configured: boolean;
+  bot_token?: string;
+  masked_bot_token?: string;
+  chat_id?: string;
+}
+
+
 
 
 

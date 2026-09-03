@@ -72,6 +72,13 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
         # Schema migration check for existing columns
         cursor.execute("PRAGMA table_info(tactical_swings)")
@@ -86,6 +93,33 @@ def init_db() -> None:
             cursor.execute("ALTER TABLE tactical_swings ADD COLUMN extended_days INTEGER DEFAULT 0")
 
         conn.commit()
+
+def get_setting(key: str, default: Optional[str] = None) -> Optional[str]:
+    """Fetch setting value by key from SQLite."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM app_settings WHERE key = ?", (key,))
+        row = cursor.fetchone()
+        return row["value"] if row else default
+
+def set_setting(key: str, value: str) -> None:
+    """Store or update setting value by key in SQLite."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO app_settings (key, value, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+        """, (key, value))
+        conn.commit()
+
+def get_all_settings() -> Dict[str, str]:
+    """Fetch all saved app settings from SQLite."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT key, value FROM app_settings")
+        rows = cursor.fetchall()
+        return {row["key"]: row["value"] for row in rows}
 
 def get_holdings() -> List[Dict[str, Any]]:
     with get_connection() as conn:

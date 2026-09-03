@@ -3,6 +3,7 @@ from typing import Dict, Any, List, Optional
 from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.taxes_charges import calculate_indian_taxes_and_charges
 from backend.app.quant.crowd_psychology_engine import analyze_news_crowd_psychology
+from backend.app.quant.insider_deals_engine import check_stock_insider_support
 
 # Comprehensive 65+ Liquid High-Momentum Universe across 10 Major Sectors
 EXPANDED_NSE_UNIVERSE = [
@@ -147,9 +148,12 @@ def scan_live_market_tactical_leaders(
                 high_52 = q.get("high_52", price * 1.10)
                 proximity_52 = (price / high_52) * 100.0 if high_52 > 0 else 85.0
 
-                # Dynamic Momentum Algorithm
-                # Higher score = stronger day breakout + near 52W high + high beta acceleration
-                momentum_score = (change_pct * 4.0) + (proximity_52 * 0.5) + (cand["beta"] * 10.0)
+                # Check Trendlyne-style Promoter Buying & Institutional Bulk Deals Support
+                insider_info = check_stock_insider_support(cand["symbol"])
+                insider_bonus = insider_info.get("score_bonus", 0.0)
+
+                # Dynamic Momentum Algorithm with +15 Insider Conviction Boost
+                momentum_score = (change_pct * 4.0) + (proximity_52 * 0.5) + (cand["beta"] * 10.0) + insider_bonus
                 scored_candidates.append((momentum_score, cand, q))
             except Exception:
                 continue
@@ -258,6 +262,7 @@ def scan_live_market_tactical_leaders(
         "net_in_hand_profit": round(net_in_hand, 2),
         "catalyst": winner_cand["catalyst"],
         "crowd_psychology": psychology,
+        "insider_support": check_stock_insider_support(sym),
         "scanned_universe_count": len(EXPANDED_NSE_UNIVERSE),
         "runner_ups": alternatives,
         "guru_thesis": guru_thesis
