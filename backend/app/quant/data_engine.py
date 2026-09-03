@@ -365,13 +365,13 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
                 "high_52w": round(float(fast_info.year_high or info.get("fiftyTwoWeekHigh", price * 1.25)), 2),
                 "low_52w": round(float(fast_info.year_low or info.get("fiftyTwoWeekLow", price * 0.75)), 2),
                 "market_cap_cr": mcap_cr or bench.get("market_cap_cr", 50000),
-                "pe": round(float(info.get("trailingPE") or bench.get("pe", 24.5)), 1),
+                "pe": round(float(info.get("trailingPE") if info.get("trailingPE") is not None else bench.get("pe", 24.5)), 1),
                 "sector_pe": bench.get("sector_pe", 25.0),
-                "roce": round(float(info.get("returnOnAssets", 0) * 100 or bench.get("roce", 18.0)), 1),
-                "roe": round(float(info.get("returnOnEquity", 0) * 100 or bench.get("roe", 16.5)), 1),
-                "debt_to_equity": round(float(info.get("debtToEquity", 0) / 100 if info.get("debtToEquity") else bench.get("debt_to_equity", 0.4)), 2),
+                "roce": round(float((info.get("returnOnAssets") * 100) if info.get("returnOnAssets") is not None else bench.get("roce", 18.0)), 1),
+                "roe": round(float((info.get("returnOnEquity") * 100) if info.get("returnOnEquity") is not None else bench.get("roe", 16.5)), 1),
+                "debt_to_equity": round(float((info.get("debtToEquity") / 100) if info.get("debtToEquity") is not None else bench.get("debt_to_equity", 0.4)), 2),
                 "volume": int(fast_info.last_volume or info.get("volume", 1500000)),
-                "beta": round(float(info.get("beta") or bench.get("beta", 1.0)), 2),
+                "beta": round(float(info.get("beta") if info.get("beta") is not None else bench.get("beta", 1.0)), 2),
                 "cagr_3y": bench.get("cagr_3y", 18.0),
                 "description": info.get("longBusinessSummary") or bench.get("description", f"{symbol} equity trading on NSE.")
             }

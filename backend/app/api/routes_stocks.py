@@ -44,8 +44,12 @@ def get_candles(
 ):
     df = fetch_historical_dataframe(symbol, period=period, interval=interval)
     points = []
+    is_intraday = interval in ["1m", "2m", "5m", "15m", "30m", "60m", "1h"] or period in ["1d", "5d"]
     for idx, row in df.iterrows():
-        date_str = idx.strftime("%d %b %Y") if hasattr(idx, "strftime") else str(idx)
+        if hasattr(idx, "strftime"):
+            date_str = idx.strftime("%H:%M" if period == "1d" else ("%d %b %H:%M" if is_intraday else "%d %b %Y"))
+        else:
+            date_str = str(idx)
         points.append({
             "date": date_str,
             "open": round(float(row["Open"]), 2),

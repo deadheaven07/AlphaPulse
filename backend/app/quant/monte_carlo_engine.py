@@ -95,7 +95,7 @@ def run_monte_carlo_simulation(
 
     # Expected Value (Probability weighted: 25% Bull, 50% Base, 25% Bear)
     expected_profit = round(
-        (0.25 * base_tax["net_in_hand_profit"]) +
+        (0.25 * bull_tax["net_in_hand_profit"]) +
         (0.50 * base_tax["net_in_hand_profit"]) +
         (0.25 * bear_tax["net_in_hand_profit"]),
         2

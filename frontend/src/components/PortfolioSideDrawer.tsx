@@ -34,7 +34,7 @@ export const PortfolioSideDrawer: React.FC<PortfolioSideDrawerProps> = ({
   onClearAll,
 }) => {
   const [activeTab, setActiveTab] = useState<"strategies" | "watchlist">("strategies");
-  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const drawerRef = useRef<HTMLElement | null>(null);
 
   // Escape key listener & Body scroll lock
   useEffect(() => {

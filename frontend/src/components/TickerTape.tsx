@@ -97,7 +97,9 @@ export const TickerTape: React.FC<TickerTapeProps> = ({ onSelectSymbol }) => {
                   </span>
 
                   <span className="font-mono text-slate-600 dark:text-muted-dark">
-                    {formatINR(item.price)}
+                    {item.symbol === "INDIA VIX" || item.symbol.includes("VIX")
+                      ? item.price.toFixed(2)
+                      : formatINR(item.price)}
                   </span>
 
                   <span
