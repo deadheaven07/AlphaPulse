@@ -9,8 +9,8 @@
   }
 
   .dark {
-    --bg-canvas: #0C101A;
-    --text-primary: #E2E8F0;
+    --bg-canvas: #121417;
+    --text-primary: #EDEDF0;
   }
 
   body {
@@ -39,13 +39,13 @@
   background: rgba(100, 116, 139, 0.6);
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(71, 85, 105, 0.4);
+  background: rgba(75, 85, 99, 0.45);
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(129, 140, 248, 0.6);
+  background: rgba(16, 185, 129, 0.6);
 }
 
-/* 3D Application & Glassmorphism Utilities (Eye-Friendly & Soothing) */
+/* 3D Application & Glassmorphism Utilities (Warm Charcoal & Emerald Gold) */
 .glass-panel-3d {
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(16px);
@@ -56,11 +56,11 @@
 }
 
 .dark .glass-panel-3d {
-  background: rgba(20, 26, 41, 0.85);
+  background: rgba(26, 29, 36, 0.88);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.35), 0 0 1px 1px rgba(255, 255, 255, 0.03) inset;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(255, 255, 255, 0.03) inset;
 }
 
 .glass-card-hover {
@@ -73,13 +73,13 @@
 }
 
 .dark .glass-card-hover:hover {
-  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(129, 140, 248, 0.25) inset;
-  border-color: rgba(129, 140, 248, 0.3);
+  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3) inset;
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 /* Modal Popup 3D Zoom Effect */
 .modal-3d-backdrop {
-  background: rgba(12, 16, 26, 0.75);
+  background: rgba(18, 20, 23, 0.82);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -106,6 +106,10 @@
   }
 }
 
+.gradient-emerald-gold {
+  background: linear-gradient(135deg, #10B981 0%, #059669 50%, #D97706 100%);
+}
+
 /* Shimmer Loading Skeleton */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
@@ -119,7 +123,7 @@
 }
 
 .dark .skeleton-shimmer {
-  background: linear-gradient(90deg, #1E2436 25%, #2A334A 50%, #1E2436 75%);
+  background: linear-gradient(90deg, #222630 25%, #2D3342 50%, #222630 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }

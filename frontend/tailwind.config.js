@@ -21,36 +21,38 @@ export default {
       colors: {
         canvas: {
           DEFAULT: "#F8FAFC",
-          dark: "#0C101A", // Soothing warm midnight charcoal
+          dark: "#121417", // Warm volcanic matte carbon (Zero blue light)
         },
         surface: {
           DEFAULT: "#FFFFFF",
-          dark: "#141A29", // Gentle elevated slate card
-          elevated: "#1D2436",
+          dark: "#1A1D24", // Warm elevated charcoal card
+          elevated: "#222733",
         },
         border: {
           DEFAULT: "#E2E8F0",
-          dark: "#232D42", // Soft matte border (zero eye glare)
+          dark: "#2A303F", // Soft warm border
         },
         muted: {
           DEFAULT: "#64748B",
-          dark: "#8E9EB5", // Calming soft silver-slate
+          dark: "#9E9EA7", // Soft warm silver
         },
         subtle: {
           DEFAULT: "#94A3B8",
-          dark: "#627188",
+          dark: "#6B7280",
         },
         brand: {
-          50: "#EEF2FF",
-          100: "#E0E7FF",
-          200: "#C7D2FE",
-          300: "#A5B4FC",
-          400: "#818CF8",
-          500: "#6366F1",
-          600: "#4F46E5",
-          700: "#4338CA",
-          800: "#3730A3",
-          900: "#312E81",
+          50: "#ECFDF5",
+          100: "#D1FAE5",
+          200: "#A7F3D0",
+          300: "#6EE7B7",
+          400: "#34D399",
+          500: "#10B981", // Rich Forest Emerald & Gold accent instead of blue
+          600: "#059669",
+          700: "#047857",
+          800: "#065F46",
+          900: "#064E3B",
+          gold: "#D97706",
+          amber: "#F59E0B",
         },
         profit: {
           50: "#ECFDF5",
@@ -78,9 +80,9 @@ export default {
       boxShadow: {
         'soft': '0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)',
         'card': '0 4px 20px -2px rgba(15, 23, 42, 0.05)',
-        'card-dark': '0 8px 24px -4px rgba(0, 0, 0, 0.35), 0 0 1px 1px rgba(255, 255, 255, 0.05)',
-        'hover': '0 12px 28px -5px rgba(99, 102, 241, 0.12), 0 4px 10px -3px rgba(99, 102, 241, 0.06)',
-        'hover-dark': '0 12px 28px -5px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(129, 140, 248, 0.3)',
+        'card-dark': '0 8px 24px -4px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(255, 255, 255, 0.05)',
+        'hover': '0 12px 28px -5px rgba(16, 185, 129, 0.12), 0 4px 10px -3px rgba(16, 185, 129, 0.06)',
+        'hover-dark': '0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3)',
         'profit': '0 8px 20px -3px rgba(16, 185, 129, 0.18)',
         'risk': '0 8px 20px -3px rgba(244, 63, 94, 0.18)',
       },

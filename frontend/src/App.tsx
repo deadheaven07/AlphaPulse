@@ -142,8 +142,8 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas dark:bg-canvas-dark text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-brand-500 selection:text-white relative transition-colors duration-300">
-      {/* 3D Background Canvas & Ambient Glow Meshes (Behind all data) */}
+    <div className="min-h-screen bg-canvas dark:bg-canvas-dark text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-white relative transition-colors duration-300">
+      {/* 3D Background Canvas & Warm Ambient Glow Meshes (Zero blue light) */}
       <ThreeBackground isDarkMode={isDarkMode} />
 
       {/* Foreground Content Stack */}
@@ -180,14 +180,14 @@ export function App() {
               <div className="space-y-4 animate-fade-in">
                 <div className="flex items-center justify-between px-1 flex-wrap gap-2">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                    <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                     <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                       Live Web-Grounded Thesis:{" "}
-                      <span className="text-muted dark:text-slate-400 font-normal">{aiResponse.query_summary}</span>
+                      <span className="text-muted dark:text-muted-dark font-normal">{aiResponse.query_summary}</span>
                     </h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-950/80 border border-brand-200 dark:border-brand-800 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <span className="text-[11px] text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1">
                       <Globe className="w-3 h-3" />
                       Live Web Grounded
                     </span>
@@ -199,7 +199,7 @@ export function App() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <div className="p-4 rounded-xl bg-white/70 dark:bg-surface-dark/90 border border-slate-200 dark:border-border-dark text-xs text-slate-700 dark:text-slate-300 font-medium">
                   💡 <strong>Sector Macro Context:</strong> {aiResponse.sector_overview}
                 </div>
 
@@ -217,14 +217,14 @@ export function App() {
           </section>
 
           {/* View Mode Switcher Tabs */}
-          <div className="flex items-center justify-between border-b border-border/80 dark:border-slate-800/80 pb-2 flex-wrap gap-2">
+          <div className="flex items-center justify-between border-b border-border/80 dark:border-border-dark pb-2 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTab("studio")}
                 className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
                   activeTab === "studio"
-                    ? "bg-slate-900 dark:bg-brand-600 text-white shadow-xs"
-                    : "bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-border dark:border-slate-800"
+                    ? "bg-slate-900 dark:bg-emerald-600 text-white shadow-xs"
+                    : "bg-white/80 dark:bg-surface-dark/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-border dark:border-border-dark"
                 }`}
               >
                 <LineChart className="w-4 h-4" />
@@ -234,8 +234,8 @@ export function App() {
                 onClick={() => setActiveTab("dividend")}
                 className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
                   activeTab === "dividend"
-                    ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-xs"
-                    : "bg-white/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-border dark:border-slate-800"
+                    ? "bg-emerald-600 dark:bg-amber-600 text-white shadow-xs"
+                    : "bg-white/80 dark:bg-surface-dark/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-border dark:border-border-dark"
                 }`}
               >
                 <Coins className="w-4 h-4" />
@@ -243,8 +243,8 @@ export function App() {
               </button>
             </div>
 
-            <span className="text-xs font-bold font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
-              Active Stock: <strong className="text-brand-600 dark:text-brand-400">{selectedSymbol}</strong>
+            <span className="text-xs font-bold font-mono text-slate-500 dark:text-muted-dark hidden sm:inline">
+              Active Stock: <strong className="text-emerald-600 dark:text-emerald-400">{selectedSymbol}</strong>
             </span>
           </div>
 
@@ -288,8 +288,8 @@ export function App() {
                 </>
               ) : (
                 <div className="glass-panel-3d rounded-2xl p-12 text-center space-y-3">
-                  <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-xs font-semibold text-slate-500 dark:text-muted-dark">
                     Fetching live NSE quotes, quality metrics, and technical indicators for {selectedSymbol}...
                   </p>
                 </div>
@@ -309,8 +309,8 @@ export function App() {
         </main>
 
         {/* Footer */}
-        <footer className="mt-auto border-t border-border dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md py-6 transition-colors duration-300">
-          <div className="max-w-7xl 3xl:max-w-[1900px] ultrawide:max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted dark:text-slate-400">
+        <footer className="mt-auto border-t border-border dark:border-border-dark bg-white/80 dark:bg-surface-dark/90 backdrop-blur-md py-6 transition-colors duration-300">
+          <div className="max-w-7xl 3xl:max-w-[1900px] ultrawide:max-w-[2400px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted dark:text-muted-dark">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-800 dark:text-white">AlphaPulse India Pro</span>
               <span>•</span>
