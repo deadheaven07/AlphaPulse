@@ -51,6 +51,46 @@ const PRESET_PROMPTS = [
   "🚀 Maximize ₹50,000 monthly SIP for 3 Years",
 ];
 
+export function calculateExactRequiredCagr(
+  target: number,
+  startingCapital: number,
+  monthlySip: number,
+  horizonMonths: number
+): number {
+  const totalContributed = startingCapital + monthlySip * horizonMonths;
+  if (target <= totalContributed || totalContributed <= 0) return 0;
+  if (horizonMonths <= 0) return 0;
+
+  let low = 0.001; // 0.1%
+  let high = 2.50; // 250% Max realistic rate
+  let solvedRate = 0.15;
+
+  for (let i = 0; i < 35; i++) {
+    const mid = (low + high) / 2;
+    const rMonthly = mid / 12.0;
+    const numMonths = horizonMonths;
+
+    // Lump sum growth + Annuity growth
+    const fvLump = startingCapital * Math.pow(1 + rMonthly, numMonths);
+    const fvSip = monthlySip > 0 ? monthlySip * ((Math.pow(1 + rMonthly, numMonths) - 1) / rMonthly) : 0;
+    const fvTotal = fvLump + fvSip;
+
+    if (Math.abs(fvTotal - target) < 50) {
+      solvedRate = mid;
+      break;
+    }
+    if (fvTotal < target) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+    solvedRate = mid;
+  }
+
+  return Math.round(solvedRate * 1000) / 10;
+}
+
+
 export const GoalPlannerPage: React.FC<GoalPlannerPageProps> = ({
   onNavigateToStudio,
 }) => {
@@ -112,12 +152,11 @@ export const GoalPlannerPage: React.FC<GoalPlannerPageProps> = ({
   });
 
   // Mathematical Projections
-  const years = Math.max(0.5, horizonMonths / 12.0);
   const totalInvested = startingCapital + monthlySip * horizonMonths;
   const requiredCagrPct = useMemo(() => {
-    if (totalInvested <= 0 || targetAmount <= totalInvested) return 0;
-    return Math.round(((targetAmount / totalInvested) ** (1.0 / years) - 1.0) * 1000) / 10;
-  }, [targetAmount, totalInvested, years]);
+    return calculateExactRequiredCagr(targetAmount, startingCapital, monthlySip, horizonMonths);
+  }, [targetAmount, startingCapital, monthlySip, horizonMonths]);
+
 
 
   // Feasibility assessment

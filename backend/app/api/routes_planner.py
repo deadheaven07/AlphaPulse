@@ -106,6 +106,42 @@ def get_basket_news(symbols: str = Query(..., description="Comma separated symbo
     return news_items
 
 
+def calculate_exact_required_cagr(
+    target: float,
+    starting_capital: float,
+    monthly_sip: float,
+    horizon_months: int
+) -> float:
+    total_contributed = starting_capital + monthly_sip * horizon_months
+    if target <= total_contributed or total_contributed <= 0:
+        return 0.0
+    if horizon_months <= 0:
+        return 0.0
+
+    low = 0.001
+    high = 2.50
+    solved_rate = 0.15
+
+    for _ in range(35):
+        mid = (low + high) / 2.0
+        r_monthly = mid / 12.0
+        num_months = horizon_months
+
+        fv_lump = starting_capital * ((1.0 + r_monthly) ** num_months)
+        fv_sip = monthly_sip * (((1.0 + r_monthly) ** num_months - 1.0) / r_monthly) if (monthly_sip > 0 and r_monthly > 0) else 0.0
+        fv_total = fv_lump + fv_sip
+
+        if abs(fv_total - target) < 50.0:
+            solved_rate = mid
+            break
+        if fv_total < target:
+            low = mid
+        else:
+            high = mid
+        solved_rate = mid
+
+    return round(solved_rate * 100.0, 1)
+
 @router.post("/ai-copilot")
 def ask_plan_copilot(req: CopilotQueryRequest):
     """
@@ -116,13 +152,14 @@ def ask_plan_copilot(req: CopilotQueryRequest):
     target = req.target_amount
     growth_required = max(0.0, target - total_invested)
     
-    # Calculate approximate required CAGR %
-    # Target = P * (1 + r)^t + SIP FV
-    # Approximate simplified required annual return:
-    if total_invested > 0:
-        required_return_pct = round(((target / total_invested) ** (1.0 / years) - 1.0) * 100.0, 1)
-    else:
-        required_return_pct = 15.0
+    # Exact Actuarial SIP Future-Value Annuity Solver
+    required_return_pct = calculate_exact_required_cagr(
+        target=target,
+        starting_capital=req.starting_capital,
+        monthly_sip=req.monthly_sip,
+        horizon_months=req.horizon_months
+    )
+
 
     # Risk-based basket recommendations
     if req.risk_level.lower() == "conservative":
