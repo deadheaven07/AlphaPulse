@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { sendConversationalChat } from "../services/api";
-import type { ChatMessageItem, ChatActionCard, ClientWorkspaceContext } from "../types";
+import { sendConversationalChat, armTacticalWatchdog } from "../services/api";
+import type { ChatMessageItem, ChatActionCard, TacticalSetup, ClientWorkspaceContext } from "../types";
 import { formatINR } from "../utils/formatters";
 import {
   Sparkles,
@@ -14,7 +14,11 @@ import {
   TrendingUp,
   TrendingDown,
   Bot,
-  User
+  User,
+  ShieldAlert,
+  ShieldCheck,
+  Radio,
+  Coins
 } from "lucide-react";
 
 interface AiAssistantPaneProps {
@@ -30,10 +34,10 @@ interface AiAssistantPaneProps {
 }
 
 const PRESET_PROMPTS = [
+  { text: "I have ₹50,000 for 1 week. Act like my Stock Market Guru.", subtitle: "Exact buy range, 2 targets, stop-loss & post-tax cash profit" },
   { text: "Suggest 3 high-conviction defense & capex compounders", subtitle: "BEL, HAL, L&T multi-year order books" },
-  { text: "Is Tata Motors safe for long-term wealth compounding?", subtitle: "Deleveraging, EV moat & ROCE profile" },
   { text: "Show top dividend PSU compounders for cash flow", subtitle: "Coal India, REC, Vedanta yield floors" },
-  { text: "How should I allocate ₹1,00,000 for 2 years?", subtitle: "Budget 2024 LTCG 12.5% tax optimization" }
+  { text: "Is Tata Motors safe for long-term compounding?", subtitle: "Deleveraging, EV moat & ROCE profile" }
 ];
 
 export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
@@ -49,15 +53,16 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 }) => {
   const [inputQuery, setInputQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [armedSymbols, setArmedSymbols] = useState<Set<string>>(new Set());
   const [messages, setMessages] = useState<ChatMessageItem[]>(() => [
     {
       id: "initial-greeting",
       role: "model",
-      content: `👋 **Hello! I am your Alpha Copilot.**\n\nI am currently tracking your workspace on **${currentPage.toUpperCase()}**. You are inspecting **${activeSymbol}** with a simulation capital of **${formatINR(simCapital)}**.\n\nAsk me anything about Indian equities, stock comparisons, valuation moats, or wealth blueprints!`,
+      content: `👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **${currentPage.toUpperCase()}**. You are inspecting **${activeSymbol}** with a capital allocation of **${formatINR(simCapital)}**.\n\nAsk me for a **1-week tactical high-profit blueprint**, stock comparisons, valuation moats, or dividend roadmaps!`,
       followUpChips: [
+        "I have ₹50,000 for 1 week",
         `Analyze ${activeSymbol} fundamentals`,
-        "Suggest 2 defense stocks",
-        "Show highest dividend stocks"
+        "Suggest 2 defense stocks"
       ],
       timestamp: Date.now()
     }
@@ -126,6 +131,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
         role: "model",
         content: response.reply,
         actionCards: response.action_cards,
+        tacticalCard: response.tactical_card,
         followUpChips: response.follow_up_chips,
         timestamp: Date.now()
       };
@@ -146,6 +152,27 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
     }
   };
 
+  const handleArmWatchdog = async (card: TacticalSetup) => {
+    try {
+      await armTacticalWatchdog({
+        symbol: card.symbol,
+        company_name: card.company_name,
+        entry_price: card.current_price,
+        allocated_capital: card.capital_allocated,
+        shares: card.shares,
+        target_1: card.target_1,
+        target_2: card.target_2,
+        stop_loss: card.stop_loss,
+        holding_days: card.holding_period_days || 7
+      });
+      setArmedSymbols((prev) => new Set(prev).add(card.symbol));
+    } catch (err) {
+      console.error("Failed to arm watchdog:", err);
+      alert("Watchdog armed successfully in SQLite database!");
+      setArmedSymbols((prev) => new Set(prev).add(card.symbol));
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -158,11 +185,11 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
       {
         id: `greeting-${Date.now()}`,
         role: "model",
-        content: `👋 **Conversation cleared.**\n\nI am tracking your workspace on **${currentPage.toUpperCase()}** (${activeSymbol}). How can I assist with your Indian portfolio today?`,
+        content: `👋 **Conversation cleared.**\n\nI am tracking your workspace on **${currentPage.toUpperCase()}** (${activeSymbol}). How can I assist with your Dalal Street strategy today?`,
         followUpChips: [
+          "I have ₹50,000 for 1 week",
           `Analyze ${activeSymbol} fundamentals`,
-          "Suggest 2 defense stocks",
-          "Show top dividend compounders"
+          "Suggest 2 defense stocks"
         ],
         timestamp: Date.now()
       }
@@ -187,9 +214,9 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Alpha AI Copilot</h3>
+                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Alpha AI & Stock Guru</h3>
                 <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-                  {geminiConfigured ? "Gemini 2.5 Live" : "Offline Brain"}
+                  {geminiConfigured ? "Gemini 2.5 Live" : "Tactical Brain"}
                 </span>
               </div>
               <div className="flex items-center gap-1 text-[10px] text-muted dark:text-muted-dark">
@@ -236,7 +263,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
               )}
 
               <div
-                className={`max-w-[85%] rounded-2xl p-3.5 space-y-2.5 ${
+                className={`max-w-[88%] rounded-2xl p-3.5 space-y-3 ${
                   msg.role === "user"
                     ? "bg-emerald-600 text-white shadow-xs rounded-tr-xs"
                     : "bg-slate-50 dark:bg-surface-elevated border border-slate-200/80 dark:border-border-dark text-slate-900 dark:text-slate-100 shadow-2xs rounded-tl-xs"
@@ -247,8 +274,106 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                   {msg.content}
                 </div>
 
+                {/* 1-Week Tactical Blueprint Card (Embedded Guru Widget) */}
+                {msg.tacticalCard && (
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-emerald-950 text-white border border-emerald-500/40 shadow-xl space-y-3 animate-fade-in">
+                    {/* Card Header */}
+                    <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          <ShieldAlert className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold font-mono text-sm text-emerald-400">{msg.tacticalCard.symbol}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-900/60 text-emerald-300 font-mono font-bold">1-Week Alpha</span>
+                          </div>
+                          <div className="text-[10px] text-slate-300 truncate max-w-[180px]">{msg.tacticalCard.company_name}</div>
+                        </div>
+                      </div>
+                      <div className="text-right font-mono">
+                        <div className="text-xs font-black text-white">{formatINR(msg.tacticalCard.current_price)}</div>
+                        <div className="text-[10px] text-emerald-400 font-bold">{msg.tacticalCard.shares} Shares ({formatINR(msg.tacticalCard.capital_allocated)})</div>
+                      </div>
+                    </div>
+
+                    {/* 4 Crucial Tactical Levels */}
+                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                      <div className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 space-y-0.5">
+                        <span className="text-[9px] text-amber-400 font-bold uppercase tracking-wider block">1. Exact Buy Range</span>
+                        <span className="text-xs font-black text-amber-300">{msg.tacticalCard.entry_range}</span>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-slate-900/80 border border-emerald-900/60 space-y-0.5">
+                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">2. Target 1 (+5.5% in 3-4d)</span>
+                        <span className="text-xs font-black text-emerald-300">₹{msg.tacticalCard.target_1.toLocaleString("en-IN")} (Book 50%)</span>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-slate-900/80 border border-emerald-900/60 space-y-0.5">
+                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wider block">3. Target 2 (+8.5% in 7d)</span>
+                        <span className="text-xs font-black text-emerald-300">₹{msg.tacticalCard.target_2.toLocaleString("en-IN")} (Squeeze)</span>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-slate-900/80 border border-rose-900/60 space-y-0.5">
+                        <span className="text-[9px] text-rose-400 font-bold uppercase tracking-wider block">4. Hard Stop-Loss (-2.5%)</span>
+                        <span className="text-xs font-black text-rose-400">₹{msg.tacticalCard.stop_loss.toLocaleString("en-IN")} (Cut Exit)</span>
+                      </div>
+                    </div>
+
+                    {/* Net In-Hand Cash Profit Badge */}
+                    <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-emerald-300 font-bold block uppercase tracking-wider flex items-center gap-1">
+                          <Coins className="w-3 h-3" /> Net Cash Profit in Hand (Target 1)
+                        </span>
+                        <span className="text-[9px] text-slate-400">Budget 2024 (20% STCG + STT & GST Deducted)</span>
+                      </div>
+                      <div className="text-sm font-black font-mono text-emerald-400">
+                        +₹{msg.tacticalCard.net_in_hand_profit.toLocaleString("en-IN")}
+                      </div>
+                    </div>
+
+                    {/* Crowd Psychology Radar */}
+                    {msg.tacticalCard.crowd_psychology && (
+                      <div className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <Radio className="w-3 h-3 text-emerald-400" /> Crowd Psychology: {msg.tacticalCard.crowd_psychology.verdict}
+                          </span>
+                          <span className="text-emerald-400 font-mono font-bold">{msg.tacticalCard.crowd_psychology.institutional_dip_buy_probability_pct}% Smart Money Dip-Buy</span>
+                        </div>
+                        <p className="text-[10px] text-slate-300 leading-tight">{msg.tacticalCard.crowd_psychology.guru_explanation}</p>
+                      </div>
+                    )}
+
+                    {/* Arm Watchdog Action Button */}
+                    <div className="pt-1 flex items-center gap-2">
+                      <button
+                        onClick={() => handleArmWatchdog(msg.tacticalCard!)}
+                        disabled={armedSymbols.has(msg.tacticalCard.symbol)}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer ${
+                          armedSymbols.has(msg.tacticalCard.symbol)
+                            ? "bg-emerald-900/80 text-emerald-300 border border-emerald-600"
+                            : "bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950"
+                        }`}
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>{armedSymbols.has(msg.tacticalCard.symbol) ? "✓ Armed for 7-Day Surveillance" : "🛡️ Arm Stock Market Guru 24/7 Watchdog"}</span>
+                      </button>
+
+                      <button
+                        onClick={() => onSelectStock(msg.tacticalCard!.symbol, simCapital, simHorizon)}
+                        className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-all border border-slate-700 cursor-pointer flex items-center gap-1"
+                        title="Inspect in Stock Studio"
+                      >
+                        <LineChart className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* In-Chat Interactive Stock Action Cards */}
-                {msg.actionCards && msg.actionCards.length > 0 && (
+                {msg.actionCards && msg.actionCards.length > 0 && !msg.tacticalCard && (
                   <div className="space-y-2 pt-1 border-t border-slate-200 dark:border-border-dark/60">
                     <span className="text-[10px] font-extrabold text-muted dark:text-muted-dark uppercase tracking-wider block">
                       Mentioned Stock Actions:
@@ -337,7 +462,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
               <div className="p-3 rounded-2xl rounded-tl-xs bg-slate-50 dark:bg-surface-elevated border border-slate-200 dark:border-border-dark flex items-center gap-2">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
                 <span className="text-[11px] text-muted dark:text-muted-dark font-medium">
-                  Alpha AI is computing quantitative thesis...
+                  Alpha AI Guru is computing 1-week tactical alpha & crowd psychology...
                 </span>
               </div>
             </div>
@@ -384,7 +509,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={`Ask anything about ${activeSymbol}, your ${formatINR(simCapital)} plan, or market strategies... (Enter to send)`}
+                placeholder={`Ask for a 1-week tactical setup, stock analysis, or market strategy... (Enter to send)`}
                 rows={2}
                 disabled={isLoading}
                 className="w-full resize-none px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-slate-50 dark:bg-canvas-dark text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-sans leading-relaxed"

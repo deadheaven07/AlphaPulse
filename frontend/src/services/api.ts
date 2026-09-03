@@ -20,7 +20,10 @@ import type {
   GoalAiCopilotResponse,
   ChatMessageItem,
   ClientWorkspaceContext,
-  ConversationalChatResponse
+  ConversationalChatResponse,
+  TacticalSetup,
+  TacticalSwingItem,
+  CrowdPsychologyResult
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -280,6 +283,72 @@ export async function sendConversationalChat(payload: {
     })
   });
   if (!res.ok) throw new Error("Failed to communicate with Alpha AI Copilot");
+  return res.json();
+}
+
+export async function screenTacticalSetup(
+  capital: number = 50000,
+  preferredSymbol?: string,
+  riskMode: string = "Aggressive"
+): Promise<TacticalSetup> {
+  const res = await fetch(`${API_BASE}/tactical/screen`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      capital,
+      preferred_symbol: preferredSymbol || undefined,
+      risk_mode: riskMode
+    })
+  });
+  if (!res.ok) throw new Error("Failed to screen tactical setup");
+  return res.json();
+}
+
+export async function armTacticalWatchdog(payload: {
+  symbol: string;
+  company_name: string;
+  entry_price: number;
+  allocated_capital: number;
+  shares: number;
+  target_1: number;
+  target_2: number;
+  stop_loss: number;
+  holding_days?: number;
+}): Promise<{ status: string; message: string; swing: TacticalSwingItem }> {
+  const res = await fetch(`${API_BASE}/tactical/arm-watchdog`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to arm 24/7 tactical watchdog");
+  return res.json();
+}
+
+export async function fetchActiveTacticalSwings(): Promise<TacticalSwingItem[]> {
+  const res = await fetch(`${API_BASE}/tactical/active`);
+  if (!res.ok) throw new Error("Failed to fetch active tactical swings");
+  return res.json();
+}
+
+export async function disarmTacticalSwing(swingId: number): Promise<void> {
+  const res = await fetch(`${API_BASE}/tactical/${swingId}`, {
+    method: "DELETE"
+  });
+  if (!res.ok) throw new Error("Failed to disarm tactical watchdog");
+}
+
+export async function analyzeNewsCrowdPsychology(payload: {
+  symbol: string;
+  headline: string;
+  summary?: string;
+  delivery_pct?: number;
+}): Promise<CrowdPsychologyResult> {
+  const res = await fetch(`${API_BASE}/tactical/analyze-news`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error("Failed to analyze crowd psychology");
   return res.json();
 }
 

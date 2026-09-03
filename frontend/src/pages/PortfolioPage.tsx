@@ -5,9 +5,11 @@ import {
   createDbHolding,
   deleteDbHolding,
   clearAllDbHoldings,
-  fetchTickerFeed
+  fetchTickerFeed,
+  fetchActiveTacticalSwings,
+  disarmTacticalSwing
 } from "../services/api";
-import type { DbHolding, TickerItem } from "../types";
+import type { DbHolding, TickerItem, TacticalSwingItem } from "../types";
 import { formatINR, formatPct } from "../utils/formatters";
 import {
   Briefcase,
@@ -18,7 +20,9 @@ import {
   LineChart,
   TrendingUp,
   TrendingDown,
-  Radio
+  Radio,
+  Clock,
+  Flame
 } from "lucide-react";
 
 interface PortfolioPageProps {
@@ -50,6 +54,20 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
     queryKey: ["live-ticker-feed"],
     queryFn: fetchTickerFeed,
     refetchInterval: 15000,
+  });
+
+  // 3. Fetch active 1-Week Tactical Swings
+  const { data: tacticalSwings = [] } = useQuery({
+    queryKey: ["active-tactical-swings"],
+    queryFn: fetchActiveTacticalSwings,
+    refetchInterval: 15000,
+  });
+
+  const disarmMutation = useMutation({
+    mutationFn: disarmTacticalSwing,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["active-tactical-swings"] });
+    }
   });
 
   // Map symbols to live ticker quotes
@@ -284,6 +302,123 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Active 1-Week Tactical Sprints (Guru Watchdog) */}
+      {tacticalSwings.length > 0 && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-emerald-950 text-white border border-emerald-500/40 shadow-xl space-y-3 animate-fade-in">
+          <div className="flex items-center justify-between border-b border-emerald-800/40 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <Flame className="w-4 h-4 animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-black text-white tracking-tight">
+                    Active 1-Week Tactical Sprints
+                  </h3>
+                  <span className="font-mono font-bold text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-300 border border-emerald-500/30">
+                    {tacticalSwings.length} Armed Guru Trade{tacticalSwings.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  24/7 automated price surveillance, 2-tier profit targets, and crowd psychology news protection.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {tacticalSwings.map((swing: TacticalSwingItem) => {
+              const live = livePriceMap.get(swing.symbol.toUpperCase());
+              const ltp = live?.price ?? swing.current_price ?? swing.entry_price;
+              const invested = swing.allocated_capital;
+              const curVal = ltp * swing.shares;
+              const pnl = curVal - invested;
+              const pnlPct = invested > 0 ? (pnl / invested) * 100 : 0;
+              const isPos = pnl >= 0;
+
+              const range = Math.max(1, swing.target_1 - swing.stop_loss);
+              const progressPct = Math.min(100, Math.max(0, ((ltp - swing.stop_loss) / range) * 100));
+
+              return (
+                <div
+                  key={swing.id}
+                  className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5 shadow-md"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black font-mono text-sm text-emerald-400">{swing.symbol}</span>
+                        <span className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{swing.company_name}</span>
+                      </div>
+                      <div className="text-[11px] font-mono text-slate-300">
+                        {swing.shares} Shares @ {formatINR(swing.entry_price)} ({formatINR(invested)})
+                      </div>
+                    </div>
+
+                    <div className="text-right font-mono">
+                      <div className="text-xs font-black text-white">{formatINR(ltp)}</div>
+                      <div className={`text-[10px] font-bold ${isPos ? "text-emerald-400" : "text-rose-400"}`}>
+                        {isPos ? "+" : ""}{formatINR(pnl)} ({formatPct(pnlPct)})
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Target & Stop Loss Levels Bar */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[9px] font-mono text-slate-400">
+                      <span className="text-rose-400">Hard SL: {formatINR(swing.stop_loss)}</span>
+                      <span className="text-emerald-300">Target 1: {formatINR(swing.target_1)}</span>
+                      <span className="text-emerald-400">Target 2: {formatINR(swing.target_2)}</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          progressPct < 20 ? "bg-rose-500" : progressPct > 80 ? "bg-emerald-500" : "bg-teal-500"
+                        }`}
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Footer & Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
+                    <div className="flex items-center gap-1 text-slate-400 font-mono">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span>{swing.remaining_days ?? 7} Days Left</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          onSelectStock(swing.symbol);
+                          onNavigateToStudio();
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <LineChart className="w-3 h-3" />
+                        <span>Inspect</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (swing.id && confirm(`Disarm 1-week watchdog for ${swing.symbol}?`)) {
+                            disarmMutation.mutate(swing.id);
+                          }
+                        }}
+                        className="px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 text-[10px] font-bold transition-all cursor-pointer"
+                        title="Disarm Watchdog"
+                      >
+                        Disarm
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Add Position Inline Form */}
       {isAdding && (

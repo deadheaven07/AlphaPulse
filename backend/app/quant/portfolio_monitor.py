@@ -2,6 +2,8 @@ from typing import Dict, Any, List
 from .data_engine import fetch_live_quotes_batch, fetch_historical_dataframe
 from .news_engine import analyze_stock_news_sentiment
 from .technicals import detect_breakout
+from .crowd_psychology_engine import analyze_news_crowd_psychology
+from backend.app.db.database import get_active_tactical_swings
 
 DANGER_KEYWORDS = [
     "investigation", "penalty", "fraud", "litigation", "probe",
@@ -11,19 +13,38 @@ DANGER_KEYWORDS = [
 
 def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Inspect user portfolio holdings against real-time NSE prices,
-    stop-loss triggers, target profits, and breaking news catalysts
-    with deterministic alert fingerprinting.
+    Inspect user portfolio holdings and active 1-week tactical swings against real-time NSE prices,
+    stop-loss triggers, target profits, crowd psychology news reactions, and breakout continuation.
     """
-    if not holdings:
+    combined_items: List[Dict[str, Any]] = list(holdings) if holdings else []
+
+    # Include active tactical swings from SQLite into the watchdog stream
+    try:
+        tactical_swings = get_active_tactical_swings()
+        for ts in tactical_swings:
+            combined_items.append({
+                "symbol": ts["symbol"],
+                "company_name": ts.get("company_name", ts["symbol"]),
+                "entry_price": ts["entry_price"],
+                "shares": ts["shares"],
+                "target_price": ts["target_1"],
+                "target_2": ts["target_2"],
+                "stop_loss": ts["stop_loss"],
+                "is_tactical": True,
+                "swing_id": ts["id"]
+            })
+    except Exception:
+        pass
+
+    if not combined_items:
         return []
 
-    symbols = [item.get("symbol", "").strip().upper() for item in holdings if item.get("symbol")]
+    symbols = list(set([item.get("symbol", "").strip().upper() for item in combined_items if item.get("symbol")]))
     quotes_map = fetch_live_quotes_batch(symbols)
 
     alerts: List[Dict[str, Any]] = []
 
-    for item in holdings:
+    for item in combined_items:
         sym = item.get("symbol", "").strip().upper()
         if not sym:
             continue
@@ -38,6 +59,7 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
             target_price = float(item.get("target_price") or (entry_price * 1.25))
             stop_loss = float(item.get("stop_loss") or item.get("bear_price") or (entry_price * 0.90))
             shares = int(item.get("shares") or 1)
+            is_tactical = item.get("is_tactical", False)
 
             pnl_inr = round((current_price - entry_price) * shares, 2)
             pnl_pct = round(((current_price - entry_price) / max(1.0, entry_price)) * 100.0, 2)
@@ -55,8 +77,13 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                     "target_price": target_price,
                     "pnl_inr": pnl_inr,
                     "pnl_pct": pnl_pct,
-                    "title": f"🎯 Profit Target Reached for {sym}!",
-                    "message": f"{sym} reached your Target Price of ₹{target_price:,.2f} (Current: ₹{current_price:,.2f}, +{pnl_pct}%). Consider booking profit on your demat broker.",
+                    "title": f"🎯 Tactical Target Reached for {sym}!" if is_tactical else f"🎯 Profit Target Reached for {sym}!",
+                    "message": (
+                        f"GURU COMMAND: {sym} reached Target of ₹{target_price:,.2f} (+{pnl_pct}%). "
+                        f"Book 50% profit (+₹{pnl_inr:,.0f} net) and trail stop-loss to entry!"
+                        if is_tactical else
+                        f"{sym} reached your Target Price of ₹{target_price:,.2f} (Current: ₹{current_price:,.2f}, +{pnl_pct}%). Consider booking profit on your demat broker."
+                    ),
                     "recommended_action": "LOCK_IN_PROFIT"
                 })
 
@@ -74,38 +101,60 @@ def inspect_portfolio_threats(holdings: List[Dict[str, Any]]) -> List[Dict[str, 
                     "pnl_inr": pnl_inr,
                     "pnl_pct": pnl_pct,
                     "title": f"🚨 Stop-Loss Breached for {sym}!",
-                    "message": f"DISCIPLINE ALERT: {sym} dropped to ₹{current_price:,.2f}, breaching your stop-loss floor of ₹{stop_loss:,.2f} ({pnl_pct}%). Exit immediately to preserve capital!",
+                    "message": f"DISCIPLINE ALERT: {sym} dropped to ₹{current_price:,.2f}, breaching stop-loss floor of ₹{stop_loss:,.2f} ({pnl_pct}%). Guru Rule #1: Exit immediately to preserve capital!",
                     "recommended_action": "EXIT_IMMEDIATELY"
                 })
 
-            # Trigger 3: Breaking News Threat (Deterministic Hash of Headline)
+            # Trigger 3: Breaking News Threat & Crowd Psychology Reaction
             news = analyze_stock_news_sentiment(sym, quote)
             headlines = news.get("headlines", [])
             threat_found = False
 
             for h in headlines[:3]:
-                title_lower = (h.get("title") or "").lower()
-                summary_lower = (h.get("summary") or "").lower()
-                matched_dangers = [kw for kw in DANGER_KEYWORDS if kw in title_lower or kw in summary_lower]
-                if matched_dangers or news.get("risk_of_loss_pct", 0) >= 45.0:
+                title_str = h.get("title") or ""
+                summary_str = h.get("summary") or ""
+
+                psychology = analyze_news_crowd_psychology(
+                    symbol=sym,
+                    headline=title_str,
+                    summary=summary_str,
+                    delivery_pct=quote.get("delivery_pct", 48.0)
+                )
+
+                if psychology["sentiment_category"] == "FATAL_RISK":
                     threat_found = True
-                    title_str = h.get("title") or ""
                     title_hash = abs(hash(title_str)) % 100000
                     alerts.append({
-                        "id": f"news-{sym}-{title_hash}",
+                        "id": f"fatal-{sym}-{title_hash}",
                         "symbol": sym,
                         "company_name": quote.get("company_name", sym),
-                        "alert_type": "NEWS_THREAT",
-                        "severity": "WARNING",
+                        "alert_type": "FATAL_RISK",
+                        "severity": "CRITICAL",
                         "current_price": current_price,
-                        "risk_of_loss_pct": news.get("risk_of_loss_pct", 55.0),
-                        "title": f"⚠️ Threat Catalyst Detected for {sym}",
-                        "message": f"Breaking headline: \"{h.get('title')}\". Loss probability rose to {news.get('risk_of_loss_pct', 55.0)}%. Consider tightening stop-loss.",
-                        "recommended_action": "TIGHTEN_STOP_LOSS"
+                        "risk_of_loss_pct": psychology["retail_panic_probability_pct"],
+                        "title": f"🚨 Fatal Risk Detected for {sym}!",
+                        "message": psychology["guru_explanation"],
+                        "recommended_action": "DUMP_IMMEDIATELY"
+                    })
+                    break
+                elif psychology["sentiment_category"] == "BEAR_TRAP_NOISE":
+                    threat_found = True
+                    title_hash = abs(hash(title_str)) % 100000
+                    alerts.append({
+                        "id": f"beartrap-{sym}-{title_hash}",
+                        "symbol": sym,
+                        "company_name": quote.get("company_name", sym),
+                        "alert_type": "BEAR_TRAP_NOISE",
+                        "severity": "INFO",
+                        "current_price": current_price,
+                        "risk_of_loss_pct": psychology["retail_panic_probability_pct"],
+                        "title": f"🛡️ Bear Trap Detected for {sym}",
+                        "message": psychology["guru_explanation"],
+                        "recommended_action": "HOLD_FOR_REBOUND"
                     })
                     break
 
-            # Trigger 4: Sideways Consolidation Breakout (Deterministic High Breakout FP)
+            # Trigger 4: Sideways Consolidation Breakout
             if not threat_found and pnl_pct >= 0:
                 df = fetch_historical_dataframe(sym, period="1mo", interval="1d")
                 breakout = detect_breakout(df)

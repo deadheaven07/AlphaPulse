@@ -436,6 +436,67 @@ export interface GoalAiCopilotResponse {
   recommended_basket: GoalBasketStock[];
 }
 
+export interface CrowdPsychologyResult {
+  symbol: string;
+  headline: string;
+  sentiment_category: "FATAL_RISK" | "BEAR_TRAP_NOISE" | "NEUTRAL_UNCERTAIN" | string;
+  retail_panic_probability_pct: number;
+  institutional_dip_buy_probability_pct: number;
+  verdict: "DUMP_IMMEDIATELY" | "HOLD_FOR_REBOUND" | "MONITOR_STOP_LOSS" | string;
+  guru_explanation: string;
+}
+
+export interface TacticalSetup {
+  symbol: string;
+  company_name: string;
+  current_price: number;
+  capital_allocated: number;
+  cash_buffer: number;
+  shares: number;
+  entry_range: string;
+  entry_low: number;
+  entry_high: number;
+  target_1: number;
+  target_1_pct: number;
+  target_2: number;
+  target_2_pct: number;
+  stop_loss: number;
+  stop_loss_pct: number;
+  risk_reward_ratio: string;
+  gross_profit: number;
+  total_tax_and_charges: number;
+  net_in_hand_profit: number;
+  holding_period_days: number;
+  catalyst: string;
+  crowd_psychology?: CrowdPsychologyResult;
+  guru_thesis: string;
+}
+
+export interface TacticalSwingItem {
+  id?: number;
+  symbol: string;
+  company_name: string;
+  entry_price: number;
+  current_price?: number;
+  day_change_pct?: number;
+  allocated_capital: number;
+  current_valuation?: number;
+  unrealized_pnl?: number;
+  pnl_pct?: number;
+  shares: number;
+  target_1: number;
+  target_2: number;
+  stop_loss: number;
+  entry_date: string;
+  expiry_date: string;
+  remaining_days?: number;
+  progress_pct?: number;
+  target_1_hit?: boolean;
+  stop_loss_hit?: boolean;
+  status: "ACTIVE" | "TARGET_HIT" | "SL_HIT" | "EXPIRED" | string;
+  created_at?: string;
+}
+
 export interface ChatActionCard {
   type: string;
   symbol: string;
@@ -450,6 +511,7 @@ export interface ChatMessageItem {
   role: "user" | "model";
   content: string;
   actionCards?: ChatActionCard[];
+  tacticalCard?: TacticalSetup;
   followUpChips?: string[];
   timestamp?: number;
 }
@@ -468,8 +530,10 @@ export interface ClientWorkspaceContext {
 export interface ConversationalChatResponse {
   reply: string;
   action_cards: ChatActionCard[];
+  tactical_card?: TacticalSetup;
   follow_up_chips: string[];
 }
+
 
 
 

@@ -50,6 +50,23 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tactical_swings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                symbol TEXT NOT NULL,
+                company_name TEXT,
+                entry_price REAL NOT NULL,
+                allocated_capital REAL NOT NULL,
+                shares INTEGER NOT NULL,
+                target_1 REAL NOT NULL,
+                target_2 REAL NOT NULL,
+                stop_loss REAL NOT NULL,
+                entry_date TEXT NOT NULL,
+                expiry_date TEXT NOT NULL,
+                status TEXT DEFAULT 'ACTIVE',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
 
 def get_holdings() -> List[Dict[str, Any]]:
@@ -151,4 +168,58 @@ def delete_goal(goal_id: int) -> bool:
         cursor.execute("DELETE FROM goal_plans WHERE id = ?", (goal_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+def save_tactical_swing(
+    symbol: str,
+    company_name: str,
+    entry_price: float,
+    allocated_capital: float,
+    shares: int,
+    target_1: float,
+    target_2: float,
+    stop_loss: float,
+    entry_date: str,
+    expiry_date: str,
+    status: str = "ACTIVE"
+) -> Dict[str, Any]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO tactical_swings (symbol, company_name, entry_price, allocated_capital, shares, target_1, target_2, stop_loss, entry_date, expiry_date, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (symbol.upper().strip(), company_name.strip(), entry_price, allocated_capital, shares, target_1, target_2, stop_loss, entry_date, expiry_date, status))
+        conn.commit()
+        swing_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM tactical_swings WHERE id = ?", (swing_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else {}
+
+def get_active_tactical_swings() -> List[Dict[str, Any]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tactical_swings WHERE status = 'ACTIVE' ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def get_all_tactical_swings() -> List[Dict[str, Any]]:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tactical_swings ORDER BY created_at DESC")
+        rows = cursor.fetchall()
+        return [dict(row) for row in rows]
+
+def update_tactical_swing_status(swing_id: int, status: str) -> bool:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tactical_swings SET status = ? WHERE id = ?", (status, swing_id))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def delete_tactical_swing(swing_id: int) -> bool:
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM tactical_swings WHERE id = ?", (swing_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
 
