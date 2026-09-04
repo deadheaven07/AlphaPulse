@@ -109,19 +109,17 @@ export const StockStudioPage: React.FC<StockStudioPageProps> = ({
             activeSymbol={symbol}
             onSelectSymbol={onSelectSymbol}
           />
-
-          {quote && (
-            /* Quality Scorecard (Piotroski F-Score & Delivery %) */
-            <QualityScoreCard
-              quality={quote.quality_filters}
-              symbol={quote.symbol}
-            />
-          )}
         </div>
       </div>
 
       {quote && (
         <>
+          {/* Institutional Quality & Governance Screener (Full Width 3-Pillar Dashboard) */}
+          <QualityScoreCard
+            quality={quote.quality_filters}
+            symbol={quote.symbol}
+          />
+
           {/* Technical Signals & Moving Averages */}
           <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
 
