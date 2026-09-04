@@ -7,7 +7,7 @@ from backend.app.quant.data_engine import (
     search_symbols
 )
 from backend.app.quant.technicals import get_technical_summary
-from backend.app.quant.sector_rrg import analyze_sector_rrg
+from backend.app.quant.sector_rrg import analyze_sector_rrg, get_all_sectors_rrg_matrix
 from backend.app.quant.quality_filters import evaluate_quality_filters
 from backend.app.quant.news_engine import analyze_stock_news_sentiment
 from backend.app.quant.radar_engine import scan_real_time_kpi_radar
@@ -72,6 +72,10 @@ def get_stock_technicals(symbol: str = Query(..., description="Stock symbol")):
 @router.get("/sector-rrg")
 def get_rrg(sector: str = Query(..., description="Sector name")):
     return analyze_sector_rrg(sector)
+
+@router.get("/sector-rrg-matrix")
+def get_rrg_matrix(timeframe: str = Query(default="1w", description="Timeframe: 1w, 1m, or 1y")):
+    return get_all_sectors_rrg_matrix(timeframe=timeframe)
 
 @router.get("/quality")
 def get_quality(symbol: str = Query(..., description="Stock symbol")):

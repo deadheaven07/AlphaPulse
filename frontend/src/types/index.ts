@@ -29,6 +29,40 @@ export interface SectorRrgData {
   color: string;
 }
 
+export interface SectorConstituentStock {
+  symbol: string;
+  name: string;
+  ltp: number;
+  day_change_pct: number;
+  timeframe_return_pct: number;
+  piotroski_score: number;
+  delivery_pct: number;
+  beta: number;
+  catalyst: string;
+}
+
+export interface SectorRrgMatrixItem {
+  id: string;
+  name: string;
+  rs_ratio: number;
+  rs_momentum: number;
+  quadrant: "Leading" | "Improving" | "Weakening" | "Lagging";
+  description: string;
+  color: string;
+  return_pct: number;
+  outperformance_vs_nifty_pct: number;
+  stock_count: number;
+  stocks: SectorConstituentStock[];
+}
+
+export interface SectorRrgMatrixResponse {
+  timeframe: string;
+  benchmark: string;
+  benchmark_return_pct: number;
+  total_sectors: number;
+  sectors: SectorRrgMatrixItem[];
+}
+
 export interface QualityFiltersData {
   delivery_pct: number;
   delivery_signal: string;

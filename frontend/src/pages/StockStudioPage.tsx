@@ -98,6 +98,8 @@ export const StockStudioPage: React.FC<StockStudioPageProps> = ({
           <SectorRrgMap
             currentSectorRrg={quote.sector_rrg}
             activeStockSymbol={quote.symbol}
+            onSelectSymbol={onSelectSymbol}
+            onNavigateToSimulator={onNavigateToSimulator}
           />
         </div>
       ) : (
