@@ -156,7 +156,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
               />
             </div>
 
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-black/[0.05] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04] flex-wrap">
               {CAPITAL_PRESETS.map((amt) => (
                 <button
                   key={amt}
@@ -164,8 +164,8 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
                   onClick={() => setCapital(amt)}
                   className={`py-1 px-2.5 rounded-lg text-xs font-semibold font-mono transition-all cursor-pointer ${
                     capital === amt
-                      ? "bg-slate-900 dark:bg-brand-500 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      ? "bg-white dark:bg-[#2A2B33] text-slate-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
                   }`}
                 >
                   {amt >= 100000 ? `₹${amt / 100000}L` : `₹${amt / 1000}K`}
@@ -186,39 +186,41 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-4 gap-1.5">
-              {HORIZON_SEGMENTS.slice(0, 4).map((seg) => (
-                <button
-                  key={seg.months}
-                  type="button"
-                  onClick={() => setHorizonMonths(seg.months)}
-                  className={`py-2 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer ${
-                    horizonMonths === seg.months
-                      ? "bg-brand-600 dark:bg-brand-500 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  <span>{seg.label}</span>
-                </button>
-              ))}
-            </div>
+            <div className="p-1 rounded-xl bg-black/[0.05] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04] space-y-1">
+              <div className="grid grid-cols-4 gap-1">
+                {HORIZON_SEGMENTS.slice(0, 4).map((seg) => (
+                  <button
+                    key={seg.months}
+                    type="button"
+                    onClick={() => setHorizonMonths(seg.months)}
+                    className={`py-1.5 rounded-lg text-xs font-semibold transition-all flex flex-col items-center justify-center cursor-pointer ${
+                      horizonMonths === seg.months
+                        ? "bg-white dark:bg-[#2A2B33] text-slate-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span>{seg.label}</span>
+                  </button>
+                ))}
+              </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
-              {HORIZON_SEGMENTS.slice(4).map((seg) => (
-                <button
-                  key={seg.months}
-                  type="button"
-                  onClick={() => setHorizonMonths(seg.months)}
-                  className={`py-1.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                    horizonMonths === seg.months
-                      ? "bg-brand-600 dark:bg-brand-500 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-                  }`}
-                >
-                  <span>{seg.label}</span>
-                  <span className="text-[9px] opacity-80">({seg.months / 12}Y)</span>
-                </button>
-              ))}
+              <div className="grid grid-cols-3 gap-1">
+                {HORIZON_SEGMENTS.slice(4).map((seg) => (
+                  <button
+                    key={seg.months}
+                    type="button"
+                    onClick={() => setHorizonMonths(seg.months)}
+                    className={`py-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                      horizonMonths === seg.months
+                        ? "bg-white dark:bg-[#2A2B33] text-slate-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span>{seg.label}</span>
+                    <span className="text-[9px] opacity-70">({seg.months / 12}Y)</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -234,16 +236,16 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="p-1 rounded-xl bg-black/[0.05] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.04] grid grid-cols-3 gap-1">
               {(["Conservative", "Moderate", "Aggressive"] as RiskTolerance[]).map((r) => (
                 <button
                   key={r}
                   type="button"
                   onClick={() => setRiskTolerance(r)}
-                  className={`py-3 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                  className={`py-2 rounded-lg text-xs font-semibold transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
                     riskTolerance === r
-                      ? "bg-slate-900 dark:bg-brand-500 text-white shadow-xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                      ? "bg-white dark:bg-[#2A2B33] text-slate-900 dark:text-white shadow-[0_1px_3px_rgba(0,0,0,0.12)]"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
                   }`}
                 >
                   <span>{r}</span>

@@ -4,89 +4,197 @@
 
 @layer base {
   :root {
-    --bg-canvas: #F8FAFC;
-    --text-primary: #0F172A;
+    --bg-canvas: #F5F5F7;
+    --text-primary: #1D1D1F;
   }
 
   .dark {
-    --bg-canvas: #121417;
-    --text-primary: #EDEDF0;
+    --bg-canvas: #16171D;
+    --text-primary: #F5F5F7;
   }
 
   body {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", "Inter", sans-serif;
     overflow-x: hidden;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease;
   }
 }
 
-/* Custom ultra-smooth modern scrollbars */
+/* Apple macOS Smooth Scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 9999px;
   backdrop-filter: blur(8px);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.6);
+  background: rgba(0, 0, 0, 0.3);
 }
 .dark ::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.45);
+  background: rgba(255, 255, 255, 0.15);
 }
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.6);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* 3D Application & Glassmorphism Utilities (Warm Charcoal & Emerald Gold) */
+/* macOS Frosted Glass Materials (Sonoma & Sequoia Vibrancy) */
+.macos-glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .macos-glass {
+  background: rgba(24, 25, 31, 0.78);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+/* macOS Squircle Window Container */
+.macos-window {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 24px 70px -10px rgba(0, 0, 0, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+.dark .macos-window {
+  background: rgba(22, 23, 29, 0.85);
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 28px 80px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
+}
+
+/* macOS Squircle Card */
+.macos-card {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.dark .macos-card {
+  background: rgba(30, 31, 38, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 28px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+/* macOS Native Segmented Control */
+.macos-segmented {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.dark .macos-segmented {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.macos-segmented-item {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 9px;
+  color: #64748B;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+.dark .macos-segmented-item {
+  color: #9E9EA7;
+}
+
+.macos-segmented-item:hover {
+  color: #0F172A;
+}
+
+.dark .macos-segmented-item:hover {
+  color: #FFFFFF;
+}
+
+.macos-segmented-item.active {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.dark .macos-segmented-item.active {
+  background: #2A2B33;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Legacy 3D Panel Compatibility */
 .glass-panel-3d {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .dark .glass-panel-3d {
-  background: rgba(26, 29, 36, 0.88);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: rgba(26, 28, 36, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), 0 0 1px 1px rgba(255, 255, 255, 0.03) inset;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-card-hover {
-  transform: translateY(0) scale(1);
-  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translateY(0);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .glass-card-hover:hover {
-  transform: translateY(-3px) scale(1.006);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.08);
 }
 
 .dark .glass-card-hover:hover {
-  box-shadow: 0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3) inset;
-  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 14px 32px -4px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(16, 185, 129, 0.25);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* Modal Popup 3D Zoom Effect */
+/* Modal Popup macOS Zoom Effect */
 .modal-3d-backdrop {
-  background: rgba(18, 20, 23, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15, 16, 20, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .modal-3d-content {
-  animation: zoomIn3D 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: zoomInMac 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   transform-origin: center;
 }
 
@@ -95,10 +203,10 @@
   to { opacity: 1; }
 }
 
-@keyframes zoomIn3D {
+@keyframes zoomInMac {
   from {
     opacity: 0;
-    transform: scale(0.94) translateY(10px);
+    transform: scale(0.96) translateY(12px);
   }
   to {
     opacity: 1;
@@ -138,58 +246,13 @@
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background: linear-gradient(90deg, #EAEBEF 25%, #DCDDE3 50%, #EAEBEF 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 .dark .skeleton-shimmer {
-  background: linear-gradient(90deg, #222630 25%, #2D3342 50%, #222630 75%);
+  background: linear-gradient(90deg, #22242D 25%, #2D303C 50%, #22242D 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes toastTimer {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
-}
-
-.animate-toast-timer {
-  animation: toastTimer linear forwards;
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-100%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.animate-slide-in-left {
-  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-

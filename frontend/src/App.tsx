@@ -13,6 +13,7 @@ import type { SimulationResult, PortfolioAlert } from "./types";
 import { ThreeBackground } from "./components/ThreeBackground";
 import { Sidebar } from "./components/Sidebar";
 import type { NavPage } from "./components/Sidebar";
+import { MacWindowTitlebar } from "./components/MacWindowTitlebar";
 import { AiAssistantPane } from "./components/AiAssistantPane";
 import { TickerTape } from "./components/TickerTape";
 import { AlertToastContainer } from "./components/AlertToastContainer";
@@ -207,6 +208,15 @@ export function App() {
 
       {/* Main Content Viewport (Scrolls independently, renders single focused page) */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
+        {/* macOS Desktop-Class Titlebar */}
+        <MacWindowTitlebar
+          activePage={activePage}
+          onOpenAi={() => setIsAiPaneOpen(true)}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          isDarkMode={isDarkMode}
+          onToggleTheme={toggleTheme}
+        />
+
         {/* Infinite Live Ticker Tape */}
         <TickerTape
           onSelectSymbol={(sym) => {

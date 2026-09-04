@@ -20,21 +20,21 @@ export default {
     extend: {
       colors: {
         canvas: {
-          DEFAULT: "#F8FAFC",
-          dark: "#121417", // Warm volcanic matte carbon (Zero blue light)
+          DEFAULT: "#F5F5F7", // Signature Apple macOS Sonoma & Sequoia Off-White Canvas
+          dark: "#16171D",    // Deep Obsidian Carbon
         },
         surface: {
           DEFAULT: "#FFFFFF",
-          dark: "#1A1D24", // Warm elevated charcoal card
-          elevated: "#222733",
+          dark: "#1E1F26",    // macOS Sequoia dark card surface
+          elevated: "#282932",
         },
         border: {
-          DEFAULT: "#E2E8F0",
-          dark: "#2A303F", // Soft warm border
+          DEFAULT: "rgba(0, 0, 0, 0.08)",
+          dark: "rgba(255, 255, 255, 0.09)", // Soft specular glass border
         },
         muted: {
           DEFAULT: "#64748B",
-          dark: "#9E9EA7", // Soft warm silver
+          dark: "#9E9EA7",    // Soft Apple silver
         },
         subtle: {
           DEFAULT: "#94A3B8",
@@ -46,7 +46,7 @@ export default {
           200: "#A7F3D0",
           300: "#6EE7B7",
           400: "#34D399",
-          500: "#10B981", // Rich Forest Emerald & Gold accent instead of blue
+          500: "#10B981",    // Forest Emerald
           600: "#059669",
           700: "#047857",
           800: "#065F46",
@@ -74,8 +74,17 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'Menlo', 'monospace'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          '"SF Pro Text"',
+          '"Plus Jakarta Sans"',
+          'Inter',
+          'system-ui',
+          'sans-serif'
+        ],
+        mono: ['"JetBrains Mono"', '"SF Mono"', 'Menlo', 'monospace'],
       },
       boxShadow: {
         'soft': '0 2px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)',
@@ -85,6 +94,8 @@ export default {
         'hover-dark': '0 12px 28px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3)',
         'profit': '0 8px 20px -3px rgba(16, 185, 129, 0.18)',
         'risk': '0 8px 20px -3px rgba(244, 63, 94, 0.18)',
+        'macos-window': '0 20px 70px -10px rgba(0, 0, 0, 0.25), 0 0 1px 1px rgba(0, 0, 0, 0.08)',
+        'macos-window-dark': '0 25px 80px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 0 rgba(255, 255, 255, 0.15)',
       },
       animation: {
         'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
@@ -99,7 +110,11 @@ export default {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-6px)' },
-        }
+        },
+      },
+      borderRadius: {
+        'squircle': '20px',
+        'squircle-lg': '24px',
       }
     },
   },

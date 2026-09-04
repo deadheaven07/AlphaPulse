@@ -5,7 +5,6 @@ import { formatINR } from "../utils/formatters";
 import {
   Sparkles,
   X,
-  Send,
   Loader2,
   Trash2,
   LineChart,
@@ -20,7 +19,9 @@ import {
   Radio,
   Bell,
   Coins,
-  Clock
+  Clock,
+  Search,
+  CornerDownLeft
 } from "lucide-react";
 
 interface AiAssistantPaneProps {
@@ -63,6 +64,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
       role: "model",
       content: `👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **${currentPage.toUpperCase()}**. You are inspecting **${activeSymbol}** with a capital allocation of **${formatINR(simCapital)}**.\n\nAsk me for a **1-week tactical high-profit blueprint**, stock comparisons, valuation moats, or dividend roadmaps!`,
       followUpChips: [
+        "I have 5 thousand tell me how to invest",
         "I have ₹50,000 for 1 week",
         `Analyze ${activeSymbol} fundamentals`,
         "Suggest 2 defense stocks"
@@ -72,7 +74,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Auto-scroll to bottom of conversation
   const scrollToBottom = () => {
@@ -199,13 +201,6 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage(inputQuery);
-    }
-  };
-
   const handleClearHistory = () => {
     setMessages([
       {
@@ -213,6 +208,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
         role: "model",
         content: `👋 **Conversation cleared.**\n\nI am tracking your workspace on **${currentPage.toUpperCase()}** (${activeSymbol}). How can I assist with your Dalal Street strategy today?`,
         followUpChips: [
+          "I have 5 thousand tell me how to invest",
           "I have ₹50,000 for 1 week",
           `Analyze ${activeSymbol} fundamentals`,
           "Suggest 2 defense stocks"
@@ -222,61 +218,104 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
     ]);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
+      {/* Frosted Dark Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-slate-950/40 dark:bg-black/60 backdrop-blur-xs transition-opacity"
+        className="fixed inset-0 bg-slate-950/50 dark:bg-black/75 backdrop-blur-md transition-opacity animate-fade-in"
       />
 
-      {/* Slide-out Left Drawer */}
-      <aside className="relative z-10 w-full max-w-md sm:max-w-lg lg:max-w-xl bg-white dark:bg-surface-dark h-full shadow-2xl border-r border-border dark:border-border-dark flex flex-col justify-between animate-slide-in-left duration-300">
-        {/* Header */}
-        <div className="p-4 border-b border-border/80 dark:border-border-dark flex items-center justify-between bg-white/70 dark:bg-surface-dark/70 backdrop-blur-md">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-amber-500 text-white shadow-xs">
-              <Sparkles className="w-5 h-5 animate-pulse" />
+      {/* Centered Floating macOS Spotlight Command Palette Modal */}
+      <div className="relative z-10 w-full max-w-2xl lg:max-w-3xl max-h-[86vh] flex flex-col rounded-[24px] bg-white/95 dark:bg-[#181920]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)_inset] overflow-hidden transition-all duration-300">
+        {/* Top Spotlight Search & Prompt Bar */}
+        <div className="p-3.5 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/60 dark:bg-black/20 backdrop-blur-md">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage(inputQuery);
+            }}
+            className="flex items-center gap-3"
+          >
+            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-amber-500 text-white shadow-xs shrink-0">
+              <Sparkles className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Alpha AI & Stock Guru</h3>
-                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-mono font-extrabold uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-                  {geminiConfigured ? "Gemini 2.5 Live" : "Tactical Brain"}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 text-[10px] text-muted dark:text-muted-dark">
-                <span>Tracking:</span>
-                <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{currentPage.toUpperCase()}</span>
-                <span>•</span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{activeSymbol}</span>
-              </div>
+
+            <div className="flex-1 relative flex items-center">
+              <Search className="w-4 h-4 text-slate-400 absolute left-0 pointer-events-none" />
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputQuery}
+                onChange={(e) => setInputQuery(e.target.value)}
+                placeholder="Ask Alpha Copilot (e.g., 'have 5 thousand how to invest', '1-week tactical setup')..."
+                disabled={isLoading}
+                className="w-full pl-7 pr-3 py-1.5 bg-transparent text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
+              />
             </div>
-          </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={handleClearHistory}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-surface-elevated transition-colors cursor-pointer"
-              title="Clear Conversation"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {inputQuery.trim() ? (
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CornerDownLeft className="w-3.5 h-3.5" />}
+                  <span className="hidden sm:inline">Ask</span>
+                </button>
+              ) : (
+                <div className="hidden sm:flex items-center gap-1">
+                  <kbd className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] dark:bg-white/[0.08] text-slate-500 dark:text-slate-400 font-bold border border-black/5 dark:border-white/5">
+                    ⌘K
+                  </kbd>
+                </div>
+              )}
 
-            <button
-              onClick={onClose}
-              aria-label="Close AI Assistant"
-              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-elevated transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                onClick={handleClearHistory}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                title="Clear Conversation"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer flex items-center gap-1"
+                title="Close (Esc)"
+              >
+                <kbd className="hidden sm:inline text-[9px] font-mono px-1 py-0.5 rounded bg-black/[0.04] dark:bg-white/[0.06] text-slate-500 dark:text-slate-400">
+                  ESC
+                </kbd>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+
+          {/* Context Capsule Bar */}
+          <div className="flex items-center justify-between gap-2 pt-2.5 mt-1 border-t border-black/[0.04] dark:border-white/[0.04] text-[10px] text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5 truncate">
+              <span>Tracking:</span>
+              <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{currentPage.toUpperCase()}</span>
+              <span>•</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{activeSymbol}</span>
+              <span>•</span>
+              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{formatINR(simCapital)}</span>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold text-emerald-700 dark:text-emerald-400">
+                {geminiConfigured ? "Gemini 2.5 Live" : "Tactical Quant Brain"}
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Message Thread (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 max-h-[calc(86vh-140px)]">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -291,10 +330,10 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
               )}
 
               <div
-                className={`max-w-[88%] rounded-2xl p-3.5 space-y-3 ${
+                className={`max-w-[90%] sm:max-w-[85%] rounded-2xl p-3.5 space-y-3 ${
                   msg.role === "user"
                     ? "bg-emerald-600 text-white shadow-xs rounded-tr-xs"
-                    : "bg-slate-50 dark:bg-surface-elevated border border-slate-200/80 dark:border-border-dark text-slate-900 dark:text-slate-100 shadow-2xs rounded-tl-xs"
+                    : "bg-white/80 dark:bg-[#1E1F27]/90 border border-black/[0.06] dark:border-white/[0.08] text-slate-900 dark:text-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.04)] rounded-tl-xs"
                 }`}
               >
                 {/* Message Body */}
@@ -453,14 +492,14 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 
                 {/* In-Chat Interactive Stock Action Cards */}
                 {msg.actionCards && msg.actionCards.length > 0 && !msg.tacticalCard && (
-                  <div className="space-y-2 pt-1 border-t border-slate-200 dark:border-border-dark/60">
-                    <span className="text-[10px] font-extrabold text-muted dark:text-muted-dark uppercase tracking-wider block">
+                  <div className="space-y-2 pt-1 border-t border-black/[0.06] dark:border-white/[0.08]">
+                    <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Mentioned Stock Actions:
                     </span>
                     {msg.actionCards.map((card: ChatActionCard) => (
                       <div
                         key={card.symbol}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-white dark:bg-canvas-dark border border-slate-200 dark:border-border-dark shadow-2xs"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-black/[0.02] dark:bg-black/40 border border-black/[0.06] dark:border-white/[0.08]"
                       >
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -470,15 +509,15 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                             <span
                               className={`text-[10px] font-bold px-1 rounded flex items-center gap-0.5 font-mono ${
                                 card.change_pct >= 0
-                                  ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
-                                  : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
+                                    ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                                    : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300"
                               }`}
                             >
                               {card.change_pct >= 0 ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                               {card.change_pct >= 0 ? "+" : ""}{card.change_pct.toFixed(1)}%
                             </span>
                           </div>
-                          <div className="text-[10px] font-mono font-bold text-slate-500">
+                          <div className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">
                             {formatINR(card.price)} • {card.company_name}
                           </div>
                         </div>
@@ -495,7 +534,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                           {onNavigateToSimulator && (
                             <button
                               onClick={() => onNavigateToSimulator(card.symbol, simCapital, simHorizon)}
-                              className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-surface-elevated hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-bold transition-all border border-slate-200 dark:border-border-dark flex items-center gap-1 cursor-pointer"
+                              className="px-2.5 py-1 rounded-lg bg-black/[0.05] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-200 text-[10px] font-bold transition-all border border-black/[0.04] dark:border-white/[0.06] flex items-center gap-1 cursor-pointer"
                             >
                               <Calculator className="w-3 h-3" />
                               <span>Simulate</span>
@@ -509,14 +548,14 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 
                 {/* Follow-Up Suggestion Chips */}
                 {msg.followUpChips && msg.followUpChips.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-200/60 dark:border-border-dark/40">
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-black/[0.04] dark:border-white/[0.04]">
                     {msg.followUpChips.map((chip, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleSendMessage(chip)}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold transition-all border border-emerald-200 dark:border-emerald-800/60 cursor-pointer flex items-center gap-1 text-left"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold transition-all border border-emerald-500/20 cursor-pointer flex items-center gap-1 text-left"
                       >
-                        <Compass className="w-2.5 h-2.5 shrink-0" />
+                        <Compass className="w-2.5 h-2.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                         <span>{chip}</span>
                       </button>
                     ))}
@@ -538,9 +577,9 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
               <div className="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-2xs">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="p-3 rounded-2xl rounded-tl-xs bg-slate-50 dark:bg-surface-elevated border border-slate-200 dark:border-border-dark flex items-center gap-2">
+              <div className="p-3 rounded-2xl rounded-tl-xs bg-white/80 dark:bg-[#1E1F27]/90 border border-black/[0.06] dark:border-white/[0.08] flex items-center gap-2 shadow-2xs">
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
-                <span className="text-[11px] text-muted dark:text-muted-dark font-medium">
+                <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">
                   Alpha AI Guru is computing 1-week tactical alpha & crowd psychology...
                 </span>
               </div>
@@ -552,62 +591,27 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 
         {/* Preset Starters (Shown when conversation is short) */}
         {messages.length <= 1 && (
-          <div className="px-4 py-2 bg-slate-50/70 dark:bg-canvas-dark/40 border-t border-border dark:border-border-dark space-y-1.5">
-            <span className="text-[10px] font-extrabold text-muted dark:text-muted-dark uppercase tracking-wider block">
+          <div className="px-4 py-3 bg-black/[0.02] dark:bg-black/30 border-t border-black/[0.04] dark:border-white/[0.06] space-y-1.5">
+            <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
               Suggested Institutional Starters:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {PRESET_PROMPTS.map((p, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSendMessage(p.text)}
-                  className="p-2 rounded-xl bg-white dark:bg-surface-elevated border border-slate-200 dark:border-border-dark hover:border-emerald-500 text-left transition-all cursor-pointer shadow-2xs group"
+                  className="p-2.5 rounded-xl bg-white/90 dark:bg-[#20212B]/90 border border-black/[0.06] dark:border-white/[0.08] hover:border-emerald-500/50 hover:bg-emerald-500/[0.03] text-left transition-all cursor-pointer shadow-2xs group"
                 >
                   <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 line-clamp-1">
                     {p.text}
                   </div>
-                  <div className="text-[9px] text-slate-400 truncate">{p.subtitle}</div>
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 truncate">{p.subtitle}</div>
                 </button>
               ))}
             </div>
           </div>
         )}
-
-        {/* Input Bar */}
-        <div className="p-3.5 border-t border-border dark:border-border-dark bg-white dark:bg-surface-dark">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage(inputQuery);
-            }}
-            className="flex items-end gap-2"
-          >
-            <div className="flex-1 relative">
-              <textarea
-                ref={inputRef}
-                value={inputQuery}
-                onChange={(e) => setInputQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Ask for a 1-week tactical setup, stock analysis, or market strategy... (Enter to send)`}
-                rows={2}
-                disabled={isLoading}
-                className="w-full resize-none px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-border-dark bg-slate-50 dark:bg-canvas-dark text-slate-900 dark:text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-sans leading-relaxed"
-              />
-              <div className="absolute right-2 bottom-2 text-[9px] text-slate-400 font-mono hidden sm:block">
-                Shift+Enter for newline
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !inputQuery.trim()}
-              className="p-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 text-white font-bold transition-all shadow-xs shrink-0 cursor-pointer"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-            </button>
-          </form>
-        </div>
-      </aside>
+      </div>
     </div>
   );
 };

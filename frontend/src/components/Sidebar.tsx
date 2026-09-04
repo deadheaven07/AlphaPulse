@@ -3,23 +3,24 @@ import { AlphaLogo } from "./AlphaLogo";
 import { useQuery } from "@tanstack/react-query";
 import { fetchMarketStatus } from "../services/api";
 import {
-  LayoutDashboard,
+  Compass,
   Radar,
   LineChart,
   Calculator,
   Coins,
   Target,
-  Briefcase,
+  Layers,
   Sparkles,
   Sun,
   Moon,
   Settings,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Zap
 } from "lucide-react";
 
-export type NavPage = "overview" | "radar" | "studio" | "simulator" | "dividend" | "planner" | "portfolio";
+export type NavPage = "overview" | "radar" | "studio" | "intraday" | "simulator" | "dividend" | "planner" | "portfolio";
 
 interface SidebarProps {
   activePage: NavPage;
@@ -31,50 +32,16 @@ interface SidebarProps {
   vaultCount?: number;
 }
 
-const NAV_ITEMS: { id: NavPage; label: string; icon: React.ComponentType<{ className?: string }>; description: string }[] = [
-  {
-    id: "overview",
-    label: "Overview",
-    icon: LayoutDashboard,
-    description: "Market pulse, indices & portfolio snapshot"
-  },
-  {
-    id: "radar",
-    label: "Radar & Screener",
-    icon: Radar,
-    description: "5-factor leaders & sub-₹150 turnarounds"
-  },
-  {
-    id: "studio",
-    label: "Stock Studio",
-    icon: LineChart,
-    description: "Live charts, technicals, quality & RRG"
-  },
-  {
-    id: "simulator",
-    label: "Profit Simulator",
-    icon: Calculator,
-    description: "Monte Carlo & Statutory Tax Engine"
-  },
-  {
-    id: "dividend",
-    label: "Dividend Income",
-    icon: Coins,
-    description: "High-yield timings & bank cash flow"
-  },
-  {
-    id: "planner",
-    label: "Goal Planner",
-    icon: Target,
-    description: "Milestone targets, risk radar & live news"
-  },
-  {
-    id: "portfolio",
-    label: "Portfolio Vault",
-    icon: Briefcase,
-    description: "Persistent SQLite holdings & threat watchdog"
-  }
-];
+interface NavSection {
+  title: string;
+  items: {
+    id: NavPage;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    description: string;
+    badge?: string;
+  }[];
+}
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activePage,
@@ -95,14 +62,82 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const isOpen = marketStatus?.market_status?.includes("OPEN") ?? false;
 
+  const SECTIONS: NavSection[] = [
+    {
+      title: "Workspaces",
+      items: [
+        {
+          id: "overview",
+          label: "Overview",
+          icon: Compass,
+          description: "Market pulse, indices & option chain PCR"
+        },
+        {
+          id: "radar",
+          label: "Radar & Screener",
+          icon: Radar,
+          description: "5-factor leaders & insider deals"
+        },
+        {
+          id: "studio",
+          label: "Stock Studio",
+          icon: LineChart,
+          description: "Candlesticks, quality & sector RRG"
+        },
+        {
+          id: "intraday",
+          label: "Intraday Terminal",
+          icon: Zap,
+          description: "15M ORB, live VWAP & 5x MIS leverage",
+          badge: "5x MIS"
+        }
+      ]
+    },
+    {
+      title: "Quantitative Lab",
+      items: [
+        {
+          id: "simulator",
+          label: "Profit Simulator",
+          icon: Calculator,
+          description: "Monte Carlo & Statutory Tax Engine"
+        },
+        {
+          id: "dividend",
+          label: "Dividend Income",
+          icon: Coins,
+          description: "High-yield timings & bank cash flow"
+        },
+        {
+          id: "planner",
+          label: "Goal Planner",
+          icon: Target,
+          description: "Milestone targets, risk radar & SIP"
+        }
+      ]
+    },
+    {
+      title: "Account & Vault",
+      items: [
+        {
+          id: "portfolio",
+          label: "Demat Vault",
+          icon: Layers,
+          description: "Persistent holdings & active sprints",
+          badge: vaultCount > 0 ? String(vaultCount) : undefined
+        }
+      ]
+    }
+  ];
+
   return (
     <aside
-      className={`relative z-20 flex flex-col justify-between h-full bg-white/95 dark:bg-surface-dark/95 backdrop-blur-xl border-r border-border dark:border-border-dark transition-all duration-300 select-none shadow-soft ${
+      className={`relative z-20 flex flex-col justify-between h-full bg-slate-50/75 dark:bg-[#15161C]/80 backdrop-blur-2xl border-r border-black/[0.06] dark:border-white/[0.08] transition-all duration-300 select-none shadow-soft ${
         isCollapsed ? "w-20" : "w-64 sm:w-72"
       }`}
     >
       {/* Top Header & Brand */}
-      <div className="p-4 border-b border-border/80 dark:border-border-dark flex items-center justify-between">
+      <div className="p-4 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
         <div
           onClick={() => onSelectPage("overview")}
           className="flex items-center gap-3 cursor-pointer group overflow-hidden"
@@ -114,8 +149,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-white truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                   AlphaPulse
                 </span>
-                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60">
-                  PRO 3D
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold uppercase bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+                  PRO
                 </span>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
@@ -135,133 +170,137 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Collapse Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-surface-elevated transition-colors cursor-pointer hidden md:flex items-center justify-center"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer hidden md:flex items-center justify-center"
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
       </div>
 
-      {/* AI Assistant Glowing Drawer Trigger */}
-      <div className="p-3">
-        <button
-          onClick={onOpenAiPane}
-          className={`w-full group relative overflow-hidden rounded-xl p-2.5 transition-all duration-300 cursor-pointer shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark ${
-            isCollapsed
-              ? "flex items-center justify-center bg-gradient-to-r from-emerald-600 to-amber-600 text-white"
-              : "bg-gradient-to-r from-emerald-600/90 via-emerald-700/90 to-amber-600/90 hover:from-emerald-600 hover:to-amber-600 text-white"
-          }`}
-          title="Ask Alpha AI Analyst"
-        >
-          <div className="flex items-center justify-center gap-2 relative z-10">
-            <Sparkles className="w-4 h-4 text-amber-300 animate-pulse shrink-0" />
-            {!isCollapsed && (
-              <div className="text-left flex-1 min-w-0 flex items-center justify-between">
-                <div>
-                  <div className="font-extrabold text-xs tracking-tight flex items-center gap-1">
-                    <span>Ask Alpha AI</span>
-                    <span className="text-[9px] px-1 py-0.2 rounded bg-white/20 text-white font-mono">Gemini</span>
-                  </div>
-                  <div className="text-[10px] text-emerald-100 truncate opacity-90">
-                    Instant conversational copilot
-                  </div>
-                </div>
-                <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-black/25 text-white text-[9px] font-mono font-bold">
-                  ⌘K
-                </kbd>
+      {/* Navigation Groups (macOS Sidebar Categorization) */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+        {/* Spotlight AI Assistant Trigger */}
+        <div>
+          <button
+            onClick={onOpenAiPane}
+            className={`w-full p-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between group cursor-pointer shadow-xs border ${
+              !isCollapsed
+                ? "bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-amber-500/10 dark:from-emerald-950/40 dark:via-teal-950/40 dark:to-amber-950/40 border-emerald-500/30 hover:border-emerald-500/50"
+                : "bg-emerald-500/10 border-emerald-500/20 justify-center"
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-1.5 rounded-lg bg-emerald-500 text-white shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                <Sparkles className="w-3.5 h-3.5" />
               </div>
-            )}
-          </div>
-        </button>
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = activePage === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelectPage(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all duration-200 cursor-pointer group ${
-                isActive
-                  ? "bg-slate-900 text-white dark:bg-emerald-600 dark:text-white shadow-soft font-bold"
-                  : "text-slate-600 dark:text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-elevated hover:text-slate-900 dark:hover:text-white font-medium"
-              }`}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <Icon
-                className={`w-5 h-5 shrink-0 transition-transform group-hover:scale-110 ${
-                  isActive ? "text-emerald-400 dark:text-white" : "text-slate-500 dark:text-muted-dark"
-                }`}
-              />
               {!isCollapsed && (
-                <div className="flex-1 min-w-0 flex items-center justify-between">
-                  <div className="truncate">
-                    <span className="text-xs sm:text-sm font-extrabold block truncate">{item.label}</span>
-                    <span className={`text-[10px] truncate block opacity-75 ${isActive ? "text-slate-300 dark:text-emerald-100" : "text-muted dark:text-muted-dark"}`}>
-                      {item.description}
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-extrabold text-xs text-slate-900 dark:text-white truncate">Ask Alpha AI</span>
+                    <span className="px-1 py-0.2 rounded text-[8px] font-mono font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300">
+                      GURU
                     </span>
                   </div>
-                  {item.id === "portfolio" && vaultCount > 0 && (
-                    <span
-                      className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono font-extrabold ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300"
-                      }`}
-                    >
-                      {vaultCount}
-                    </span>
-                  )}
+                  <span className="text-[10px] text-muted dark:text-muted-dark truncate">Tactical trades & budget allocator</span>
                 </div>
               )}
-            </button>
-          );
-        })}
-      </nav>
+            </div>
 
-      {/* Bottom Controls */}
-      <div className="p-3 border-t border-border/80 dark:border-border-dark space-y-2">
-        <div className={`flex items-center ${isCollapsed ? "flex-col gap-2" : "justify-between"} gap-1.5`}>
-          {/* Theme Toggle */}
-          <button
-            onClick={onToggleTheme}
-            aria-label="Toggle Theme"
-            className="p-2 rounded-xl text-slate-600 dark:text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-elevated hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center gap-2"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Soothing Dark Mode"}
-          >
-            {isDarkMode ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-700" />
-            )}
             {!isCollapsed && (
-              <span className="text-xs font-bold">{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-500 dark:text-slate-400 bg-white/80 dark:bg-surface-elevated/80 border border-black/[0.08] dark:border-white/[0.1] rounded-md shadow-2xs">
+                ⌘K
+              </kbd>
             )}
           </button>
+        </div>
 
-          {/* Settings Trigger */}
+        {/* Grouped Nav Items */}
+        {SECTIONS.map((section, sIdx) => (
+          <div key={sIdx} className="space-y-1">
+            {!isCollapsed && (
+              <div className="px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {section.title}
+              </div>
+            )}
+
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = activePage === item.id;
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectPage(item.id)}
+                  title={isCollapsed ? item.label : undefined}
+                  className={`w-full p-2 rounded-xl text-left transition-all duration-150 flex items-center justify-between group cursor-pointer ${
+                    isActive
+                      ? "bg-white dark:bg-[#22232B] text-slate-900 dark:text-white shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-black/[0.04] dark:border-white/[0.08]"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                        isActive
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          : "text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                    </div>
+
+                    {!isCollapsed && (
+                      <div className="flex flex-col min-w-0">
+                        <span className={`text-xs font-semibold truncate ${isActive ? "text-slate-900 dark:text-white font-bold" : ""}`}>
+                          {item.label}
+                        </span>
+                        <span className="text-[10px] text-muted dark:text-muted-dark truncate max-w-[170px]">
+                          {item.description}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isCollapsed && item.badge && (
+                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-mono font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-500/20">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom Footer Actions */}
+      <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2 bg-slate-50/50 dark:bg-[#15161C]/50">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onOpenSettings}
-            aria-label="Open Settings"
-            className="p-2 rounded-xl text-slate-600 dark:text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-elevated hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center gap-2"
-            title="Settings & Diagnostics"
+            className="flex-1 p-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            title="Settings & System Diagnostics"
           >
-            <Settings className="w-4 h-4" />
-            {!isCollapsed && <span className="text-xs font-bold">Settings</span>}
+            <Settings className="w-3.5 h-3.5 text-slate-500" />
+            {!isCollapsed && <span>Settings</span>}
+          </button>
+
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors flex items-center justify-center cursor-pointer"
+            title={isDarkMode ? "Light Mode" : "Dark Mode"}
+          >
+            {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
           </button>
         </div>
 
         {!isCollapsed && (
-          <div className="px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-canvas-dark border border-slate-200/60 dark:border-border-dark flex items-center justify-between text-[10px] text-muted dark:text-muted-dark">
+          <div className="px-2 py-1.5 rounded-lg bg-black/[0.03] dark:bg-white/[0.04] border border-black/[0.04] dark:border-white/[0.05] flex items-center justify-between text-[10px] text-muted dark:text-muted-dark">
             <span className="flex items-center gap-1 font-semibold">
               <ShieldCheck className="w-3 h-3 text-emerald-500" />
               Statutory STT & Tax
             </span>
-            <span className="font-mono font-bold">v2.2 Pro</span>
+            <span className="font-mono font-bold">v2.3 macOS</span>
           </div>
         )}
       </div>
