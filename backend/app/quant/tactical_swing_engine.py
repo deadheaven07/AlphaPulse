@@ -1,5 +1,4 @@
 import math
-import numpy as np
 from typing import Dict, Any, List, Optional
 from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.taxes_charges import calculate_indian_taxes_and_charges
@@ -209,18 +208,22 @@ def scan_live_market_tactical_leaders(
     # Standard deviation of returns for the holding period
     period_vol = annual_vol * math.sqrt(holding_days / 252)
 
-    # Z-scores and probabilities using normal distribution CDF
+    # Z-scores and probabilities using normal distribution CDF (via math.erf)
+    # Standard normal CDF: Phi(z) = 0.5 * (1 + erf(z / sqrt(2)))
+    def _phi(z):
+        return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
+
     # Probability of hitting target 1
     z_target_1 = (target_1_pct / 100) / period_vol if period_vol > 0 else 0
-    prob_target_1_hit = round(float(np.norm.cdf(z_target_1) * 100), 1)
+    prob_target_1_hit = round(float(_phi(z_target_1) * 100), 1)
 
     # Probability of hitting target 2
     z_target_2 = (target_2_pct / 100) / period_vol if period_vol > 0 else 0
-    prob_target_2_hit = round(float(np.norm.cdf(z_target_2) * 100), 1)
+    prob_target_2_hit = round(float(_phi(z_target_2) * 100), 1)
 
     # Probability of stop-loss being hit
     z_stop_loss = (abs(stop_loss_pct) / 100) / period_vol if period_vol > 0 else 0
-    prob_stop_loss_hit = round(float(np.norm.cdf(-z_stop_loss) * 100), 1)
+    prob_stop_loss_hit = round(float(_phi(-z_stop_loss) * 100), 1)
 
     # Expected value considering probabilities
     expected_value_pct = round(
