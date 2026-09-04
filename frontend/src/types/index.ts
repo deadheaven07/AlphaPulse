@@ -602,6 +602,15 @@ export interface ChatMessageItem {
   content: string;
   actionCards?: ChatActionCard[];
   tacticalCard?: TacticalSetup;
+  intradaySetup?: IntradayLeverageCalculation & {
+    trade_id?: number;
+    company_name?: string;
+    orb_high?: number;
+    orb_low?: number;
+    vwap?: number;
+  };
+  intradayCandidates?: IntradayCandidate[];
+  intradayActiveTrades?: IntradayTrade[];
   followUpChips?: string[];
   timestamp?: number;
 }
@@ -621,6 +630,15 @@ export interface ConversationalChatResponse {
   reply: string;
   action_cards: ChatActionCard[];
   tactical_card?: TacticalSetup;
+  intraday_setup?: IntradayLeverageCalculation & {
+    trade_id?: number;
+    company_name?: string;
+    orb_high?: number;
+    orb_low?: number;
+    vwap?: number;
+  };
+  intraday_candidates?: IntradayCandidate[];
+  intraday_active_trades?: IntradayTrade[];
   follow_up_chips: string[];
 }
 

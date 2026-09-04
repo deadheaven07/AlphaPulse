@@ -191,17 +191,31 @@ graph TD
 
 ---
 
-### 5. ⚡ Intraday Tactical Terminal (9:15 AM – 3:20 PM MIS 5x Engine)
+### 5. ⚡ Intraday Tactical Terminal & Conversational Prompt Guide (9:15 AM – 3:20 PM MIS 5x Engine)
 - **SEBI 5x Broker Leverage (MIS Margin)**:
   - Retail broker 5x leverage calculator (trade ₹1,00,000 worth of shares with ₹20,000 margin).
-  - **1:2.25 Risk-to-Reward Math**: A +1.8% move with 5x leverage yields **+9.0% on cash margin**.
+  - **1:2.25 Risk-to-Reward Math**: A +1.8% move with 5x leverage yields **+9.0% on cash margin**; -0.8% stop-loss limits risk to **-4.0%**.
 - **15-Minute Opening Range Breakout (ORB) + Live VWAP Screener**:
   - **🟢 Bullish Breakouts (LONG / Buy First)**: $Price > 15M\text{ High} \land Price > VWAP$ with $Volume > 1.8\times$.
   - **🔴 Bearish Breakdowns (SHORT / Sell First)**: $Price < 15M\text{ Low} \land Price < VWAP$ with $Volume > 1.8\times$.
-- **3:10 PM Mandatory Square-Off Guardian**:
-  - Countdown timer to 3:15 PM broker auto square-off cut-off to prevent forced penalty charges.
+- **3:15 PM Mandatory Square-Off Guardian**:
+  - Countdown timer to 3:15 PM broker auto square-off cut-off to prevent forced RMS liquidation penalties (₹50 + 18% GST).
+
+#### 🎯 Intraday Slash Commands & Prompt Guide
+| Command / Prompt | What It Does | Example |
+| :--- | :--- | :--- |
+| `/intraday-long [symbol]` | Arm a LONG 5x MIS position at current LTP with exact 1:2.25 R:R | `/intraday-long TCS` |
+| `/intraday-short [symbol]` | Arm a SHORT 5x MIS position at current LTP with exact 1:2.25 R:R | `/intraday-short INFY` |
+| `/intraday-scanner` | Refresh live 15M ORB + VWAP breakout scanner across 65+ NSE stocks | `/intraday-scanner` |
+| `/intraday-active` | Show open MIS positions with live PnL & 1-click square-off buttons | `/intraday-active` |
+| `/intraday-history` | Show closed trade log with win-rate % & realized net PnL | `/intraday-history` |
+| `/intraday-capital [amount]` | Set active margin capital for intraday trading | `/intraday-capital 50000` |
+| *"Act like my intraday trader..."* | Dynamic AI trader persona parsing budget & scanning high-probability setups | *"I have ₹50,000. Find me bullish breakout candidates."* |
+| *"Square off [symbol]"* | Instantly close position in SQLite & Demat, calculate realized PnL | *"Square off my TCS position at LTP"* |
+| *"Show statutory charge breakdown"* | Full breakdown of STT (0.025%), flat ₹20 brokerage, exchange GST & 3:15 PM cutoff | *"Explain intraday statutory charges"* |
 
 ---
+
 
 ### 6. 🏛️ 3 Free Institutional Superpowers (Zero-Subscription Pro Tools)
 - **📱 1. Free Phone Alerts via Private Telegram Bot (Screen-OFF Notifications)**:

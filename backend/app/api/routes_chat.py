@@ -4,12 +4,25 @@ from typing import List, Dict, Any, Optional, Tuple
 import os
 import re
 import math
-from backend.app.quant.data_engine import fetch_live_quote
+from backend.app.quant.data_engine import fetch_live_quote, fetch_live_quotes_batch
 from backend.app.quant.tactical_swing_engine import (
     scan_live_market_tactical_leaders,
     EXPANDED_NSE_UNIVERSE
 )
 from backend.app.quant.crowd_psychology_engine import analyze_news_crowd_psychology
+from backend.app.quant.intraday_engine import (
+    scan_intraday_breakouts,
+    calculate_intraday_leverage_math,
+    get_session_time_status,
+    calculate_intraday_charges,
+    INTRADAY_UNIVERSE
+)
+from backend.app.db.database import (
+    create_intraday_trade,
+    get_active_intraday_trades,
+    get_all_intraday_trades,
+    square_off_intraday_trade
+)
 
 router = APIRouter(prefix="/api/ai", tags=["conversational-ai"])
 
@@ -296,6 +309,69 @@ def handle_conversational_chat(req: ConversationalChatRequest):
 
     # 3. Detect Intent Types
     is_greeting = q_lower in ["hi", "hello", "hey", "namaste", "good morning", "good evening", "help", "who are you", "hi!", "hello!"]
+
+    # --- Intraday Intents ---
+    is_intraday_scanner = (
+        q_lower.startswith("/intraday-scanner") or
+        any(k in q_lower for k in [
+            "intraday scanner", "intraday-scanner", "live scanner", "show me the live scanner",
+            "bullish breakout", "bearish breakdown", "scan nse for long", "scan for short",
+            "15m orb", "orb breakout", "vwap alignment", "breakdown below 15m", "new candidates",
+            "refresh the intraday scanner", "intraday candidates", "find me bullish breakout"
+        ])
+    )
+
+    is_intraday_arm_long = (
+        q_lower.startswith("/intraday-long") or
+        any(k in q_lower for k in [
+            "arm me a long", "arm a long", "arm long", "go long", "buy long",
+            "long position in", "long 5x", "5x mis long", "buy 5x"
+        ]) or
+        (("arm" in q_lower or "buy" in q_lower) and "long" in q_lower and any(m in q_lower for m in ["intraday", "mis", "5x", "leverage"]))
+    )
+
+    is_intraday_arm_short = (
+        q_lower.startswith("/intraday-short") or
+        any(k in q_lower for k in [
+            "arm me a short", "arm a short", "arm short", "go short", "sell short",
+            "short position in", "short 5x", "5x mis short", "short in"
+        ]) or
+        (("arm" in q_lower or "short" in q_lower or "sell" in q_lower) and "short" in q_lower and any(m in q_lower for m in ["intraday", "mis", "5x", "leverage"]))
+    )
+
+    is_intraday_active = (
+        q_lower.startswith("/intraday-active") or
+        any(k in q_lower for k in [
+            "intraday-active", "active positions", "open positions", "my open mis",
+            "active mis positions", "my active positions", "show my positions",
+            "open trades", "check active trades"
+        ])
+    )
+
+    is_intraday_history = (
+        q_lower.startswith("/intraday-history") or
+        any(k in q_lower for k in [
+            "intraday-history", "trade history", "closed trades", "show my closed trades",
+            "closed trade log", "past trades", "trades for today", "most profitable trade"
+        ])
+    )
+
+    is_intraday_risk_math = (
+        any(k in q_lower for k in [
+            "guardian", "penalty", "risk math", "risk-to-reward math", "1:2.25",
+            "statutory charge", "breakdown for an intraday", "charges for an intraday",
+            "stt on intraday", "3:15 pm", "remind me about", "what happens if"
+        ])
+    )
+
+    is_intraday_square_off = (
+        not is_intraday_risk_math and
+        any(k in q_lower for k in [
+            "square off", "square-off", "close active", "close my active",
+            "close my mis", "exit my position", "exit intraday", "exit mis",
+            "close position"
+        ])
+    )
     
     is_budget_advisory = (
         has_explicit_budget or
@@ -318,10 +394,344 @@ def handle_conversational_chat(req: ConversationalChatRequest):
     ai_reply_text = None
     structured_cards = []
     tactical_card = None
+    intraday_setup = None
+    intraday_candidates = None
+    intraday_active_trades = None
     follow_up_chips = []
 
-    # Priority 1: Budget Allocation Intent (Directs to Capital Allocator)
-    if is_budget_advisory and not is_greeting:
+    # Priority 1: Intraday Arm Position (Long or Short)
+    if (is_intraday_arm_long or is_intraday_arm_short) and not is_greeting:
+        direction = "LONG" if is_intraday_arm_long else "SHORT"
+        
+        # Extract target symbol
+        target_sym = None
+        cmd_match = re.search(r'/intraday-(?:long|short)\s+([A-Za-z0-9_-]+)', latest_user_msg, re.IGNORECASE)
+        if cmd_match:
+            target_sym = cmd_match.group(1).upper()
+        else:
+            # Check against universe
+            all_known = [u["symbol"] for u in INTRADAY_UNIVERSE] + [u["symbol"] for u in EXPANDED_NSE_UNIVERSE]
+            for s_cand in all_known:
+                if re.search(rf'\b{s_cand.lower()}\b', q_lower):
+                    target_sym = s_cand
+                    break
+        
+        if not target_sym:
+            target_sym = ctx.active_symbol or "TCS"
+        
+        try:
+            quote = fetch_live_quote(target_sym)
+            live_price = float(quote.get("price", 1000.0))
+            company_name = quote.get("company_name", target_sym)
+        except Exception:
+            live_price = 1000.0
+            company_name = target_sym
+
+        math_data = calculate_intraday_leverage_math(
+            symbol=target_sym,
+            entry_price=live_price,
+            margin_capital=parsed_capital,
+            direction=direction,
+            leverage_multiplier=5.0
+        )
+
+        # Save to SQLite database
+        try:
+            trade_id = create_intraday_trade({
+                "symbol": target_sym,
+                "company_name": company_name,
+                "direction": direction,
+                "entry_price": math_data["entry_price"],
+                "shares": math_data["shares"],
+                "margin_capital": parsed_capital,
+                "total_exposure": math_data["total_exposure"],
+                "leverage_multiplier": 5.0,
+                "target_price": math_data["target_price"],
+                "stop_loss": math_data["stop_loss"],
+                "orb_high": quote.get("high_52w", 0.0),
+                "orb_low": quote.get("low_52w", 0.0),
+                "vwap": math_data["entry_price"]
+            })
+        except Exception:
+            trade_id = 1
+
+        intraday_setup = {
+            **math_data,
+            "trade_id": trade_id,
+            "company_name": company_name,
+            "orb_high": quote.get("high_52w", 0.0),
+            "orb_low": quote.get("low_52w", 0.0),
+            "vwap": math_data["entry_price"]
+        }
+
+        ai_reply_text = f"""⚡ **Intraday {direction} MIS Position Armed on [{target_sym}] (5x Leverage)**
+
+- 🏢 **Company**: {company_name}
+- 💵 **Margin Capital**: **₹{parsed_capital:,.2f}** $\\rightarrow$ **5x Total Exposure**: **₹{math_data['total_exposure']:,.2f}**
+- 📦 **Shares Executed**: **{math_data['shares']} Shares** @ LTP **₹{math_data['entry_price']:,.2f}**
+- 🎯 **Target ({'+1.8%' if direction == 'LONG' else '-1.8%'})**: **₹{math_data['target_price']:,.2f}** (Net Gain: **+₹{math_data['net_profit']:,.2f}** / **+{math_data['net_roi_pct']}%** on margin)
+- 🛑 **Hard Stop-Loss ({'-0.8%' if direction == 'LONG' else '+0.8%'})**: **₹{math_data['stop_loss']:,.2f}** (Risk: **-₹{math_data['net_loss']:,.2f}**)
+- ⚖️ **Risk-to-Reward Ratio**: **1:{math_data['risk_reward_ratio']}**
+- ⏱️ **Mandatory Session Rule**: Position recorded in SQLite. Enforce manual square-off before **3:15 PM** to avoid broker auto-square-off penalty charges."""
+
+        follow_up_chips = [
+            "/intraday-active",
+            f"Square off {target_sym}",
+            "/intraday-scanner"
+        ]
+
+    # Priority 2: Intraday Scanner Query
+    # Priority 2: Intraday Scanner Query
+    elif is_intraday_scanner and not is_greeting:
+        scanner_res = scan_intraday_breakouts(margin_capital=parsed_capital)
+        long_cands = scanner_res.get("long_candidates", [])[:3]
+        short_cands = scanner_res.get("short_candidates", [])[:3]
+        session = scanner_res.get("session_status", {})
+
+        intraday_candidates = long_cands + short_cands
+
+        long_md = ""
+        for c in long_cands:
+            c_name = c.get("company_name", c.get("name", c.get("symbol", "")))
+            c_price = float(c.get("ltp", c.get("price", 0.0)))
+            c_orb = float(c.get("orb_high", 0.0))
+            c_vwap = float(c.get("vwap", 0.0))
+            c_vol = float(c.get("volume_multiplier", 1.0))
+            c_target = float(c.get("target_price", 0.0))
+            long_md += f"- **[{c['symbol']}]** ({c_name}) • LTP: **₹{c_price:,.2f}** | 15M High: **₹{c_orb:,.2f}** | VWAP: **₹{c_vwap:,.2f}** | Vol: **{c_vol}x** $\\rightarrow$ Target: **₹{c_target:,.2f} (+1.8%)**\n"
+
+        short_md = ""
+        for c in short_cands:
+            c_name = c.get("company_name", c.get("name", c.get("symbol", "")))
+            c_price = float(c.get("ltp", c.get("price", 0.0)))
+            c_orb = float(c.get("orb_low", 0.0))
+            c_vwap = float(c.get("vwap", 0.0))
+            c_vol = float(c.get("volume_multiplier", 1.0))
+            c_target = float(c.get("target_price", 0.0))
+            short_md += f"- **[{c['symbol']}]** ({c_name}) • LTP: **₹{c_price:,.2f}** | 15M Low: **₹{c_orb:,.2f}** | VWAP: **₹{c_vwap:,.2f}** | Vol: **{c_vol}x** $\\rightarrow$ Target: **₹{c_target:,.2f} (-1.8%)**\n"
+
+        session_phase = session.get("session_phase", "LIVE_SESSION")
+        countdown = session.get("formatted_countdown", "3:15 PM Guardian Active")
+
+        ai_reply_text = f"""🔍 **NSE Intraday 15M ORB & VWAP Breakout Scanner (5x MIS Leverage)**
+
+⏰ **Session Phase**: `{session_phase}` | 3:15 PM Guardian: **{countdown}**
+💰 **Margin Base**: **₹{parsed_capital:,.2f}** (5x Exposure: **₹{parsed_capital * 5:,.2f}**)
+
+---
+
+### 🟢 **Top Bullish Breakouts (Above 15M ORB High + Above VWAP)**
+{long_md if long_md else "- *No high-volume bullish breakouts detected in the current window.*"}
+
+---
+
+### 🔴 **Top Bearish Breakdowns (Below 15M ORB Low + Below VWAP)**
+{short_md if short_md else "- *No high-volume bearish breakdowns detected in the current window.*"}
+
+---
+
+💡 **Execution Shortcut**: Click or type `/intraday-long [SYMBOL]` or `/intraday-short [SYMBOL]` to instantly arm a 5x MIS order with 1:2.25 risk-reward parameters."""
+
+        top_long_sym = long_cands[0]["symbol"] if long_cands else "TCS"
+        top_short_sym = short_cands[0]["symbol"] if short_cands else "RELIANCE"
+        follow_up_chips = [
+            f"/intraday-long {top_long_sym}",
+            f"/intraday-short {top_short_sym}",
+            "/intraday-active"
+        ]
+
+
+    # Priority 3: Intraday Active Trades
+    elif is_intraday_active and not is_greeting:
+        trades = get_active_intraday_trades()
+        if trades:
+            symbols = [t["symbol"] for t in trades]
+            quotes_map = fetch_live_quotes_batch(symbols)
+            enriched_trades = []
+            trades_md = ""
+            total_live_pnl = 0.0
+
+            for t in trades:
+                sym = t["symbol"]
+                quote = quotes_map.get(sym) or {}
+                live_p = quote.get("price", t["entry_price"])
+                entry_p = float(t["entry_price"])
+                shares = int(t["shares"])
+                direction = t["direction"].upper()
+                margin_cap = float(t["margin_capital"])
+                target_p = float(t["target_price"])
+                stop_l = float(t["stop_loss"])
+
+                if direction == "LONG":
+                    gross_pnl = (live_p - entry_p) * shares
+                    prog = max(0.0, min(100.0, ((live_p - entry_p) / max(target_p - entry_p, 0.01)) * 100.0))
+                else:
+                    gross_pnl = (entry_p - live_p) * shares
+                    prog = max(0.0, min(100.0, ((entry_p - live_p) / max(entry_p - target_p, 0.01)) * 100.0))
+
+                total_live_pnl += gross_pnl
+                roi = round((gross_pnl / max(margin_cap, 1.0)) * 100.0, 2)
+
+                en = dict(t)
+                en.update({
+                    "live_price": live_p,
+                    "gross_pnl": round(gross_pnl, 2),
+                    "roi_pct": roi,
+                    "progress_pct": round(prog, 1),
+                    "day_change": quote.get("change", 0.0)
+                })
+                enriched_trades.append(en)
+
+                pnl_sign = "+" if gross_pnl >= 0 else ""
+                trades_md += f"- **[{sym}]** ({direction} 5x) • {shares} shares | Entry: ₹{entry_p:,.2f} | LTP: **₹{live_p:,.2f}** | PnL: **{pnl_sign}₹{gross_pnl:,.2f} ({pnl_sign}{roi}%)** | Target: ₹{target_p:,.2f} | Stop: ₹{stop_l:,.2f}\n"
+
+            intraday_active_trades = enriched_trades
+
+            pnl_tot_sign = "+" if total_live_pnl >= 0 else ""
+            ai_reply_text = f"""📊 **Your Active Intraday (5x MIS) Positions**
+
+💵 **Total Open Unrealized PnL**: **{pnl_tot_sign}₹{total_live_pnl:,.2f}**
+📦 **Active Open Trades**: **{len(trades)} Positions**
+
+{trades_md}
+
+⏰ **Risk Reminder**: Square-off all MIS trades before **3:15 PM** to avoid broker auto-liquidation penalties."""
+
+            follow_up_chips = [
+                f"Square off {trades[0]['symbol']}",
+                "/intraday-history",
+                "/intraday-scanner"
+            ]
+        else:
+            ai_reply_text = """ℹ️ **No Active Intraday Positions**
+
+You currently have zero open 5x MIS leveraged intraday positions.
+Use `/intraday-scanner` to scan 65+ equities for active 15M ORB & VWAP breakout triggers, or arm a new setup with `/intraday-long [SYMBOL]`."""
+            follow_up_chips = [
+                "/intraday-scanner",
+                "/intraday-long TCS",
+                "/intraday-short RELIANCE"
+            ]
+
+    # Priority 4: Intraday Square Off Action
+    elif is_intraday_square_off and not is_greeting:
+        trades = get_active_intraday_trades()
+        if not trades:
+            ai_reply_text = "ℹ️ **No active positions to square off.** All your intraday MIS positions are currently closed."
+            follow_up_chips = ["/intraday-scanner", "/intraday-history"]
+        else:
+            # Find matching trade or square off first active
+            target_trade = None
+            for t in trades:
+                if t["symbol"].lower() in q_lower:
+                    target_trade = t
+                    break
+            if not target_trade:
+                target_trade = trades[0]
+
+            sym = target_trade["symbol"]
+            try:
+                q = fetch_live_quote(sym)
+                exit_p = float(q.get("price", target_trade["entry_price"]))
+            except Exception:
+                exit_p = float(target_trade["entry_price"])
+
+            direction = target_trade["direction"].upper()
+            entry_p = float(target_trade["entry_price"])
+            shares = int(target_trade["shares"])
+
+            if direction == "LONG":
+                pnl = (exit_p - entry_p) * shares
+            else:
+                pnl = (entry_p - exit_p) * shares
+
+            square_off_intraday_trade(target_trade["id"], exit_p, pnl, reason="MANUAL_SQUARE_OFF")
+
+            pnl_sign = "+" if pnl >= 0 else ""
+            ai_reply_text = f"""✅ **Position Squared Off Successfully**
+
+- 🏢 **Symbol**: **[{sym}]** ({direction} 5x MIS)
+- 📦 **Shares**: {shares} Shares
+- 🚪 **Exit Price**: **₹{exit_p:,.2f}** (Entry: ₹{entry_p:,.2f})
+- 💵 **Realized Net PnL**: **{pnl_sign}₹{pnl:,.2f}**
+- ⏱️ **Status**: Position closed and settled to Demat Cash Balance."""
+
+            follow_up_chips = [
+                "/intraday-active",
+                "/intraday-history",
+                "/intraday-scanner"
+            ]
+
+    # Priority 5: Intraday Trade History
+    elif is_intraday_history and not is_greeting:
+        all_trades = get_all_intraday_trades()
+        closed_trades = [t for t in all_trades if t.get("status") != "ACTIVE"]
+        
+        if not closed_trades:
+            ai_reply_text = "📜 **No closed trades recorded today yet.** As you execute and square off 5x MIS positions, your PnL scorecard and win-rate analytics will appear here."
+            follow_up_chips = ["/intraday-scanner", "/intraday-active"]
+        else:
+            total_net_pnl = sum(float(t.get("net_pnl", 0.0)) for t in closed_trades)
+            profitable = [t for t in closed_trades if float(t.get("net_pnl", 0.0)) > 0]
+            win_rate = round((len(profitable) / max(len(closed_trades), 1)) * 100.0, 1)
+
+            recent_md = ""
+            for t in closed_trades[-5:]:
+                pnl = float(t.get("net_pnl", 0.0))
+                pnl_s = "+" if pnl >= 0 else ""
+                recent_md += f"- **[{t['symbol']}]** ({t['direction']}) • Exit @ ₹{float(t.get('exit_price', 0.0)):,.2f} | Realized PnL: **{pnl_s}₹{pnl:,.2f}** ({t.get('status', 'SQUARED_OFF')})\n"
+
+            pnl_tot_s = "+" if total_net_pnl >= 0 else ""
+            ai_reply_text = f"""📜 **Intraday Trading History & Performance Scorecard**
+
+- 📊 **Total Closed Trades**: **{len(closed_trades)}**
+- 🏆 **Win Rate**: **{win_rate}%** ({len(profitable)} Won / {len(closed_trades) - len(profitable)} Lost)
+- 💰 **Cumulative Realized PnL**: **{pnl_tot_s}₹{total_net_pnl:,.2f}**
+
+### **Recent Trade Logs:**
+{recent_md}"""
+
+            follow_up_chips = [
+                "/intraday-active",
+                "/intraday-scanner",
+                "Show risk-to-reward math"
+            ]
+
+    # Priority 6: Intraday Risk, Compliance & Charges Math
+    elif is_intraday_risk_math and not is_greeting:
+        charges_sample = calculate_intraday_charges(buy_turnover=100000.0, sell_turnover=101800.0)
+        ai_reply_text = f"""🛡️ **Intraday Risk Math, 3:15 PM Guardian & Statutory Charges Guide**
+
+### 1. ⚖️ **The 1:2.25 Risk-to-Reward Formula**
+Under SEBI 5x MIS leverage rules, every trade is framed with tight risk boundaries:
+- 🎯 **Profit Target (+1.8%)**: Yields **+9.0% return on your cash margin capital**.
+- 🛑 **Hard Stop-Loss (-0.8%)**: Limits maximum downside to **-4.0% of cash margin**.
+- 📊 **Reward-to-Risk**: **1 : 2.25** (You risk ₹1 to make ₹2.25).
+
+---
+
+### 2. ⏰ **The 3:15 PM Square-Off Guardian**
+- **Trading Window**: 9:15 AM to 3:20 PM IST.
+- **Mandatory Manual Square-off**: Before **3:15 PM**.
+- **Auto-Liquidation Penalty**: If positions remain open at 3:15 PM, broker RMS will auto-square off and levy **₹50 + 18% GST** per executed order.
+
+---
+
+### 3. 🧾 **Statutory Charges Breakdown (per ₹1,00,000 Intraday Turnover)**
+- **STT (Securities Transaction Tax)**: **0.025%** on sell side only (~₹{charges_sample['stt']:.2f}).
+- **Brokerage**: Flat **₹20 Buy + ₹20 Sell = ₹40** total roundtrip.
+- **Exchange Turnover Charges**: **0.00345%** on total turnover (~₹{charges_sample['exchange_charges']:.2f}).
+- **GST (18%)**: Applied on Brokerage + Exchange charges (~₹{charges_sample['gst']:.2f}).
+- **Stamp Duty**: **0.003%** on buy turnover (~₹{charges_sample['stamp_duty']:.2f})."""
+
+        follow_up_chips = [
+            "/intraday-scanner",
+            "/intraday-long TCS",
+            "/intraday-active"
+        ]
+
+    # Priority 7: Budget Allocation Intent (Directs to Capital Allocator)
+    elif is_budget_advisory and not is_greeting:
         budget_allocation = build_budget_portfolio_allocation(parsed_capital)
         
         # If Gemini API Key is available, generate an enriched response grounded in live prices
@@ -380,7 +790,7 @@ Guidelines:
                 "Show Coal India dividend ex-dates"
             ]
 
-    # Priority 2: 1-Week Tactical Momentum / Guru Query
+    # Priority 8: 1-Week Tactical Momentum / Guru Query
     elif is_guru_query and not is_greeting:
         preferred_symbol = None
         for cand in EXPANDED_NSE_UNIVERSE:
@@ -465,7 +875,7 @@ With your **₹{parsed_capital:,.0f}**, today's #1 Ranked Quantitative Leader is
                 "Show runner-up momentum stocks"
             ]
 
-    # Priority 3: General Workspace & Topic Queries
+    # Priority 9: General Workspace & Topic Queries
     else:
         if api_key and not is_greeting:
             try:
@@ -508,11 +918,12 @@ Guidelines:
 
         if not ai_reply_text:
             if is_greeting:
-                ai_reply_text = f"👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **{ctx.current_page.upper()}**. You are inspecting **{ctx.active_symbol}** with a capital allocation of **₹{ctx.capital:,.0f}**.\n\nHow can I help you today? You can ask me:\n- *\"I have ₹5,000. How should I invest for better results?\"*\n- *\"Find a 1-week tactical trade for quick profit\"*\n- *\"Compare defense and renewable energy compounders\"*"
+                ai_reply_text = f"👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **{ctx.current_page.upper()}**. You are inspecting **{ctx.active_symbol}** with a capital allocation of **₹{ctx.capital:,.0f}**.\n\nHow can I help you today? You can ask me:\n- *\"/intraday-scanner to find 15M ORB & VWAP breakouts\"*\n- *\"Arm me a long position in TCS with 5x leverage\"*\n- *\"I have ₹5,000. How should I invest for better results?\"*\n- *\"Find a 1-week tactical swing trade for quick profit\"*"
                 follow_up_chips = [
+                    "/intraday-scanner",
+                    "/intraday-long TCS",
                     "I have ₹5,000 to invest",
-                    "Find 1-week tactical swing trade",
-                    f"Analyze {ctx.active_symbol} fundamentals"
+                    "Find 1-week tactical swing trade"
                 ]
             elif "defense" in q_lower or "hal" in q_lower or "bel" in q_lower:
                 ai_reply_text = "Here are India's premier high-conviction defense compounders:\n\n- **[BEL]**: Bharat Electronics holds a dominant sovereign radar/avionics order book with >25% ROCE.\n- **[HAL]**: Hindustan Aeronautics possesses a sovereign monopoly on fighter aircraft platforms with high operating cash flow."
@@ -553,5 +964,8 @@ Guidelines:
         "reply": ai_reply_text,
         "action_cards": structured_cards,
         "tactical_card": tactical_card,
-        "follow_up_chips": follow_up_chips or ["Explain post-tax ROI", "Check risk of loss", "Show alternative stocks"]
+        "intraday_setup": intraday_setup,
+        "intraday_candidates": intraday_candidates,
+        "intraday_active_trades": intraday_active_trades,
+        "follow_up_chips": follow_up_chips or ["/intraday-scanner", "/intraday-active", "/intraday-history"]
     }

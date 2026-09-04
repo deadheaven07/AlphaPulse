@@ -33,6 +33,7 @@ import { SimulatorPage } from "./pages/SimulatorPage";
 import { DividendPage } from "./pages/DividendPage";
 import { GoalPlannerPage } from "./pages/GoalPlannerPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
+import { IntradayTerminal } from "./components/IntradayTerminal";
 
 export function App() {
   // Navigation State (8 focused pages)
@@ -245,6 +246,12 @@ export function App() {
           setActivePage("simulator");
           setIsAiPaneOpen(false);
         }}
+        onNavigateToIntraday={() => {
+          playClick();
+          setActivePage("intraday");
+          setIsAiPaneOpen(false);
+        }}
+        onCapitalChange={(cap) => setSimCapital(cap)}
         geminiConfigured={Boolean(health?.gemini_api_configured)}
       />
 
@@ -324,6 +331,16 @@ export function App() {
                   }}
                   capital={simCapital}
                   onCapitalChange={setSimCapital}
+                />
+              )}
+
+              {activePage === "intraday" && (
+                <IntradayTerminal
+                  onSelectStock={(sym) => {
+                    handleSelectStock(sym);
+                    setActivePage("studio");
+                  }}
+                  defaultCapital={simCapital}
                 />
               )}
 

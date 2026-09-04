@@ -127,7 +127,7 @@ def square_off_trade(trade_id: int, payload: Optional[SquareOffPayload] = None):
 
     exit_price = payload.exit_price if (payload and payload.exit_price) else None
     if exit_price is None:
-        quote = fetch_stock_quote(trade["symbol"])
+        quote = fetch_live_quote(trade["symbol"])
         exit_price = quote.get("price", trade["entry_price"])
 
     direction = trade["direction"].upper()
