@@ -14,7 +14,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
-  Receipt
+  Receipt,
 } from "lucide-react";
 
 interface ProfitSimulatorProps {
@@ -80,7 +80,6 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  // Target Calendar Milestone
   const targetDate = new Date();
   targetDate.setMonth(targetDate.getMonth() + horizonMonths);
   const targetDateStr = targetDate.toLocaleDateString("en-IN", {
@@ -89,10 +88,11 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   });
 
   const baseTax = simData?.base_case?.taxes_and_charges;
+  const expectedValue = simData?.expected_value;
+  const empiricalPercentiles = expectedValue?.percentile_probabilities?.empirical_from_1000_paths;
 
   return (
     <div className="space-y-6">
-      {/* Control Deck Card */}
       <div className="glass-panel-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-2.5">
@@ -117,7 +117,6 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
 
-          {/* Save to Vault Action Button */}
           <button
             onClick={handleSave}
             disabled={!simData}
@@ -132,9 +131,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
           </button>
         </div>
 
-        {/* Input Parameters Form (Responsive 3-column layout) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 1. Capital Input */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -178,7 +175,6 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
 
-          {/* 2. Horizon Segment Selectors */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -228,7 +224,6 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
 
-          {/* 3. Risk Tolerance */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -267,8 +262,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
           </div>
         </div>
 
-        {/* Share Allocation Badge */}
-{simData && (
+        {simData && (
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-4 flex-wrap">
               <div>
@@ -294,217 +288,229 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
           </div>
         )}
 
-        {/* Monte Carlo Probability Summary */}
-        {simData?.expected_value && (
+        {expectedValue && (
           <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-700/50 dark:border-slate-600/50 mt-3 space-y-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-medium text-slate-400">Monte Carlo Probabilities (1,000 paths)</span>
-              <span className="text-[10px] text-emerald-400 font-bold">{simData.expected_value.probability_positive_post_tax_roi * 100}% positive ROI</span>
+              <span className="text-[10px] text-emerald-400 font-bold">{((expectedValue.probability_positive_post_tax_roi ?? 0) * 100).toFixed(0)}% positive ROI</span>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-[9px] text-slate-500 uppercase block">P10 (Bear)</span>
-                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 === 0.1 ? "~10%" : simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 > 0 ? `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 * 100).toFixed(1)}%` : "Calculating..."}</span>
+                <span className="text-[12px] font-medium text-emerald-400">
+                  {empiricalPercentiles?.p10 === 0.1
+                    ? "~10%"
+                    : empiricalPercentiles?.p10 && empiricalPercentiles.p10 > 0
+                      ? `${((empiricalPercentiles.p10 ?? 0) * 100).toFixed(1)}%`
+                      : "Calculating..."}
+                </span>
               </div>
               <div>
                 <span className="text-[9px] text-slate-500 uppercase block">P50 (Base/Median)</span>
-                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p50 === 0.5 ? "~50%" : `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p50 * 100).toFixed(1)}%`}</span>
+                <span className="text-[12px] font-medium text-emerald-400">
+                  {empiricalPercentiles?.p50 === 0.5
+                    ? "~50%"
+                    : empiricalPercentiles?.p50 !== undefined
+                      ? `${((empiricalPercentiles.p50 ?? 0) * 100).toFixed(1)}%`
+                      : "Calculating..."}
+                </span>
               </div>
               <div>
                 <span className="text-[9px] text-slate-500 uppercase block">P90 (Bull)</span>
-                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p90 === 0.9 ? "~90%" : `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p90 * 100).toFixed(1)}%`}</span>
+                <span className="text-[12px] font-medium text-emerald-400">
+                  {empiricalPercentiles?.p90 === 0.9
+                    ? "~90%"
+                    : empiricalPercentiles?.p90 !== undefined
+                      ? `${((empiricalPercentiles.p90 ?? 0) * 100).toFixed(1)}%`
+                      : "Calculating..."}
+                </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 mt-2">
               <div>
                 <span className="text-[9px] text-slate-500 uppercase block">Profit Factor</span>
-                <span className="text-[12px] font-medium">{simData.expected_value.profit_factor > 0 ? simData.expected_value.profit_factor.toFixed(2) : "—"}</span>
+                <span className="text-[12px] font-medium">{(expectedValue.profit_factor ?? 0) > 0 ? (expectedValue.profit_factor ?? 0).toFixed(2) : "—"}</span>
               </div>
               <div>
                 <span className="text-[9px] text-slate-500 uppercase block">100x Return Prob.</span>
-                <span className="text-[12px] font-medium">{simData.expected_value.probability_100x_return * 100}%</span>
+                <span className="text-[12px] font-medium">{((expectedValue.probability_100x_return ?? 0) * 100).toFixed(1)}%</span>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-700/20 dark:border-slate-600/20">
               <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence</span>
-              <span className="text-[11px] font-medium text-emerald-400">{simData.expected_value.confidence_level}</span>
+              <span className="text-[11px] font-medium text-emerald-400">{expectedValue.confidence_level}</span>
             </div>
           </div>
         )}
 
-       {/* 3 Outcome Forecast Cards (Bull / Base / Bear) */}
-      {simData && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* 1. 🚀 Bull Case Card */}
-          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-emerald-200 dark:border-emerald-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-glow-emerald" />
-                <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                  Bull Case (90th %ile)
+        {simData && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-emerald-200 dark:border-emerald-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-glow-emerald" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                    Bull Case (90th %ile)
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                  +{simData.bull_case.roi_pct.toFixed(1)}% Gain
                 </span>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
-                +{simData.bull_case.roi_pct.toFixed(1)}% Gain
-              </span>
-            </div>
 
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                Target Spot Price
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
-                {formatINR(simData.bull_case.target_price)}
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 space-y-1">
-              <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">
-                In-Hand Net Profit (Post-Tax)
-              </span>
-              <div className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
-                +{formatINR(simData.bull_case.net_in_hand_profit)}
-              </div>
-              <span className="text-[10px] text-emerald-800/80 dark:text-emerald-400/80 block">
-                Portfolio Net: {formatINR(simData.bull_case.total_value)}
-              </span>
-            </div>
-          </div>
-
-          {/* 2. ⚖️ Base Case (Consensus / Median 50th %ile) */}
-          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-brand-200 dark:border-brand-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-brand-500 shadow-glow-cyan" />
-                <span className="text-xs font-extrabold uppercase tracking-wider text-brand-800 dark:text-brand-300">
-                  Base Case (50th %ile Median)
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                  Target Spot Price
                 </span>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                  {formatINR(simData.bull_case.target_price)}
+                </div>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-300">
-                +{simData.base_case.roi_pct.toFixed(1)}% Gain
-              </span>
-            </div>
 
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                Target Spot Price
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
-                {formatINR(simData.base_case.target_price)}
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-brand-50/80 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900 space-y-1">
-              <span className="text-[10px] font-bold text-brand-800 dark:text-brand-300 uppercase tracking-wider block">
-                In-Hand Net Profit (Post-Tax)
-              </span>
-              <div className="text-xl font-extrabold font-mono text-brand-700 dark:text-brand-400">
-                +{formatINR(simData.base_case.net_in_hand_profit)}
-              </div>
-              <span className="text-[10px] text-brand-800/80 dark:text-brand-400/80 block">
-                Portfolio Net: {formatINR(simData.base_case.total_value)}
-              </span>
-            </div>
-          </div>
-
-          {/* 3. 🛡️ Bear Case (10th %ile / VaR Drawdown) */}
-          <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-rose-200 dark:border-rose-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-glow-rose" />
-                <span className="text-xs font-extrabold uppercase tracking-wider text-rose-800 dark:text-rose-300">
-                  Bear Case (10th %ile / VaR)
+              <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider block">
+                  In-Hand Net Profit (Post-Tax)
                 </span>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300">
-                {simData.bear_case.roi_pct.toFixed(1)}% Drawdown
-              </span>
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
-                Trailing Floor / Stop-Loss
-              </span>
-              <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
-                {formatINR(simData.bear_case.target_price)}
-              </div>
-            </div>
-
-            <div className="p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900 space-y-1">
-              <span className="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider block">
-                Estimated Capital At Risk
-              </span>
-              <div className="text-xl font-extrabold font-mono text-rose-700 dark:text-rose-400">
-                {formatINR(simData.bear_case.net_in_hand_profit)}
-              </div>
-              <span className="text-[10px] text-rose-800/80 dark:text-rose-400/80 block">
-                Preserved Capital: {formatINR(simData.bear_case.total_value)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Statutory Taxes & Charges Friction Drawer (STCG 20% / LTCG 12.5% Breakdown) */}
-      {baseTax && (
-        <div className="glass-panel-3d rounded-2xl p-5 space-y-4">
-          <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}>
-            <div className="flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-              <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                Statutory Levies & Capital Gains Tax Friction Breakdown ({baseTax.tax_type})
-              </h4>
-            </div>
-            <button className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 cursor-pointer">
-              <span>{showTaxBreakdown ? "Hide Breakdown" : "View Breakdown"}</span>
-              {showTaxBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-            </button>
-          </div>
-
-          {showTaxBreakdown && (
-            <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs border-t border-slate-100 dark:border-slate-800">
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">STT (0.1% Exit)</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stt.toFixed(2)}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Exchange Fees</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.exchange_fees.toFixed(2)}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Stamp Duty (0.015%)</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stamp_duty.toFixed(2)}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">SEBI & GST (18%)</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-white">₹{(baseTax.sebi_charges + baseTax.gst).toFixed(2)}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">{baseTax.tax_type}</span>
-                <span className="font-mono font-bold text-rose-600 dark:text-rose-400">₹{baseTax.capital_gains_tax.toFixed(2)}</span>
-              </div>
-              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Friction</span>
-                <span className="font-mono font-extrabold text-slate-900 dark:text-white">
-                  ₹{(baseTax.total_statutory_friction + baseTax.capital_gains_tax).toFixed(2)}
+                <div className="text-xl font-extrabold font-mono text-emerald-700 dark:text-emerald-400">
+                  +{formatINR(simData.bull_case.net_in_hand_profit)}
+                </div>
+                <span className="text-[10px] text-emerald-800/80 dark:text-emerald-400/80 block">
+                  Portfolio Net: {formatINR(simData.bull_case.total_value)}
                 </span>
               </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Trajectory Timeline Chart */}
-      {simData?.trajectory && (
-        <ProjectionChart
-          trajectory={simData.trajectory}
-          symbol={simData.symbol}
-          capital={simData.capital}
-        />
-      )}
+            <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-brand-200 dark:border-brand-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-500 shadow-glow-cyan" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-brand-800 dark:text-brand-300">
+                    Base Case (50th %ile Median)
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-100 dark:bg-brand-950 text-brand-800 dark:text-brand-300">
+                  +{simData.base_case.roi_pct.toFixed(1)}% Gain
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                  Target Spot Price
+                </span>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                  {formatINR(simData.base_case.target_price)}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-brand-50/80 dark:bg-brand-950/40 border border-brand-100 dark:border-brand-900 space-y-1">
+                <span className="text-[10px] font-bold text-brand-800 dark:text-brand-300 uppercase tracking-wider block">
+                  In-Hand Net Profit (Post-Tax)
+                </span>
+                <div className="text-xl font-extrabold font-mono text-brand-700 dark:text-brand-400">
+                  +{formatINR(simData.base_case.net_in_hand_profit)}
+                </div>
+                <span className="text-[10px] text-brand-800/80 dark:text-brand-400/80 block">
+                  Portfolio Net: {formatINR(simData.base_case.total_value)}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-rose-200 dark:border-rose-800/80 shadow-soft hover:shadow-hover dark:hover:shadow-hover-dark transition-all space-y-4 relative overflow-hidden glass-card-hover">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-glow-rose" />
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                    Bear Case (10th %ile / VaR)
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300">
+                  {simData.bear_case.roi_pct.toFixed(1)}% Drawdown
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
+                  Trailing Floor / Stop-Loss
+                </span>
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white">
+                  {formatINR(simData.bear_case.target_price)}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-900 space-y-1">
+                <span className="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider block">
+                  Estimated Capital At Risk
+                </span>
+                <div className="text-xl font-extrabold font-mono text-rose-700 dark:text-rose-400">
+                  {formatINR(simData.bear_case.net_in_hand_profit)}
+                </div>
+                <span className="text-[10px] text-rose-800/80 dark:text-rose-400/80 block">
+                  Preserved Capital: {formatINR(simData.bear_case.total_value)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {baseTax && (
+          <div className="glass-panel-3d rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}>
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+                <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Statutory Levies & Capital Gains Tax Friction Breakdown ({baseTax.tax_type})
+                </h4>
+              </div>
+              <button className="text-xs font-bold text-brand-600 dark:text-brand-400 flex items-center gap-1 cursor-pointer">
+                <span>{showTaxBreakdown ? "Hide Breakdown" : "View Breakdown"}</span>
+                {showTaxBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {showTaxBreakdown && (
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs border-t border-slate-100 dark:border-slate-800">
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">STT (0.1% Exit)</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stt.toFixed(2)}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Exchange Fees</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.exchange_fees.toFixed(2)}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">Stamp Duty (0.015%)</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">₹{baseTax.stamp_duty.toFixed(2)}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">SEBI & GST (18%)</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white">₹{(baseTax.sebi_charges + baseTax.gst).toFixed(2)}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase block">{baseTax.tax_type}</span>
+                  <span className="font-mono font-bold text-rose-600 dark:text-rose-400">₹{baseTax.capital_gains_tax.toFixed(2)}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Total Friction</span>
+                  <span className="font-mono font-extrabold text-slate-900 dark:text-white">
+                    ₹{(baseTax.total_statutory_friction + baseTax.capital_gains_tax).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {simData?.trajectory && (
+          <ProjectionChart
+            trajectory={simData.trajectory}
+            symbol={simData.symbol}
+            capital={simData.capital}
+          />
+        )}
+      </div>
     </div>
   );
 };

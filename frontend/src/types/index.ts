@@ -245,9 +245,28 @@ export interface SimulationResult {
   expected_value: {
     expected_net_profit: number;
     expected_roi_pct: number;
-    risk_reward_ratio: number;
+    risk_reward_ratio?: number;
     var_90_pct: number;
     confidence_level: string;
+    probability_positive_post_tax_roi?: number;
+    probability_100x_return?: number;
+    profit_factor?: number;
+    percentile_probabilities?: {
+      theoretical?: {
+        p10?: number;
+        p25?: number;
+        p50?: number;
+        p75?: number;
+        p90?: number;
+      };
+      empirical_from_1000_paths?: {
+        p10?: number;
+        p25?: number;
+        p50?: number;
+        p75?: number;
+        p90?: number;
+      };
+    };
   };
   trajectory: TrajectoryPoint[];
 }
@@ -498,6 +517,12 @@ export interface TacticalSetup {
   stop_loss: number;
   stop_loss_pct: number;
   risk_reward_ratio: string;
+  probability_target_1_hit_pct?: number;
+  probability_target_2_hit_pct?: number;
+  probability_stop_loss_hit_pct?: number;
+  expected_value_pct?: number;
+  confidence_score_100?: number;
+  risk_reward_with_probability?: string;
   gross_profit: number;
   total_tax_and_charges: number;
   net_in_hand_profit: number;

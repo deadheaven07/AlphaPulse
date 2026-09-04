@@ -23,32 +23,9 @@ import {
   Search,
   CornerDownLeft,
   ArrowRight,
-  Terminal
+  Terminal,
 } from "lucide-react";
 import { ProbabilityBar } from "./ProbabilityBar";
-import {
-  Sparkles,
-  X,
-  Loader2,
-  Trash2,
-  LineChart,
-  Calculator,
-  Compass,
-  TrendingUp,
-  TrendingDown,
-  Bot,
-  User,
-  ShieldAlert,
-  ShieldCheck,
-  Radio,
-  Bell,
-  Coins,
-  Clock,
-  Search,
-  CornerDownLeft,
-  Terminal,
-  ArrowRight
-} from "lucide-react";
 
 interface AiAssistantPaneProps {
   isOpen: boolean;
@@ -539,16 +516,6 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                     />
 
                     {/* Dynamic Holding Sprint Banner */}
-                    <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-[10px]">
-                      <span className="text-slate-400 uppercase tracking-wider font-bold">Dynamic Volatility Sprint:</span>
-                      <span className="font-mono font-extrabold text-amber-300 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-amber-400" />
-                        {msg.tacticalCard.holding_period_label || `${msg.tacticalCard.holding_period_days || 7} Days`}
-                      </span>
-                    </div>
-
-                    {/* 4 Crucial Tactical Levels */}
-                    <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                     <div className="flex items-center justify-between px-2.5 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 text-[10px]">
                       <span className="text-slate-400 uppercase tracking-wider font-bold">Dynamic Volatility Sprint:</span>
                       <span className="font-mono font-extrabold text-amber-300 flex items-center gap-1">
