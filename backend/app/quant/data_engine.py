@@ -9,7 +9,10 @@ import numpy as np
 import pandas as pd
 from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
-import yfinance as yf
+try:
+    import yfinance as yf
+except ImportError:
+    yf = None
 from backend.app.db.database import save_live_quote_cache, get_live_quote_cache
 
 logger = logging.getLogger("data_engine")
@@ -249,11 +252,40 @@ def fetch_historical_dataframe(raw_symbol: str, period: str = "1y", interval: st
         return _CANDLE_CACHE[cache_key]["df"]
 
     df = pd.DataFrame()
+    # 1. Try direct Yahoo chart endpoint for authentic historical candles
     try:
-        ticker = yf.Ticker(f"{symbol}.NS")
-        df = ticker.history(period=period, interval=interval)
-    except Exception:
+        resolved_sym = CORPORATE_ALIASES.get(symbol, symbol)
+        range_param = period if period in ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"] else "1y"
+        int_param = interval if interval in ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"] else "1d"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{resolved_sym}.NS?interval={int_param}&range={range_param}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"})
+        with urllib.request.urlopen(req, context=SSL_CONTEXT, timeout=5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            res = data.get("chart", {}).get("result", [])
+            if res:
+                timestamps = res[0].get("timestamp", [])
+                quote = res[0].get("indicators", {}).get("quote", [{}])[0]
+                if timestamps and quote.get("close"):
+                    dates = [datetime.fromtimestamp(ts) for ts in timestamps]
+                    df = pd.DataFrame({
+                        "Open": quote.get("open", []),
+                        "High": quote.get("high", []),
+                        "Low": quote.get("low", []),
+                        "Close": quote.get("close", []),
+                        "Volume": quote.get("volume", [])
+                    }, index=pd.DatetimeIndex(dates))
+                    df = df.dropna()
+    except Exception as e:
+        logger.debug(f"Direct historical candle fetch failed for {symbol}: {e}")
         df = pd.DataFrame()
+
+    # 2. Fallback to yfinance if available
+    if (df.empty or len(df) < 10) and yf is not None:
+        try:
+            ticker = yf.Ticker(f"{symbol}.NS")
+            df = ticker.history(period=period, interval=interval)
+        except Exception:
+            df = pd.DataFrame()
 
     if df.empty or len(df) < 10:
         # Generate synthetic realistic historical dataframe
