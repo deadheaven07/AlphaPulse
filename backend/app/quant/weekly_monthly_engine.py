@@ -1,26 +1,33 @@
+import time
 import math
 from typing import Dict, Any, List, Optional
-from backend.app.quant.data_engine import INDIAN_STOCKS_DB, fetch_live_quote
+from backend.app.quant.data_engine import fetch_live_quote, fetch_live_quotes_batch
 from backend.app.quant.tactical_swing_engine import EXPANDED_NSE_UNIVERSE
 from backend.app.quant.sector_rrg import SECTOR_DEFINITIONS, analyze_sector_rrg
+
+_WEEKLY_CACHE: Dict[str, Any] = {"data": None, "timestamp": 0}
+_MONTHLY_CACHE: Dict[str, Any] = {"data": None, "timestamp": 0}
+CACHE_TTL_SEC = 60.0
 
 def get_weekly_top_performers(limit: int = 15) -> Dict[str, Any]:
     """
     Scans the 65+ liquid NSE universe and identifies the top performers of the week (1W).
     Returns a ranked list of weekly leaders arranged strictly descending by weekly gain %.
     """
+    global _WEEKLY_CACHE
+    now = time.time()
+    if _WEEKLY_CACHE["data"] is not None and (now - _WEEKLY_CACHE["timestamp"]) < CACHE_TTL_SEC:
+        cached = _WEEKLY_CACHE["data"]
+        return {**cached, "performers": cached["performers"][:limit]}
+
+    # Batch fetch all quotes in parallel
+    symbols = [item["symbol"] for item in EXPANDED_NSE_UNIVERSE]
+    quotes_map = fetch_live_quotes_batch(symbols)
+
     performers = []
-    
     for item in EXPANDED_NSE_UNIVERSE:
         sym = item["symbol"]
-        quote = INDIAN_STOCKS_DB.get(sym)
-        if not quote:
-            quote = {
-                "symbol": sym,
-                "company_name": item["name"],
-                "price": round(250.0 + (item["beta"] * 350.0), 2),
-                "change_pct": round((item["beta"] - 1.0) * 2.5, 2)
-            }
+        quote = quotes_map.get(sym) or fetch_live_quote(sym)
         
         day_change = quote.get("change_pct", 0.0)
         beta = item.get("beta", quote.get("beta", 1.25))
@@ -58,37 +65,36 @@ def get_weekly_top_performers(limit: int = 15) -> Dict[str, Any]:
     for idx, p in enumerate(performers, start=1):
         p["rank"] = idx
 
-    return {
+    full_result = {
         "timeframe": "1W",
         "benchmark": "NIFTY 50",
         "benchmark_weekly_return_pct": 2.2,
         "total_universe_scanned": len(EXPANDED_NSE_UNIVERSE),
         "total_performers": len(performers),
-        "performers": performers[:limit]
+        "performers": performers
     }
+    _WEEKLY_CACHE = {"data": full_result, "timestamp": now}
+
+    return {**full_result, "performers": performers[:limit]}
 
 def get_safest_monthly_champion_stock() -> Dict[str, Any]:
     """
     Quantitative Selection Engine for the #1 Safest and Most Profitable Stock of the Month.
-    
-    Mathematical Dual-Pillar Evaluation:
-    1. Pillar 1: Fundamental Safety & Solvency Shield (Capital Preservation)
-       - Piotroski F-Score >= 7/9 (high operating efficiency, positive cashflow from ops)
-       - Low Debt/Equity (<0.8) or pristine Tier-1 banking capital adequacy
-       - High Institutional Delivery (>50%)
-       - ROCE > 18% and ROE > 20%
-    2. Pillar 2: Expected 1-Month Return & RRG Sector Leadership
-       - Sector in RRG Leading/Improving quadrant
-       - 20-Day breakout momentum & earnings order book clarity
-       - 1:3+ Asymmetric Risk/Reward Ratio (strict stop-loss near 20-EMA)
     """
+    global _MONTHLY_CACHE
+    now = time.time()
+    if _MONTHLY_CACHE["data"] is not None and (now - _MONTHLY_CACHE["timestamp"]) < CACHE_TTL_SEC:
+        return _MONTHLY_CACHE["data"]
+
+    # Batch fetch all quotes in parallel
+    symbols = [item["symbol"] for item in EXPANDED_NSE_UNIVERSE]
+    quotes_map = fetch_live_quotes_batch(symbols)
+
     candidates = []
 
     for item in EXPANDED_NSE_UNIVERSE:
         sym = item["symbol"]
-        quote = INDIAN_STOCKS_DB.get(sym)
-        if not quote:
-            continue
+        quote = quotes_map.get(sym) or fetch_live_quote(sym)
             
         beta = item.get("beta", quote.get("beta", 1.25))
         sector = item.get("sector", quote.get("sector", "Equities"))
@@ -159,16 +165,16 @@ def get_safest_monthly_champion_stock() -> Dict[str, Any]:
 
     # Return champion #1
     champion = candidates[0] if candidates else {
-        "symbol": "TATAMOTORS",
-        "company_name": "Tata Motors Limited",
+        "symbol": "TMPV",
+        "company_name": "Tata Motors Passenger Vehicles Ltd",
         "sector": "Auto & EV",
         "rrg_quadrant": "Leading",
-        "ltp": 1045.60,
+        "ltp": 312.30,
         "composite_score": 96.8,
         "safety_rating": "AAA (Pristine Solvency)",
         "expected_1m_return_pct": 12.8,
-        "target_price_1m": 1179.40,
-        "stop_loss": 1008.00,
+        "target_price_1m": 352.25,
+        "stop_loss": 301.35,
         "risk_reward_ratio": "1:3.4",
         "piotroski_score": 8,
         "delivery_pct": 58.4,
@@ -180,7 +186,7 @@ def get_safest_monthly_champion_stock() -> Dict[str, Any]:
         "monthly_thesis": "Safest and highest conviction 30-day capital hold in Indian equities: Zero net-debt milestone, sovereign EV leadership (>65% market share), luxury Jaguar Land Rover margin expansion, and strong institutional delivery (58.4%) creating an asymmetric 1:3.4 risk-reward cushion."
     }
 
-    return {
+    result = {
         "champion": champion,
         "runner_ups": candidates[1:4] if len(candidates) > 1 else [],
         "selection_criteria": {
@@ -191,3 +197,5 @@ def get_safest_monthly_champion_stock() -> Dict[str, Any]:
             "holding_horizon": "30 Days (1 Month)"
         }
     }
+    _MONTHLY_CACHE = {"data": result, "timestamp": now}
+    return result

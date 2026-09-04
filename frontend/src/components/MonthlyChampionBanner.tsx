@@ -31,7 +31,14 @@ export const MonthlyChampionBanner: React.FC<MonthlyChampionBannerProps> = ({
   });
 
   if (isLoading || !data?.champion) {
-    return null;
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center gap-3 animate-pulse">
+        <Trophy className="w-5 h-5 text-amber-500 animate-bounce" />
+        <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+          Institutional Pick of the Month: Screening 65+ NSE leaders for highest solvency & asymmetric risk-reward...
+        </span>
+      </div>
+    );
   }
 
   const champion = data.champion;

@@ -15,7 +15,7 @@ const FALLBACK_TICKERS: TickerItem[] = [
   { symbol: "BANK NIFTY", name: "Bank Nifty", price: 51220.80, change: 310.40, change_pct: 0.61, is_index: true },
   { symbol: "NIFTY IT", name: "Nifty IT", price: 42150.00, change: -85.20, change_pct: -0.20, is_index: true },
   { symbol: "INDIA VIX", name: "India Volatility", price: 12.85, change: -0.45, change_pct: -3.38, is_index: true },
-  { symbol: "TATAMOTORS", name: "Tata Motors", price: 1045.60, change: 22.30, change_pct: 2.18, is_index: false },
+  { symbol: "TMPV", name: "Tata Motors PV", price: 312.30, change: 3.50, change_pct: 1.13, is_index: false },
   { symbol: "RELIANCE", name: "Reliance Ind.", price: 1302.50, change: -10.60, change_pct: -0.81, is_index: false },
   { symbol: "HDFCBANK", name: "HDFC Bank", price: 706.65, change: 5.85, change_pct: 0.83, is_index: false },
   { symbol: "INFY", name: "Infosys Ltd", price: 1130.30, change: -9.70, change_pct: -0.85, is_index: false },
@@ -27,8 +27,8 @@ const FALLBACK_TICKERS: TickerItem[] = [
   { symbol: "BEL", name: "Bharat Electronics", price: 408.60, change: 2.85, change_pct: 0.70, is_index: false },
   { symbol: "HAL", name: "Hindustan Aero", price: 4765.60, change: -14.40, change_pct: -0.30, is_index: false },
   { symbol: "TATAPOWER", name: "Tata Power", price: 365.70, change: 1.70, change_pct: 0.47, is_index: false },
-  { symbol: "TRENT", name: "Trent Retail", price: 2815.60, change: -36.70, change_pct: -1.29, is_index: false },
-  { symbol: "ZOMATO", name: "Zomato Ltd", price: 265.50, change: 7.80, change_pct: 3.03, is_index: false },
+  { symbol: "TRENT", name: "Trent Retail", price: 2846.70, change: 12.50, change_pct: 0.44, is_index: false },
+  { symbol: "ETERNAL", name: "Eternal Ltd (Zomato)", price: 323.85, change: 4.20, change_pct: 1.31, is_index: false },
 ];
 
 export const TickerTape: React.FC<TickerTapeProps> = ({ onSelectSymbol }) => {

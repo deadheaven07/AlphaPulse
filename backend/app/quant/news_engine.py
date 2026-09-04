@@ -77,10 +77,11 @@ STOCK_NEWS_FEEDS: Dict[str, List[Dict[str, Any]]] = {
 }
 
 def fetch_live_stock_news(symbol: str) -> List[Dict[str, Any]]:
-    """Fetch live real-time financial news feeds from Yahoo Finance / NSE wire."""
-    sym = symbol.strip().upper()
-    if sym.endswith(".NS") or sym.endswith(".BO"):
-        sym = sym[:-3]
+    """
+    Scrape real-time RSS news feeds for an Indian ticker symbol.
+    """
+    from .data_engine import clean_symbol
+    sym = clean_symbol(symbol)
 
     now_ts = time.time()
     if sym in _LIVE_NEWS_CACHE:

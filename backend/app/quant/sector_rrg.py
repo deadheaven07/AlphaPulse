@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional
-from backend.app.quant.data_engine import fetch_live_quote, INDIAN_STOCKS_DB
+from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.tactical_swing_engine import EXPANDED_NSE_UNIVERSE
 
 # Comprehensive 11-Sector Institutional Mapping in Indian Equities (Relative to NIFTY 50)
@@ -40,7 +40,7 @@ SECTOR_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     "Auto & EV": {
         "id": "auto",
         "name": "Auto & EV",
-        "symbols": ["TATAMOTORS", "M&M", "BAJAJ-AUTO", "MOTHERSON", "MARUTI", "ASHOKLEY", "TVSMOTOR", "SONACOMS"],
+        "symbols": ["TMPV", "M&M", "BAJAJ-AUTO", "MOTHERSON", "MARUTI", "ASHOKLEY", "TVSMOTOR", "SONACOMS"],
         "description": "Robust passenger SUV order books, luxury JLR margins, EV charging networks, and commercial vehicle fleet replacement.",
         "profiles": {
             "1w": {"rs_ratio": 104.2, "rs_momentum": 102.5, "quadrant": "Leading", "color": "emerald", "return_pct": 4.2, "nifty_alpha": 2.0},
@@ -95,7 +95,7 @@ SECTOR_DEFINITIONS: Dict[str, Dict[str, Any]] = {
     "Retail & Consumer": {
         "id": "retail",
         "name": "Retail & Consumer",
-        "symbols": ["TRENT", "ZOMATO", "DIXON", "TITAN", "DMART", "KAYNES"],
+        "symbols": ["TRENT", "ETERNAL", "DIXON", "TITAN", "DMART", "KAYNES"],
         "description": "High revenue growth from rapid store rollouts and quick-commerce scaling, consolidating after a steep multi-year run-up.",
         "profiles": {
             "1w": {"rs_ratio": 102.4, "rs_momentum": 98.6, "quadrant": "Weakening", "color": "amber", "return_pct": 1.4, "nifty_alpha": -0.8},
@@ -180,7 +180,7 @@ def get_all_sectors_rrg_matrix(timeframe: str = "1w") -> Dict[str, Any]:
         constituent_stocks = []
         for sym in sec_data["symbols"]:
             meta = universe_meta.get(sym, {})
-            quote = INDIAN_STOCKS_DB.get(sym)
+            quote = fetch_live_quote(sym)
             if not quote:
                 quote = {
                     "symbol": sym,

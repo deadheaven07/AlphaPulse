@@ -5,7 +5,7 @@ from .data_engine import fetch_live_quotes_batch, fetch_live_quote
 
 # High-Volume Liquid NSE Universe optimized for 5x MIS Intraday Trading
 INTRADAY_UNIVERSE = [
-    {"symbol": "TATAMOTORS", "name": "Tata Motors", "sector": "Auto", "beta": 1.45, "base_vol_mult": 2.1},
+    {"symbol": "TMPV", "name": "Tata Motors PV", "sector": "Auto", "beta": 1.45, "base_vol_mult": 2.1},
     {"symbol": "TRENT", "name": "Trent Ltd", "sector": "Retail", "beta": 1.85, "base_vol_mult": 2.4},
     {"symbol": "DIXON", "name": "Dixon Tech", "sector": "EMS Tech", "beta": 1.70, "base_vol_mult": 1.9},
     {"symbol": "TITAGARH", "name": "Titagarh Rail", "sector": "Railways", "beta": 1.95, "base_vol_mult": 2.6},
@@ -17,7 +17,7 @@ INTRADAY_UNIVERSE = [
     {"symbol": "SBIN", "name": "State Bank of India", "sector": "Banking", "beta": 1.25, "base_vol_mult": 1.6},
     {"symbol": "HDFCBANK", "name": "HDFC Bank", "sector": "Banking", "beta": 1.10, "base_vol_mult": 1.4},
     {"symbol": "RELIANCE", "name": "Reliance Industries", "sector": "Energy", "beta": 1.05, "base_vol_mult": 1.3},
-    {"symbol": "ZOMATO", "name": "Zomato Ltd", "sector": "Consumer", "beta": 1.75, "base_vol_mult": 2.5},
+    {"symbol": "ETERNAL", "name": "Eternal Ltd (Zomato)", "sector": "Consumer", "beta": 1.75, "base_vol_mult": 2.5},
     {"symbol": "JINDALSTEL", "name": "Jindal Steel & Power", "sector": "Metals", "beta": 1.60, "base_vol_mult": 1.8},
     {"symbol": "BAJAJ-AUTO", "name": "Bajaj Auto", "sector": "Auto", "beta": 1.20, "base_vol_mult": 1.5},
     {"symbol": "HAL", "name": "Hindustan Aeronautics", "sector": "Defense", "beta": 1.55, "base_vol_mult": 2.0},

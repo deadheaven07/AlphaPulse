@@ -101,6 +101,26 @@ QUALITY_METRICS_DB: Dict[str, Dict[str, Any]] = {
         "dii_holding_pct": 22.40,
         "order_book_cr": 0,
         "quality_verdict": "Platform Duopoly (Blinkit Quick Commerce Positive Contribution)"
+    },
+    "ETERNAL": {
+        "delivery_pct": 57.6,
+        "piotroski_score": 7,
+        "promoter_pledge_pct": 0.0,
+        "promoter_holding_pct": 0.0,
+        "fii_holding_pct": 54.20,
+        "dii_holding_pct": 23.10,
+        "order_book_cr": 0,
+        "quality_verdict": "Platform Duopoly (Blinkit Quick Commerce Positive Operating Leverage)"
+    },
+    "TMPV": {
+        "delivery_pct": 58.4,
+        "piotroski_score": 8,
+        "promoter_pledge_pct": 0.0,
+        "promoter_holding_pct": 46.36,
+        "fii_holding_pct": 19.20,
+        "dii_holding_pct": 16.45,
+        "order_book_cr": 145000,
+        "quality_verdict": "Institutional Accumulation (Piotroski 8/9, Zero Pledge, EV Leader)"
     }
 }
 
@@ -108,7 +128,8 @@ def evaluate_quality_filters(symbol: str, raw_quote: Dict[str, Any]) -> Dict[str
     """
     Compute Piotroski F-Score (0-9), NSE Delivery %, and Promoter Pledging checks.
     """
-    sym = symbol.strip().upper()
+    from .data_engine import clean_symbol
+    sym = clean_symbol(symbol)
     metrics = QUALITY_METRICS_DB.get(sym, {})
 
     roce = float(raw_quote.get("roce", 15.0))

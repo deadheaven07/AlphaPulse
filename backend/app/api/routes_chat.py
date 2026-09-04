@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import os
 import re
-from backend.app.quant.data_engine import fetch_live_quote, INDIAN_STOCKS_DB
+from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.tactical_swing_engine import (
     scan_live_market_tactical_leaders,
     EXPANDED_NSE_UNIVERSE

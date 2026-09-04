@@ -9,7 +9,7 @@ from .monte_carlo_engine import run_monte_carlo_simulation
 RADAR_CANDIDATES = [
     "BEL",
     "HAL",
-    "TATAMOTORS",
+    "TMPV",
     "LT",
     "COALINDIA",
     "TATAPOWER",
@@ -17,7 +17,7 @@ RADAR_CANDIDATES = [
     "TCS",
     "ITC",
     "TRENT",
-    "ZOMATO"
+    "ETERNAL"
 ]
 
 def scan_real_time_kpi_radar(capital_reference: float = 100000.0) -> List[Dict[str, Any]]:

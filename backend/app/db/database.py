@@ -103,6 +103,24 @@ def init_db() -> None:
                 closed_at TIMESTAMP
             )
         """)
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS live_stock_cache (
+                symbol TEXT PRIMARY KEY,
+                company_name TEXT NOT NULL,
+                price REAL NOT NULL,
+                change REAL NOT NULL,
+                change_pct REAL NOT NULL,
+                open REAL,
+                high REAL,
+                low REAL,
+                prev_close REAL,
+                high_52w REAL,
+                low_52w REAL,
+                volume INTEGER,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
         # Schema migration check for existing columns
         cursor.execute("PRAGMA table_info(tactical_swings)")
@@ -510,4 +528,50 @@ def delete_intraday_trade(trade_id: int) -> bool:
         cursor.execute("DELETE FROM intraday_trades WHERE id = ?", (trade_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+def save_live_quote_cache(data: Dict[str, Any]) -> None:
+    """Saves or updates a verified live quote into persistent SQLite storage."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO live_stock_cache (
+                symbol, company_name, price, change, change_pct,
+                open, high, low, prev_close, high_52w, low_52w, volume, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(symbol) DO UPDATE SET
+                company_name = excluded.company_name,
+                price = excluded.price,
+                change = excluded.change,
+                change_pct = excluded.change_pct,
+                open = excluded.open,
+                high = excluded.high,
+                low = excluded.low,
+                prev_close = excluded.prev_close,
+                high_52w = excluded.high_52w,
+                low_52w = excluded.low_52w,
+                volume = excluded.volume,
+                updated_at = CURRENT_TIMESTAMP
+        """, (
+            data["symbol"].upper(),
+            data.get("company_name", data["symbol"]),
+            float(data["price"]),
+            float(data.get("change", 0.0)),
+            float(data.get("change_pct", 0.0)),
+            float(data.get("open", data["price"])),
+            float(data.get("high", data["price"])),
+            float(data.get("low", data["price"])),
+            float(data.get("prev_close", data["price"])),
+            float(data.get("high_52w", data["price"] * 1.25)),
+            float(data.get("low_52w", data["price"] * 0.75)),
+            int(data.get("volume", 0))
+        ))
+        conn.commit()
+
+def get_live_quote_cache(symbol: str) -> Optional[Dict[str, Any]]:
+    """Retrieves the last verified price from SQLite."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM live_stock_cache WHERE symbol = ?", (symbol.upper(),))
+        row = cursor.fetchone()
+        return dict(row) if row else None
 

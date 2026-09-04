@@ -39,7 +39,7 @@ EXPANDED_NSE_UNIVERSE = [
 
     # 4. Consumer, Retail & Quick Commerce
     {"symbol": "TRENT", "name": "Trent Retail", "beta": 1.55, "sector": "Consumer Retail", "catalyst": "Zudio rapid nationwide store footprint with 30%+ same-store sales growth"},
-    {"symbol": "ZOMATO", "name": "Zomato Limited", "beta": 1.60, "sector": "Quick Commerce", "catalyst": "Blinkit rapid store addition with high operating leverage profitability"},
+    {"symbol": "ETERNAL", "name": "Eternal Ltd (Zomato/Blinkit)", "beta": 1.60, "sector": "Quick Commerce", "catalyst": "Blinkit rapid store addition with operating leverage profitability"},
     {"symbol": "DIXON", "name": "Dixon Technologies", "beta": 1.50, "sector": "EMS / Electronics", "catalyst": "Smartphone & IT hardware PLI scheme manufacturing volume explosion"},
     {"symbol": "TITAN", "name": "Titan Company", "beta": 1.20, "sector": "Consumer Luxury", "catalyst": "Tanishq wedding jewellery demand surge and international store rollout"},
     {"symbol": "DMART", "name": "Avenue Supermarts", "beta": 1.15, "sector": "Consumer Retail", "catalyst": "Store cluster expansion with unmatched retail inventory turnover"},
@@ -58,7 +58,7 @@ EXPANDED_NSE_UNIVERSE = [
     {"symbol": "GAIL", "name": "GAIL India", "beta": 1.10, "sector": "Gas Transmission", "catalyst": "National gas grid pipeline expansion and rising transmission volumes"},
 
     # 6. Auto & Electric Mobility
-    {"symbol": "TATAMOTORS", "name": "Tata Motors", "beta": 1.35, "sector": "Automotive & EV", "catalyst": "Zero net-debt milestone, JLR luxury margins, and domestic EV leadership"},
+    {"symbol": "TMPV", "name": "Tata Motors Passenger Vehicles", "beta": 1.35, "sector": "Automotive & EV", "catalyst": "EV market leadership (>65% share) and JLR luxury margins following demerger"},
     {"symbol": "M&M", "name": "Mahindra & Mahindra", "beta": 1.30, "sector": "Automotive", "catalyst": "SUV booking waiting periods and farm equipment domestic market share"},
     {"symbol": "BAJAJ-AUTO", "name": "Bajaj Auto", "beta": 1.10, "sector": "2-Wheelers", "catalyst": "Chetak EV volume ramp-up and CNG motorcycle export recovery"},
     {"symbol": "MOTHERSON", "name": "Samvardhana Motherson", "beta": 1.40, "sector": "Auto Ancillary", "catalyst": "Global wiring harness content-per-vehicle expansion with EV acquisitions"},
