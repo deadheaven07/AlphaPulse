@@ -229,6 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Theme Toggle */}
           <button
             onClick={onToggleTheme}
+            aria-label="Toggle Theme"
             className="p-2 rounded-xl text-slate-600 dark:text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-elevated hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center gap-2"
             title={isDarkMode ? "Switch to Light Mode" : "Switch to Soothing Dark Mode"}
           >
@@ -245,6 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Settings Trigger */}
           <button
             onClick={onOpenSettings}
+            aria-label="Open Settings"
             className="p-2 rounded-xl text-slate-600 dark:text-muted-dark hover:bg-slate-100 dark:hover:bg-surface-elevated hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer flex items-center gap-2"
             title="Settings & Diagnostics"
           >

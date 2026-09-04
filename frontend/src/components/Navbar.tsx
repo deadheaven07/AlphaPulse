@@ -111,6 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Dark / Light Mode Switcher */}
             <button
               onClick={onToggleTheme}
+              aria-label="Toggle Dark/Light Mode"
               title={isDarkMode ? "Switch to Crisp Light Mode" : "Switch to Soothing Warm Charcoal Dark Mode"}
               className="p-2 sm:px-3 sm:py-1.5 rounded-xl border border-slate-200 dark:border-border-dark bg-slate-50 dark:bg-canvas-dark text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-surface-elevated transition-all flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer"
             >
@@ -158,6 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Settings Button */}
             <button
               onClick={onOpenSettings}
+              aria-label="Open Settings"
               className="p-2 rounded-xl border border-slate-200 dark:border-border-dark text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-canvas-dark transition-colors cursor-pointer"
               title="API Configuration"
             >
