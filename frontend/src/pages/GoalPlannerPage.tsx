@@ -51,7 +51,7 @@ const PRESET_PROMPTS = [
   "🚀 Maximize ₹50,000 monthly SIP for 3 Years",
 ];
 
-export function calculateExactRequiredCagr(
+function calculateExactRequiredCagr(
   target: number,
   startingCapital: number,
   monthlySip: number,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { runProfitSimulation } from "../services/api";
 import type { RiskTolerance, SimulationResult } from "../types";
@@ -42,18 +42,22 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   onSaveSimulation,
 }) => {
   const [capital, setCapital] = useState<number>(initialCapital);
+  const [prevInitialCapital, setPrevInitialCapital] = useState<number>(initialCapital);
   const [horizonMonths, setHorizonMonths] = useState<number>(initialHorizon);
+  const [prevInitialHorizon, setPrevInitialHorizon] = useState<number>(initialHorizon);
   const [riskTolerance, setRiskTolerance] = useState<RiskTolerance>("Moderate");
   const [isSaved, setIsSaved] = useState(false);
   const [showTaxBreakdown, setShowTaxBreakdown] = useState(false);
 
-  useEffect(() => {
+  if (prevInitialCapital !== initialCapital) {
+    setPrevInitialCapital(initialCapital);
     setCapital(initialCapital);
-  }, [initialCapital]);
+  }
 
-  useEffect(() => {
+  if (prevInitialHorizon !== initialHorizon) {
+    setPrevInitialHorizon(initialHorizon);
     setHorizonMonths(initialHorizon);
-  }, [initialHorizon]);
+  }
 
   const { data: simData } = useQuery({
     queryKey: ["profit-sim-mc", symbol, capital, horizonMonths, riskTolerance],

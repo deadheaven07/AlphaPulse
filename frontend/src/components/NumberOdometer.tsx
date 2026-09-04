@@ -20,6 +20,7 @@ export const NumberOdometer: React.FC<NumberOdometerProps> = ({
   const [displayValue, setDisplayValue] = useState<number>(value);
   const [trend, setTrend] = useState<"up" | "down" | null>(null);
   const prevValueRef = useRef<number>(value);
+  const currentValRef = useRef<number>(value);
   const animRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export const NumberOdometer: React.FC<NumberOdometerProps> = ({
 
       const startTime = performance.now();
       const duration = 650; // ms
-      const startVal = displayValue;
+      const startVal = currentValRef.current;
       const targetVal = value;
 
       const animate = (currentTime: number) => {
@@ -40,11 +41,13 @@ export const NumberOdometer: React.FC<NumberOdometerProps> = ({
         const ease = 1 - Math.pow(1 - progress, 3);
         const current = startVal + (targetVal - startVal) * ease;
 
+        currentValRef.current = current;
         setDisplayValue(current);
 
         if (progress < 1) {
           animRef.current = requestAnimationFrame(animate);
         } else {
+          currentValRef.current = targetVal;
           setDisplayValue(targetVal);
           prevValueRef.current = targetVal;
           setTimeout(() => setTrend(null), 1000);

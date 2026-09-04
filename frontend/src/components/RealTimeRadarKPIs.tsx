@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchKpiRadar } from "../services/api";
 import { formatINR, formatPct } from "../utils/formatters";
@@ -35,13 +35,15 @@ export const RealTimeRadarKPIs: React.FC<RealTimeRadarKPIsProps> = ({
   onCapitalChange,
 }) => {
   const [capital, setCapital] = useState<number>(referenceCapital);
+  const [prevRefCapital, setPrevRefCapital] = useState<number>(referenceCapital);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [inputVal, setInputVal] = useState<string>(referenceCapital.toString());
 
-  useEffect(() => {
+  if (prevRefCapital !== referenceCapital) {
+    setPrevRefCapital(referenceCapital);
     setCapital(referenceCapital);
     setInputVal(referenceCapital.toString());
-  }, [referenceCapital]);
+  }
 
   const { data: radarStocks, isLoading } = useQuery({
     queryKey: ["kpi-radar", capital],

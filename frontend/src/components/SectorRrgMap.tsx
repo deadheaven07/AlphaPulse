@@ -42,7 +42,7 @@ export const SectorRrgMap: React.FC<SectorRrgMapProps> = ({
     refetchInterval: 60000,
   });
 
-  const sectors = matrixData?.sectors || [];
+  const sectors = useMemo(() => matrixData?.sectors || [], [matrixData?.sectors]);
 
   // Determine currently selected sector item
   const activeSector = useMemo(() => {

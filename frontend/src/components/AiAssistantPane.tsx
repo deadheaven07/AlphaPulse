@@ -69,6 +69,34 @@ const KNOWN_TICKERS = [
   { sym: "ICICIBANK", name: "ICICI Bank", price: 1423.20, sector: "Banking" }
 ];
 
+let msgSeq = 0;
+const createMsgId = (prefix: string) => `${prefix}-${Date.now()}-${++msgSeq}`;
+
+const createUserMessage = (query: string): ChatMessageItem => ({
+  id: createMsgId("user"),
+  role: "user",
+  content: query,
+  timestamp: Date.now()
+});
+
+const createAssistantMessage = (reply: string, actionCards?: ChatActionCard[], tacticalCard?: TacticalSetup, followUpChips?: string[]): ChatMessageItem => ({
+  id: createMsgId("model"),
+  role: "model",
+  content: reply,
+  actionCards,
+  tacticalCard,
+  followUpChips,
+  timestamp: Date.now()
+});
+
+const createErrorMessage = (content: string, followUpChips?: string[]): ChatMessageItem => ({
+  id: createMsgId("err"),
+  role: "model",
+  content,
+  followUpChips,
+  timestamp: Date.now()
+});
+
 export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
   isOpen,
   onClose,
@@ -95,7 +123,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
         `Analyze ${activeSymbol} fundamentals`,
         "Suggest 2 defense stocks"
       ],
-      timestamp: Date.now()
+      timestamp: 0
     }
   ]);
 
@@ -164,13 +192,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
       }
     }
 
-    const userMessage: ChatMessageItem = {
-      id: `user-${Date.now()}`,
-      role: "user",
-      content: query,
-      timestamp: Date.now()
-    };
-
+    const userMessage = createUserMessage(query);
     const newHistory = [...messages, userMessage];
     setMessages(newHistory);
     setInputQuery("");
@@ -190,26 +212,20 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
         context: workspaceContext
       });
 
-      const assistantMessage: ChatMessageItem = {
-        id: `model-${Date.now()}`,
-        role: "model",
-        content: response.reply,
-        actionCards: response.action_cards,
-        tacticalCard: response.tactical_card,
-        followUpChips: response.follow_up_chips,
-        timestamp: Date.now()
-      };
+      const assistantMessage = createAssistantMessage(
+        response.reply,
+        response.action_cards,
+        response.tactical_card,
+        response.follow_up_chips
+      );
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
       console.error("Conversational AI Error:", err);
-      const errorMessage: ChatMessageItem = {
-        id: `err-${Date.now()}`,
-        role: "model",
-        content: "⚠️ Unable to reach Alpha AI Copilot. Please check your backend connection or Gemini API key in Settings.",
-        followUpChips: ["Retry query", "Check health status"],
-        timestamp: Date.now()
-      };
+      const errorMessage = createErrorMessage(
+        "⚠️ Unable to reach Alpha AI Copilot. Please check your backend connection or Gemini API key in Settings.",
+        ["Retry query", "Check health status"]
+      );
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -262,18 +278,17 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 
   const handleClearHistory = () => {
     setMessages([
-      {
-        id: `greeting-${Date.now()}`,
-        role: "model",
-        content: `👋 **Conversation cleared.**\n\nI am tracking your workspace on **${currentPage.toUpperCase()}** (${activeSymbol}). How can I assist with your Dalal Street strategy today?`,
-        followUpChips: [
+      createAssistantMessage(
+        `👋 **Conversation cleared.**\n\nI am tracking your workspace on **${currentPage.toUpperCase()}** (${activeSymbol}). How can I assist with your Dalal Street strategy today?`,
+        undefined,
+        undefined,
+        [
           "I have 5 thousand tell me how to invest",
           "I have ₹50,000 for 1 week",
           `Analyze ${activeSymbol} fundamentals`,
           "Suggest 2 defense stocks"
-        ],
-        timestamp: Date.now()
-      }
+        ]
+      )
     ]);
   };
 
