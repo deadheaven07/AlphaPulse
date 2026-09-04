@@ -268,7 +268,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
         </div>
 
         {/* Share Allocation Badge */}
-        {simData && (
+{simData && (
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-4 flex-wrap">
               <div>
@@ -293,9 +293,49 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
             </div>
           </div>
         )}
-      </div>
 
-      {/* 3 Outcome Forecast Cards (Bull / Base / Bear) */}
+        {/* Monte Carlo Probability Summary */}
+        {simData?.expected_value && (
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-700/50 dark:border-slate-600/50 mt-3 space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-medium text-slate-400">Monte Carlo Probabilities (1,000 paths)</span>
+              <span className="text-[10px] text-emerald-400 font-bold">{simData.expected_value.probability_positive_post_tax_roi * 100}% positive ROI</span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div>
+                <span className="text-[9px] text-slate-500 uppercase block">P10 (Bear)</span>
+                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 === 0.1 ? "~10%" : simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 > 0 ? `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p10 * 100).toFixed(1)}%` : "Calculating..."}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-slate-500 uppercase block">P50 (Base/Median)</span>
+                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p50 === 0.5 ? "~50%" : `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p50 * 100).toFixed(1)}%`}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-slate-500 uppercase block">P90 (Bull)</span>
+                <span className="text-[12px] font-medium text-emerald-400">{simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p90 === 0.9 ? "~90%" : `${(simData.expected_value.percentile_probabilities.empirical_from_1000_paths.p90 * 100).toFixed(1)}%`}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <span className="text-[9px] text-slate-500 uppercase block">Profit Factor</span>
+                <span className="text-[12px] font-medium">{simData.expected_value.profit_factor > 0 ? simData.expected_value.profit_factor.toFixed(2) : "—"}</span>
+              </div>
+              <div>
+                <span className="text-[9px] text-slate-500 uppercase block">100x Return Prob.</span>
+                <span className="text-[12px] font-medium">{simData.expected_value.probability_100x_return * 100}%</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-700/20 dark:border-slate-600/20">
+              <span className="text-[9px] text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence</span>
+              <span className="text-[11px] font-medium text-emerald-400">{simData.expected_value.confidence_level}</span>
+            </div>
+          </div>
+        )}
+
+       {/* 3 Outcome Forecast Cards (Bull / Base / Bear) */}
       {simData && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* 1. 🚀 Bull Case Card */}
