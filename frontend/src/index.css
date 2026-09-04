@@ -256,3 +256,40 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* Apple macOS Specular Glint & Micro-Interactions */
+.specular-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.specular-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  pointer-events: none;
+}
+
+.dark .specular-card::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+/* QuickLook HUD Animation */
+@keyframes quickLookScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-quicklook {
+  animation: quickLookScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

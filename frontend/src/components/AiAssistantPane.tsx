@@ -21,7 +21,9 @@ import {
   Coins,
   Clock,
   Search,
-  CornerDownLeft
+  CornerDownLeft,
+  Terminal,
+  ArrowRight
 } from "lucide-react";
 
 interface AiAssistantPaneProps {
@@ -43,6 +45,30 @@ const PRESET_PROMPTS = [
   { text: "Show top dividend PSU compounders for cash flow", subtitle: "Coal India, REC, Vedanta yield floors" }
 ];
 
+const SLASH_COMMANDS = [
+  { cmd: "/simulate [symbol] [capital]", desc: "Launch Monte Carlo post-tax profit engine for a stock", example: "/simulate BEL 50000" },
+  { cmd: "/studio [symbol]", desc: "Open interactive Candlestick Studio & Quality Screener", example: "/studio HAL" },
+  { cmd: "/radar", desc: "Jump to 5-factor screener & insider deals leaderboard", example: "/radar" },
+  { cmd: "/vault", desc: "Inspect persistent Demat holdings & active tactical sprints", example: "/vault" },
+  { cmd: "/dividend", desc: "Open Dividend Income intelligence & quarterly cash flow", example: "/dividend" },
+  { cmd: "/clear", desc: "Clear current conversation thread and reset workspace context", example: "/clear" }
+];
+
+const KNOWN_TICKERS = [
+  { sym: "HAL", name: "Hindustan Aeronautics", price: 4856.00, sector: "Defense" },
+  { sym: "BEL", name: "Bharat Electronics", price: 408.00, sector: "Defense" },
+  { sym: "RELIANCE", name: "Reliance Industries", price: 1322.00, sector: "Energy" },
+  { sym: "ETERNAL", name: "Eternal Limited (Zomato)", price: 322.75, sector: "FMCG" },
+  { sym: "TMPV", name: "Tata Motors Passenger", price: 311.50, sector: "Auto" },
+  { sym: "TCS", name: "Tata Consultancy", price: 4210.00, sector: "IT" },
+  { sym: "INFY", name: "Infosys", price: 1130.00, sector: "IT" },
+  { sym: "COALINDIA", name: "Coal India", price: 415.35, sector: "PSU" },
+  { sym: "TATAPOWER", name: "Tata Power", price: 425.00, sector: "Energy" },
+  { sym: "LT", name: "Larsen & Toubro", price: 3964.10, sector: "Capex" },
+  { sym: "HDFCBANK", name: "HDFC Bank", price: 712.10, sector: "Banking" },
+  { sym: "ICICIBANK", name: "ICICI Bank", price: 1423.20, sector: "Banking" }
+];
+
 export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
   isOpen,
   onClose,
@@ -62,7 +88,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
     {
       id: "initial-greeting",
       role: "model",
-      content: `👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **${currentPage.toUpperCase()}**. You are inspecting **${activeSymbol}** with a capital allocation of **${formatINR(simCapital)}**.\n\nAsk me for a **1-week tactical high-profit blueprint**, stock comparisons, valuation moats, or dividend roadmaps!`,
+      content: `👋 **Hello! I am your Alpha Copilot & Stock Market Guru.**\n\nI am currently tracking your workspace on **${currentPage.toUpperCase()}**. You are inspecting **${activeSymbol}** with a capital allocation of **${formatINR(simCapital)}**.\n\nAsk me for a **1-week tactical high-profit blueprint**, stock comparisons, valuation moats, or dividend roadmaps! You can also use **Slash Commands** like \`/simulate BEL 50000\` or \`/studio HAL\`.`,
       followUpChips: [
         "I have 5 thousand tell me how to invest",
         "I have ₹50,000 for 1 week",
@@ -101,9 +127,42 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
 
   if (!isOpen) return null;
 
+  // Process Slash Commands or Natural Language
   const handleSendMessage = async (textToSend: string) => {
     const query = textToSend.trim();
     if (!query || isLoading) return;
+
+    // 1. Direct Slash Command Handling
+    if (query.startsWith("/")) {
+      const parts = query.slice(1).split(/\s+/);
+      const command = parts[0]?.toLowerCase();
+      const targetSym = (parts[1] || "").toUpperCase();
+      const numArg = parts[2] ? parseInt(parts[2].replace(/[₹,]/g, ""), 10) : undefined;
+
+      if (command === "clear") {
+        handleClearHistory();
+        setInputQuery("");
+        return;
+      }
+
+      if (command === "simulate" && targetSym && onNavigateToSimulator) {
+        onNavigateToSimulator(targetSym, numArg || simCapital, simHorizon);
+        onClose();
+        return;
+      }
+
+      if (command === "studio" && targetSym) {
+        onSelectStock(targetSym, numArg || simCapital, simHorizon);
+        onClose();
+        return;
+      }
+
+      if (command === "radar" || command === "vault" || command === "dividend") {
+        onSelectStock(activeSymbol, simCapital, simHorizon);
+        onClose();
+        return;
+      }
+    }
 
     const userMessage: ChatMessageItem = {
       id: `user-${Date.now()}`,
@@ -218,6 +277,15 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
     ]);
   };
 
+  const isSlashActive = inputQuery.startsWith("/");
+  const matchedTickers = !isSlashActive && inputQuery.length >= 2
+    ? KNOWN_TICKERS.filter(
+        (t) =>
+          t.sym.toLowerCase().includes(inputQuery.toLowerCase()) ||
+          t.name.toLowerCase().includes(inputQuery.toLowerCase())
+      ).slice(0, 3)
+    : [];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
       {/* Frosted Dark Backdrop */}
@@ -229,7 +297,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
       {/* Centered Floating macOS Spotlight Command Palette Modal */}
       <div className="relative z-10 w-full max-w-2xl lg:max-w-3xl max-h-[86vh] flex flex-col rounded-[24px] bg-white/95 dark:bg-[#181920]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.08)_inset] overflow-hidden transition-all duration-300">
         {/* Top Spotlight Search & Prompt Bar */}
-        <div className="p-3.5 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/60 dark:bg-black/20 backdrop-blur-md">
+        <div className="p-3.5 sm:p-4 border-b border-black/[0.06] dark:border-white/[0.08] bg-white/60 dark:bg-black/20 backdrop-blur-md relative">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -248,7 +316,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                 type="text"
                 value={inputQuery}
                 onChange={(e) => setInputQuery(e.target.value)}
-                placeholder="Ask Alpha Copilot (e.g., 'have 5 thousand how to invest', '1-week tactical setup')..."
+                placeholder="Ask AI or type '/' for quick actions (/simulate BEL 50k, /studio HAL)..."
                 disabled={isLoading}
                 className="w-full pl-7 pr-3 py-1.5 bg-transparent text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none"
               />
@@ -262,7 +330,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                   className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer"
                 >
                   {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CornerDownLeft className="w-3.5 h-3.5" />}
-                  <span className="hidden sm:inline">Ask</span>
+                  <span className="hidden sm:inline">Execute</span>
                 </button>
               ) : (
                 <div className="hidden sm:flex items-center gap-1">
@@ -294,6 +362,57 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
               </button>
             </div>
           </form>
+
+          {/* Quick Slash Commands Autocomplete Popup */}
+          {isSlashActive && (
+            <div className="absolute left-4 right-4 top-full mt-1.5 p-2 rounded-2xl bg-white/95 dark:bg-[#1E1F27]/95 backdrop-blur-xl border border-black/[0.08] dark:border-white/[0.1] shadow-2xl z-30 space-y-1 animate-quicklook">
+              <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2 py-1 flex items-center gap-1">
+                <Terminal className="w-3 h-3 text-emerald-500" /> Omnibox Quick Actions
+              </div>
+              {SLASH_COMMANDS.map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setInputQuery(item.example);
+                    inputRef.current?.focus();
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] flex items-center justify-between transition-all cursor-pointer group"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-xs text-emerald-600 dark:text-emerald-400 group-hover:text-emerald-500">
+                      {item.cmd}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline">
+                      {item.desc}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-400 opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                    Try: {item.example} <ArrowRight className="w-2.5 h-2.5" />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Real-time Symbol Quick Pick Pill */}
+          {matchedTickers.length > 0 && (
+            <div className="flex items-center gap-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.04] overflow-x-auto">
+              <span className="text-[10px] text-slate-400 font-bold uppercase shrink-0">Matching Equities:</span>
+              {matchedTickers.map((t) => (
+                <button
+                  key={t.sym}
+                  onClick={() => {
+                    onSelectStock(t.sym, simCapital, simHorizon);
+                    onClose();
+                  }}
+                  className="px-2 py-0.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-800 dark:text-emerald-300 text-[10px] font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors shrink-0"
+                >
+                  <span>{t.sym}</span>
+                  <span className="text-[9px] opacity-75">{formatINR(t.price)}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Context Capsule Bar */}
           <div className="flex items-center justify-between gap-2 pt-2.5 mt-1 border-t border-black/[0.04] dark:border-white/[0.04] text-[10px] text-slate-500 dark:text-slate-400">

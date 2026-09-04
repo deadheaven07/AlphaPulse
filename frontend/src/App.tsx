@@ -7,7 +7,8 @@ import {
   addDbWatchlist,
   deleteDbWatchlist,
   createDbHolding,
-  fetchDbHoldings
+  fetchDbHoldings,
+  fetchStockQuote
 } from "./services/api";
 import type { SimulationResult, PortfolioAlert } from "./types";
 import { ThreeBackground } from "./components/ThreeBackground";
@@ -18,6 +19,11 @@ import { AiAssistantPane } from "./components/AiAssistantPane";
 import { TickerTape } from "./components/TickerTape";
 import { AlertToastContainer } from "./components/AlertToastContainer";
 import { SettingsModal } from "./components/SettingsModal";
+import { SpacebarQuickLook } from "./components/SpacebarQuickLook";
+import { BentoQuantDesk } from "./components/BentoQuantDesk";
+import { TearSheetExportModal } from "./components/TearSheetExportModal";
+import { useTactileAudio } from "./hooks/useTactileAudio";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 // Focused Dedicated Pages
 import { OverviewPage } from "./pages/OverviewPage";
@@ -29,7 +35,7 @@ import { GoalPlannerPage } from "./pages/GoalPlannerPage";
 import { PortfolioPage } from "./pages/PortfolioPage";
 
 export function App() {
-  // Navigation State (6 focused pages)
+  // Navigation State (8 focused pages)
   const [activePage, setActivePage] = useState<NavPage>("overview");
 
   // Selected Stock & Quantitative State
@@ -37,9 +43,17 @@ export function App() {
   const [simCapital, setSimCapital] = useState<number>(100000);
   const [simHorizon, setSimHorizon] = useState<number>(12);
 
+  // View Mode: Focus Page vs. Bento Quant Desk
+  const [isBentoMode, setIsBentoMode] = useState<boolean>(false);
+
   // Drawers & Modals
   const [isAiPaneOpen, setIsAiPaneOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isQuickLookOpen, setIsQuickLookOpen] = useState<boolean>(false);
+  const [isTearSheetOpen, setIsTearSheetOpen] = useState<boolean>(false);
+
+  // Web Audio Synthesizer Hook
+  const { isMuted, toggleMute, playClick, playChime, playVaultLock } = useTactileAudio();
 
   // Dark / Light Mode State
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
@@ -62,19 +76,28 @@ export function App() {
     }
   }, [isDarkMode]);
 
-  // Global Keyboard Shortcut: Cmd+K / Ctrl+K to toggle AI Copilot pane
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setIsAiPaneOpen((prev) => !prev);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const toggleTheme = () => {
+    playClick();
+    setIsDarkMode((prev) => !prev);
+  };
 
-  const toggleTheme = () => setIsDarkMode((prev) => !prev);
+  // Global Keyboard Shortcuts (Space, 1-8, Cmd+K, T)
+  useKeyboardShortcuts({
+    onSelectPage: (page) => {
+      playClick();
+      setActivePage(page);
+    },
+    onToggleTheme: toggleTheme,
+    onToggleAi: () => {
+      playClick();
+      setIsAiPaneOpen((prev) => !prev);
+    },
+    onToggleQuickLook: () => {
+      playClick();
+      setIsQuickLookOpen((prev) => !prev);
+    },
+    isModalOpen: isAiPaneOpen || isSettingsOpen || isQuickLookOpen || isTearSheetOpen,
+  });
 
   // Live Watchdog Alerts State
   const [activeAlerts, setActiveAlerts] = useState<PortfolioAlert[]>([]);
@@ -84,6 +107,13 @@ export function App() {
     queryKey: ["db-holdings"],
     queryFn: fetchDbHoldings,
     refetchInterval: 20000,
+  });
+
+  // Active Symbol Quote for Tear-Sheet
+  const { data: activeQuote } = useQuery({
+    queryKey: ["app-active-quote", selectedSymbol],
+    queryFn: () => fetchStockQuote(selectedSymbol),
+    staleTime: 30000,
   });
 
   // Watchlist in SQLite / LocalStorage
@@ -137,6 +167,7 @@ export function App() {
   }, [dbHoldings]);
 
   const handleSaveSimulation = (sim: SimulationResult) => {
+    playVaultLock();
     // Persist holding into SQLite database
     createDbHolding({
       symbol: sim.symbol,
@@ -149,6 +180,7 @@ export function App() {
   };
 
   const handleToggleWatchlist = (symbol: string) => {
+    playClick();
     setWatchlist((prev) => {
       let updated: string[];
       if (prev.includes(symbol)) {
@@ -164,6 +196,7 @@ export function App() {
   };
 
   const handleSelectStock = (symbol: string, budget?: number, horizon?: number) => {
+    playClick();
     setSelectedSymbol(symbol);
     if (budget) setSimCapital(budget);
     if (horizon) setSimHorizon(horizon);
@@ -177,9 +210,18 @@ export function App() {
       {/* Modern Left Navigation Sidebar */}
       <Sidebar
         activePage={activePage}
-        onSelectPage={setActivePage}
-        onOpenAiPane={() => setIsAiPaneOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
+        onSelectPage={(page) => {
+          playClick();
+          setActivePage(page);
+        }}
+        onOpenAiPane={() => {
+          playClick();
+          setIsAiPaneOpen(true);
+        }}
+        onOpenSettings={() => {
+          playClick();
+          setIsSettingsOpen(true);
+        }}
         isDarkMode={isDarkMode}
         onToggleTheme={toggleTheme}
         vaultCount={dbHoldings.length}
@@ -206,20 +248,38 @@ export function App() {
         geminiConfigured={Boolean(health?.gemini_api_configured)}
       />
 
-      {/* Main Content Viewport (Scrolls independently, renders single focused page) */}
+      {/* Main Content Viewport (Scrolls independently, renders single focused page or Bento Grid) */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
         {/* macOS Desktop-Class Titlebar */}
         <MacWindowTitlebar
           activePage={activePage}
-          onOpenAi={() => setIsAiPaneOpen(true)}
-          onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenAi={() => {
+            playClick();
+            setIsAiPaneOpen(true);
+          }}
+          onOpenSettings={() => {
+            playClick();
+            setIsSettingsOpen(true);
+          }}
           isDarkMode={isDarkMode}
           onToggleTheme={toggleTheme}
+          isBentoMode={isBentoMode}
+          onToggleBentoMode={() => {
+            playClick();
+            setIsBentoMode((prev) => !prev);
+          }}
+          isMuted={isMuted}
+          onToggleMute={toggleMute}
+          onOpenQuickLook={() => {
+            playClick();
+            setIsQuickLookOpen(true);
+          }}
         />
 
         {/* Infinite Live Ticker Tape */}
         <TickerTape
           onSelectSymbol={(sym) => {
+            playClick();
             setSelectedSymbol(sym);
             setActivePage("studio");
           }}
@@ -227,70 +287,102 @@ export function App() {
 
         {/* Page Container */}
         <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl 3xl:max-w-[1900px] ultrawide:max-w-[2400px] w-full mx-auto space-y-6">
-          {activePage === "overview" && (
-            <OverviewPage
-              onSelectStock={(sym) => {
+          {isBentoMode ? (
+            <BentoQuantDesk
+              selectedSymbol={selectedSymbol}
+              onSelectSymbol={(sym) => {
+                playClick();
                 setSelectedSymbol(sym);
-                setActivePage("studio");
               }}
-              onNavigate={(page) => setActivePage(page)}
-            />
-          )}
-
-          {activePage === "radar" && (
-            <RadarPage
-              onSelectStock={(sym, bgt) => {
-                handleSelectStock(sym, bgt);
-                setActivePage("studio");
-              }}
-              capital={simCapital}
-              onCapitalChange={setSimCapital}
-            />
-          )}
-
-          {activePage === "studio" && (
-            <StockStudioPage
-              symbol={selectedSymbol}
-              onSelectSymbol={(sym) => setSelectedSymbol(sym)}
-              isWatchlisted={watchlist.includes(selectedSymbol)}
-              onToggleWatchlist={handleToggleWatchlist}
-              onNavigateToSimulator={() => setActivePage("simulator")}
-            />
-          )}
-
-          {activePage === "simulator" && (
-            <SimulatorPage
-              symbol={selectedSymbol}
               capital={simCapital}
               horizon={simHorizon}
+              isWatchlisted={watchlist.includes(selectedSymbol)}
+              onToggleWatchlist={handleToggleWatchlist}
               onSaveSimulation={handleSaveSimulation}
+              onNavigateToSimulator={() => setActivePage("simulator")}
             />
-          )}
+          ) : (
+            <>
+              {activePage === "overview" && (
+                <OverviewPage
+                  onSelectStock={(sym) => {
+                    handleSelectStock(sym);
+                    setActivePage("studio");
+                  }}
+                  onNavigate={(page) => {
+                    playClick();
+                    setActivePage(page);
+                  }}
+                />
+              )}
 
-          {activePage === "dividend" && (
-            <DividendPage
-              symbol={selectedSymbol}
-              onSelectStock={(sym) => setSelectedSymbol(sym)}
-            />
-          )}
+              {activePage === "radar" && (
+                <RadarPage
+                  onSelectStock={(sym, bgt) => {
+                    handleSelectStock(sym, bgt);
+                    setActivePage("studio");
+                  }}
+                  capital={simCapital}
+                  onCapitalChange={setSimCapital}
+                />
+              )}
 
-          {activePage === "planner" && (
-            <GoalPlannerPage
-              onNavigateToStudio={(sym: string) => {
-                setSelectedSymbol(sym);
-                setActivePage("studio");
-              }}
-            />
-          )}
+              {activePage === "studio" && (
+                <StockStudioPage
+                  symbol={selectedSymbol}
+                  onSelectSymbol={(sym) => {
+                    playClick();
+                    setSelectedSymbol(sym);
+                  }}
+                  isWatchlisted={watchlist.includes(selectedSymbol)}
+                  onToggleWatchlist={handleToggleWatchlist}
+                  onNavigateToSimulator={() => {
+                    playClick();
+                    setActivePage("simulator");
+                  }}
+                />
+              )}
 
-          {activePage === "portfolio" && (
-            <PortfolioPage
-              onSelectStock={(sym) => {
-                setSelectedSymbol(sym);
-                setActivePage("studio");
-              }}
-              onNavigateToStudio={() => setActivePage("studio")}
-            />
+              {activePage === "simulator" && (
+                <SimulatorPage
+                  symbol={selectedSymbol}
+                  capital={simCapital}
+                  horizon={simHorizon}
+                  onSaveSimulation={handleSaveSimulation}
+                />
+              )}
+
+              {activePage === "dividend" && (
+                <DividendPage
+                  symbol={selectedSymbol}
+                  onSelectStock={(sym) => {
+                    handleSelectStock(sym);
+                  }}
+                />
+              )}
+
+              {activePage === "planner" && (
+                <GoalPlannerPage
+                  onNavigateToStudio={(sym: string) => {
+                    handleSelectStock(sym);
+                    setActivePage("studio");
+                  }}
+                />
+              )}
+
+              {activePage === "portfolio" && (
+                <PortfolioPage
+                  onSelectStock={(sym) => {
+                    handleSelectStock(sym);
+                    setActivePage("studio");
+                  }}
+                  onNavigateToStudio={() => {
+                    playClick();
+                    setActivePage("studio");
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
 
@@ -300,9 +392,19 @@ export function App() {
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-slate-800 dark:text-white">AlphaPulse India Pro</span>
               <span>•</span>
-              <span>Dedicated Focused Workstation</span>
+              <span>Dedicated Focused Workstation & Bento Quant Desk</span>
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  playChime();
+                  setIsTearSheetOpen(true);
+                }}
+                className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+              >
+                📄 Export Institutional Tear-Sheet ({selectedSymbol})
+              </button>
+              <span>•</span>
               <span>Current Statutory Tax Regime (STCG 20% & LTCG 12.5%) Compliant</span>
               <span>•</span>
               <span>SQLite Persistent Vault</span>
@@ -316,9 +418,38 @@ export function App() {
         alerts={activeAlerts}
         onDismiss={(id) => setActiveAlerts((prev) => prev.filter((a) => a.id !== id))}
         onSelectSymbol={(sym) => {
-          setSelectedSymbol(sym);
+          handleSelectStock(sym);
           setActivePage("studio");
         }}
+      />
+
+      {/* macOS Spacebar QuickLook Floating HUD Modal */}
+      <SpacebarQuickLook
+        isOpen={isQuickLookOpen}
+        onClose={() => setIsQuickLookOpen(false)}
+        symbol={selectedSymbol}
+        onNavigateToStudio={(sym) => {
+          handleSelectStock(sym);
+          setActivePage("studio");
+        }}
+        onNavigateToSimulator={(sym) => {
+          handleSelectStock(sym);
+          setActivePage("simulator");
+        }}
+        isWatchlisted={watchlist.includes(selectedSymbol)}
+        onToggleWatchlist={handleToggleWatchlist}
+      />
+
+      {/* Institutional Research Tear-Sheet Memo Exporter Modal */}
+      <TearSheetExportModal
+        isOpen={isTearSheetOpen}
+        onClose={() => setIsTearSheetOpen(false)}
+        symbol={selectedSymbol}
+        companyName={activeQuote?.company_name || `${selectedSymbol} Enterprises`}
+        currentPrice={activeQuote?.price || 4856.0}
+        sector={activeQuote?.sector || "Capital Goods & Defense"}
+        capital={simCapital}
+        horizonMonths={simHorizon}
       />
 
       {/* Settings & System Diagnostics Modal */}

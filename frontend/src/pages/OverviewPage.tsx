@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchKpiRadar, fetchTopDividendYielders, fetchDbHoldings, fetchOptionChainPcr } from "../services/api";
 import { formatINR } from "../utils/formatters";
+import { MarketTreemap } from "../components/MarketTreemap";
 import {
   TrendingUp,
   TrendingDown,
@@ -343,6 +344,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onSelectStock, onNav
           </div>
         </div>
       </div>
+
+      {/* Interactive Cross-Sector Market Breadth Treemap */}
+      <MarketTreemap
+        onSelectStock={(sym) => {
+          onSelectStock(sym);
+          onNavigate("studio");
+        }}
+      />
 
       {/* 4-Step Plain English Quant Matrix */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">

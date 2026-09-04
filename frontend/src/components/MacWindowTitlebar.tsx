@@ -12,7 +12,11 @@ import {
   Coins,
   Target,
   Layers,
-  Sparkles
+  Sparkles,
+  LayoutGrid,
+  Volume2,
+  VolumeX,
+  Eye
 } from "lucide-react";
 import type { NavPage } from "./Sidebar";
 
@@ -22,6 +26,11 @@ interface MacWindowTitlebarProps {
   onOpenSettings: () => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
+  isBentoMode?: boolean;
+  onToggleBentoMode?: () => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
+  onOpenQuickLook?: () => void;
 }
 
 const PAGE_LABELS: Record<NavPage, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -41,6 +50,11 @@ export const MacWindowTitlebar: React.FC<MacWindowTitlebarProps> = ({
   onOpenSettings,
   isDarkMode,
   onToggleTheme,
+  isBentoMode = false,
+  onToggleBentoMode,
+  isMuted = false,
+  onToggleMute,
+  onOpenQuickLook,
 }) => {
   const [timeString, setTimeString] = useState<string>("");
   const [isTrafficHovered, setIsTrafficHovered] = useState<boolean>(false);
@@ -118,6 +132,22 @@ export const MacWindowTitlebar: React.FC<MacWindowTitlebarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
           <span>NSE / BSE • Live Feed</span>
         </div>
+
+        {/* Bento Multi-Desk View Toggle */}
+        {onToggleBentoMode && (
+          <button
+            onClick={onToggleBentoMode}
+            className={`hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
+              isBentoMode
+                ? "bg-indigo-600 text-white border-indigo-500 shadow-2xs"
+                : "bg-black/[0.04] dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 border-black/[0.04] dark:border-white/[0.06] hover:bg-black/[0.08]"
+            }`}
+            title="Toggle Bento Multi-Desk Split View"
+          >
+            <LayoutGrid className="w-3 h-3" />
+            <span>{isBentoMode ? "Bento Mode ON" : "Bento Grid"}</span>
+          </button>
+        )}
       </div>
 
       {/* Center: Window Breadcrumb / Active Page */}
@@ -129,12 +159,29 @@ export const MacWindowTitlebar: React.FC<MacWindowTitlebarProps> = ({
         <span className="text-slate-400 dark:text-slate-600">/</span>
         <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
           <PageIcon className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="font-medium text-[11px] truncate max-w-[140px] sm:max-w-none">{activeMeta.label}</span>
+          <span className="font-medium text-[11px] truncate max-w-[140px] sm:max-w-none">
+            {isBentoMode ? "Bento Quant Desk" : activeMeta.label}
+          </span>
         </div>
       </div>
 
-      {/* Right: macOS Spotlight Trigger & System Status */}
+      {/* Right: macOS Spotlight Trigger, QuickLook, Audio, Settings & System Status */}
       <div className="flex items-center gap-2">
+        {/* QuickLook HUD Trigger */}
+        {onOpenQuickLook && (
+          <button
+            onClick={onOpenQuickLook}
+            className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-black/[0.04] dark:bg-white/[0.06] hover:bg-black/[0.08] dark:hover:bg-white/[0.1] border border-black/[0.04] dark:border-white/[0.06] text-xs text-slate-600 dark:text-slate-300 transition-all cursor-pointer shadow-2xs"
+            title="Open QuickLook HUD (Spacebar)"
+          >
+            <Eye className="w-3 h-3 text-brand-500" />
+            <span className="text-[10px] font-medium hidden md:inline">QuickLook</span>
+            <kbd className="text-[9px] font-mono px-1 rounded bg-black/[0.06] dark:bg-white/[0.08] text-slate-500 dark:text-slate-400 font-bold">
+              Space
+            </kbd>
+          </button>
+        )}
+
         {/* Spotlight Trigger */}
         <button
           onClick={onOpenAi}
@@ -147,6 +194,17 @@ export const MacWindowTitlebar: React.FC<MacWindowTitlebarProps> = ({
             ⌘K
           </kbd>
         </button>
+
+        {/* Audio Synthesizer Mute Button */}
+        {onToggleMute && (
+          <button
+            onClick={onToggleMute}
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+            title={isMuted ? "Unmute Tactile Sounds" : "Mute Tactile Sounds"}
+          >
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-emerald-500" />}
+          </button>
+        )}
 
         {/* Settings Button */}
         <button
@@ -161,7 +219,7 @@ export const MacWindowTitlebar: React.FC<MacWindowTitlebarProps> = ({
         <button
           onClick={onToggleTheme}
           className="p-1 rounded-lg text-slate-500 hover:text-amber-500 dark:text-slate-400 dark:hover:text-amber-400 hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-          title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title={isDarkMode ? "Switch to Light Mode (T)" : "Switch to Dark Mode (T)"}
         >
           {isDarkMode ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
         </button>
