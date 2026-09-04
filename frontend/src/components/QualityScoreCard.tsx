@@ -77,8 +77,8 @@ export const QualityScoreCard: React.FC<QualityScoreCardProps> = ({ quality, sym
         </div>
       </div>
 
-      {/* 3 Main Quality Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+      {/* 3 Main Quality Pillars */}
+      <div className="space-y-4">
         {/* ======================================================== */}
         {/* PILLAR 1: Piotroski F-Score (0 - 9 Points)              */}
         {/* ======================================================== */}

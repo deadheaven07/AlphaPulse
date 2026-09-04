@@ -103,23 +103,25 @@ export const StockStudioPage: React.FC<StockStudioPageProps> = ({
           )}
         </div>
 
-        {/* Side Column: Top Performers of the Week (Default 3, Expandable) */}
+        {/* Side Column: Top Performers of the Week & Quality Governance Screener */}
         <div className="lg:col-span-4 space-y-6">
           <WeeklyTopPerformersWidget
             activeSymbol={symbol}
             onSelectSymbol={onSelectSymbol}
           />
+
+          {quote && (
+            /* Institutional Quality & Governance Screener */
+            <QualityScoreCard
+              quality={quote.quality_filters}
+              symbol={quote.symbol}
+            />
+          )}
         </div>
       </div>
 
       {quote && (
         <>
-          {/* Institutional Quality & Governance Screener (Full Width 3-Pillar Dashboard) */}
-          <QualityScoreCard
-            quality={quote.quality_filters}
-            symbol={quote.symbol}
-          />
-
           {/* Technical Signals & Moving Averages */}
           <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
 
