@@ -6,6 +6,8 @@ import { LiveNewsSentimentBar } from "../components/LiveNewsSentimentBar";
 import { QualityScoreCard } from "../components/QualityScoreCard";
 import { TechnicalSignals } from "../components/TechnicalSignals";
 import { SectorRrgMap } from "../components/SectorRrgMap";
+import { WeeklyTopPerformersWidget } from "../components/WeeklyTopPerformersWidget";
+import { MonthlyChampionBanner } from "../components/MonthlyChampionBanner";
 import { LineChart, Calculator, ArrowRight } from "lucide-react";
 
 interface StockStudioPageProps {
@@ -63,49 +65,74 @@ export const StockStudioPage: React.FC<StockStudioPageProps> = ({
         </button>
       </div>
 
-      {isLoading ? (
-        <div className="glass-panel-3d rounded-2xl p-12 text-center space-y-3">
-          <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-xs font-semibold text-slate-500 dark:text-muted-dark">
-            Fetching live NSE quotes, quality metrics, and technical indicators for {symbol}...
-          </p>
+      {/* 🏆 Institutional Pick of the Month Banner (Safest High-Yield 30-Day Compounder) */}
+      <MonthlyChampionBanner
+        activeSymbol={symbol}
+        onSelectSymbol={onSelectSymbol}
+      />
+
+      {/* Main Grid: Central Overview & Side Weekly Performers Widget */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Center Main Column (Stock Overview & Live Price Graph) */}
+        <div className="lg:col-span-8 space-y-6">
+          {isLoading ? (
+            <div className="glass-panel-3d rounded-2xl p-12 text-center space-y-3">
+              <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+              <p className="text-xs font-semibold text-slate-500 dark:text-muted-dark">
+                Fetching live NSE quotes, quality metrics, and technical indicators for {symbol}...
+              </p>
+            </div>
+          ) : quote ? (
+            <>
+              <StockOverviewCard
+                quote={quote}
+                onSelectSymbol={onSelectSymbol}
+                isWatchlisted={isWatchlisted}
+                onToggleWatchlist={onToggleWatchlist}
+              />
+
+              {/* Live News Sentiment & Loss Risk Engine */}
+              <LiveNewsSentimentBar
+                symbol={quote.symbol}
+              />
+            </>
+          ) : (
+            <div className="p-8 text-center text-muted dark:text-muted-dark text-xs glass-panel-3d rounded-2xl">
+              Unable to fetch data for symbol {symbol}. Please check ticker symbol.
+            </div>
+          )}
         </div>
-      ) : quote ? (
-        <div className="space-y-6">
-          {/* Stock Overview Card & Real-Time Price */}
-          <StockOverviewCard
-            quote={quote}
+
+        {/* Side Column: Top Performers of the Week (Default 3, Expandable) */}
+        <div className="lg:col-span-4 space-y-6">
+          <WeeklyTopPerformersWidget
+            activeSymbol={symbol}
             onSelectSymbol={onSelectSymbol}
-            isWatchlisted={isWatchlisted}
-            onToggleWatchlist={onToggleWatchlist}
           />
 
-          {/* Live News Sentiment & Loss Risk Engine */}
-          <LiveNewsSentimentBar
-            symbol={quote.symbol}
-          />
+          {quote && (
+            /* Quality Scorecard (Piotroski F-Score & Delivery %) */
+            <QualityScoreCard
+              quality={quote.quality_filters}
+              symbol={quote.symbol}
+            />
+          )}
+        </div>
+      </div>
 
-          {/* Quality Scorecard (Piotroski F-Score & Delivery %) */}
-          <QualityScoreCard
-            quality={quote.quality_filters}
-            symbol={quote.symbol}
-          />
-
+      {quote && (
+        <>
           {/* Technical Signals & Moving Averages */}
           <TechnicalSignals signals={quote.technicals} symbol={quote.symbol} />
 
-          {/* Relative Rotation Graph 2D Quadrant Map */}
+          {/* Relative Rotation Graph 2D Quadrant Map & Constituent Stocks Breakdown */}
           <SectorRrgMap
             currentSectorRrg={quote.sector_rrg}
             activeStockSymbol={quote.symbol}
             onSelectSymbol={onSelectSymbol}
             onNavigateToSimulator={onNavigateToSimulator}
           />
-        </div>
-      ) : (
-        <div className="p-8 text-center text-muted dark:text-muted-dark text-xs">
-          Unable to fetch data for symbol {symbol}. Please check ticker symbol.
-        </div>
+        </>
       )}
     </div>
   );

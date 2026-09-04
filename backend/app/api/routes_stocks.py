@@ -96,3 +96,13 @@ def get_ticker_tape_feed():
     from backend.app.quant.data_engine import get_live_ticker_feed
     return get_live_ticker_feed()
 
+@router.get("/weekly-top-performers")
+def get_weekly_leaders(limit: int = Query(default=15, description="Max number of performers")):
+    from backend.app.quant.weekly_monthly_engine import get_weekly_top_performers
+    return get_weekly_top_performers(limit=limit)
+
+@router.get("/monthly-champion")
+def get_monthly_champion():
+    from backend.app.quant.weekly_monthly_engine import get_safest_monthly_champion_stock
+    return get_safest_monthly_champion_stock()
+

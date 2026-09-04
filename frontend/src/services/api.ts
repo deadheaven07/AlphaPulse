@@ -32,7 +32,9 @@ import type {
   IntradayScannerResponse,
   IntradayTrade,
   IntradayLeverageCalculation,
-  SectorRrgMatrixResponse
+  SectorRrgMatrixResponse,
+  WeeklyTopPerformersResponse,
+  MonthlyChampionResponse
 } from "../types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
@@ -571,6 +573,18 @@ export async function deleteIntradayTrade(tradeId: number): Promise<void> {
 export async function fetchSectorRrgMatrix(timeframe: string = "1w"): Promise<SectorRrgMatrixResponse> {
   const res = await fetch(`${API_BASE}/stocks/sector-rrg-matrix?timeframe=${timeframe.toLowerCase()}`);
   if (!res.ok) throw new Error("Failed to fetch sector RRG matrix");
+  return res.json();
+}
+
+export async function fetchWeeklyTopPerformers(limit: number = 15): Promise<WeeklyTopPerformersResponse> {
+  const res = await fetch(`${API_BASE}/stocks/weekly-top-performers?limit=${limit}`);
+  if (!res.ok) throw new Error("Failed to fetch weekly top performers");
+  return res.json();
+}
+
+export async function fetchMonthlyChampionStock(): Promise<MonthlyChampionResponse> {
+  const res = await fetch(`${API_BASE}/stocks/monthly-champion`);
+  if (!res.ok) throw new Error("Failed to fetch monthly stock champion");
   return res.json();
 }
 

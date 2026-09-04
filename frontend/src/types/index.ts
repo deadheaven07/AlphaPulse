@@ -725,8 +725,66 @@ export interface IntradayLeverageCalculation {
   risk_reward_ratio: string;
 }
 
+export interface WeeklyTopPerformer {
+  rank: number;
+  symbol: string;
+  name: string;
+  ltp: number;
+  day_change_pct: number;
+  weekly_return_pct: number;
+  sector: string;
+  rrg_quadrant: string;
+  piotroski_score: number;
+  delivery_pct: number;
+  beta: number;
+  catalyst: string;
+}
 
+export interface WeeklyTopPerformersResponse {
+  timeframe: string;
+  benchmark: string;
+  benchmark_weekly_return_pct: number;
+  total_universe_scanned: number;
+  total_performers: number;
+  performers: WeeklyTopPerformer[];
+}
 
+export interface MonthlyChampionStock {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  rrg_quadrant: string;
+  ltp: number;
+  market_cap_cr: number;
+  pe: number;
+  sector_pe: number;
+  roce: number;
+  roe: number;
+  debt_to_equity: number;
+  cagr_3y: number;
+  piotroski_score: number;
+  delivery_pct: number;
+  beta: number;
+  safety_score: number;
+  momentum_score: number;
+  composite_score: number;
+  safety_rating: string;
+  expected_1m_return_pct: number;
+  target_price_1m: number;
+  stop_loss: number;
+  risk_reward_ratio: string;
+  catalyst: string;
+  monthly_thesis: string;
+}
 
-
-
+export interface MonthlyChampionResponse {
+  champion: MonthlyChampionStock;
+  runner_ups?: MonthlyChampionStock[];
+  selection_criteria?: {
+    min_piotroski: string;
+    max_debt_equity: string;
+    min_institutional_delivery: string;
+    rrg_sector_requirement: string;
+    holding_horizon: string;
+  };
+}
