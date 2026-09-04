@@ -61,6 +61,19 @@ def run_monte_carlo_simulation(
     p75_trajectory = np.percentile(simulated_prices, 75, axis=0)
     p90_trajectory = np.percentile(simulated_prices, 90, axis=0)  # Bull (90th percentile)
 
+    # Empirical probabilities from the 1000 simulated paths (final month)
+    p10_count = int(np.sum(simulated_prices[:, -1] <= p10_trajectory[-1]))
+    p25_count = int(np.sum(simulated_prices[:, -1] <= p25_trajectory[-1]))
+    p50_count = int(np.sum(simulated_prices[:, -1] <= p50_trajectory[-1]))
+    p75_count = int(np.sum(simulated_prices[:, -1] <= p75_trajectory[-1]))
+    p90_count = int(np.sum(simulated_prices[:, -1] <= p90_trajectory[-1]))
+
+    empirical_p10 = round(p10_count / num_paths, 3)
+    empirical_p25 = round(p25_count / num_paths, 3)
+    empirical_p50 = round(p50_count / num_paths, 3)
+    empirical_p75 = round(p75_count / num_paths, 3)
+    empirical_p90 = round(p90_count / num_paths, 3)
+
     # Final prices at target horizon
     final_bull_price = round(float(p90_trajectory[-1]), 2)
     final_base_price = round(float(p50_trajectory[-1]), 2)
@@ -101,6 +114,28 @@ def run_monte_carlo_simulation(
         2
     )
     expected_roi_pct = round((expected_profit / deployed_capital) * 100, 2) if deployed_capital > 0 else 0.0
+
+    # Probability of positive post-tax ROI across all 1000 paths
+    profitable_paths = 0
+    for i in range(num_paths):
+        final_price = simulated_prices[i, -1]
+        tax_result = calculate_indian_taxes_and_charges(
+            current_price, final_price, shares, horizon_months
+        )
+        if tax_result["net_in_hand_profit"] > 0:
+            profitable_paths += 1
+
+    probability_positive_roi = round(profitable_paths / num_paths, 3)
+    probability_100x_return = round(
+        np.sum(simulated_prices[:, -1] >= current_price * 2.0) / num_paths, 3
+    )
+
+    # Profit factor: gross positive profit / absolute gross negative profit
+    total_gross_positive = sum(max(t["gross_profit"], 0) for t in [bull_tax, base_tax, bear_tax])
+    total_gross_negative = sum(abs(min(t["gross_profit"], 0)) for t in [bull_tax, base_tax, bear_tax])
+    profit_factor = round(
+        total_gross_positive / max(0.01, total_gross_negative), 2
+    )
 
     risk_downside = abs(min(0.0, bear_tax["net_in_hand_profit"]))
     reward_upside = max(0.0, bull_tax["net_in_hand_profit"])
@@ -148,9 +183,21 @@ def run_monte_carlo_simulation(
         "expected_value": {
             "expected_net_profit": expected_profit,
             "expected_roi_pct": expected_roi_pct,
-            "risk_reward_ratio": rr_ratio,
+            "calculation_method": "probability_weighted_average_(25%_bull + 50%_base + 25%_bear)_post_tax",
+            "percentile_probabilities": {
+                "theoretical": {
+                    "p10": 0.10, "p25": 0.25, "p50": 0.50, "p75": 0.75, "p90": 0.90
+                },
+                "empirical_from_1000_paths": {
+                    "p10": empirical_p10, "p25": empirical_p25,
+                    "p50": empirical_p50, "p75": empirical_p75, "p90": empirical_p90
+                }
+            },
+            "probability_positive_post_tax_roi": probability_positive_roi,
+            "probability_100x_return": probability_100x_return,
+            "profit_factor": profit_factor,
             "var_90_pct": abs(bear_tax["net_in_hand_profit"]),
-            "confidence_level": "90% Empirical Confidence"
+            "confidence_level": "90% Empirical Confidence (from 1000 paths)"
         },
         "trajectory": trajectory_points
     }

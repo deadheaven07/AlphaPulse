@@ -1,4 +1,5 @@
 import math
+import numpy as np
 from typing import Dict, Any, List, Optional
 from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.taxes_charges import calculate_indian_taxes_and_charges
@@ -197,6 +198,43 @@ def scan_live_market_tactical_leaders(
 
     stop_loss_pct = -2.5
 
+    # Probability estimation using beta and historical volatility
+    # Approximate annual volatility for Indian stocks (replace with real fetch if available)
+    historical_vol_20d = 0.20  # ~20% typical for Indian equities
+    annual_vol = historical_vol_20d * math.sqrt(252 / 20)  # Annualize from 20-day
+
+    # Holding period in days
+    holding_days = holding_days_max
+
+    # Standard deviation of returns for the holding period
+    period_vol = annual_vol * math.sqrt(holding_days / 252)
+
+    # Z-scores and probabilities using normal distribution CDF
+    # Probability of hitting target 1
+    z_target_1 = (target_1_pct / 100) / period_vol if period_vol > 0 else 0
+    prob_target_1_hit = round(float(np.norm.cdf(z_target_1) * 100), 1)
+
+    # Probability of hitting target 2
+    z_target_2 = (target_2_pct / 100) / period_vol if period_vol > 0 else 0
+    prob_target_2_hit = round(float(np.norm.cdf(z_target_2) * 100), 1)
+
+    # Probability of stop-loss being hit
+    z_stop_loss = (abs(stop_loss_pct) / 100) / period_vol if period_vol > 0 else 0
+    prob_stop_loss_hit = round(float(np.norm.cdf(-z_stop_loss) * 100), 1)
+
+    # Expected value considering probabilities
+    expected_value_pct = round(
+        (prob_target_1_hit / 100) * target_1_pct
+        - (prob_stop_loss_hit / 100) * abs(stop_loss_pct),
+        2
+    )
+
+    # Confidence score (0-100) based on win probability
+    confidence_score = round(
+        min(100, (prob_target_1_hit * 0.6 + prob_stop_loss_hit * 0.4)),
+        1
+    )
+
     entry_low = round(price * 0.995, 2)
     entry_high = round(price * 1.008, 2)
     target_1 = round(price * (1.0 + target_1_pct / 100.0), 2)
@@ -253,6 +291,12 @@ def scan_live_market_tactical_leaders(
         "stop_loss": stop_loss,
         "stop_loss_pct": stop_loss_pct,
         "risk_reward_ratio": f"1 : {round(target_1_pct / abs(stop_loss_pct), 1)}",
+        "probability_target_1_hit_pct": prob_target_1_hit,
+        "probability_target_2_hit_pct": prob_target_2_hit,
+        "probability_stop_loss_hit_pct": prob_stop_loss_hit,
+        "expected_value_pct": expected_value_pct,
+        "confidence_score_100": confidence_score,
+        "risk_reward_with_probability": f"1 : {round(target_1_pct / max(1.0, abs(stop_loss_pct)), 1)} ( {prob_target_1_hit:.0f}% win prob )",
         "holding_days": holding_days_max,
         "holding_days_min": holding_days_min,
         "holding_days_max": holding_days_max,
