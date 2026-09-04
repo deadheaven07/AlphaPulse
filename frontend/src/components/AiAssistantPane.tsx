@@ -36,10 +36,10 @@ interface AiAssistantPaneProps {
 }
 
 const PRESET_PROMPTS = [
+  { text: "I have 5 thousand tell me how to invest for better results", subtitle: "Live share allocation across 3 high-conviction strategies" },
   { text: "I have ₹50,000 for 1 week. Act like my Stock Market Guru.", subtitle: "Exact buy range, 2 targets, stop-loss & post-tax cash profit" },
   { text: "Suggest 3 high-conviction defense & capex compounders", subtitle: "BEL, HAL, L&T multi-year order books" },
-  { text: "Show top dividend PSU compounders for cash flow", subtitle: "Coal India, REC, Vedanta yield floors" },
-  { text: "Is Tata Motors safe for long-term compounding?", subtitle: "Deleveraging, EV moat & ROCE profile" }
+  { text: "Show top dividend PSU compounders for cash flow", subtitle: "Coal India, REC, Vedanta yield floors" }
 ];
 
 export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
