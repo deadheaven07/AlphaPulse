@@ -223,7 +223,7 @@ Current Portfolio Plan Context:
 Provide a direct, conversational, institutional answer addressing their exact query:
 1. Directly answer what the user asked about.
 2. Relate it to their target of ₹{target:,.0f} and the required {required_return_pct}% CAGR.
-3. Suggest concrete next steps or portfolio adjustments under Budget 2024 tax rules (STCG 20%, LTCG 12.5%).
+3. Suggest concrete next steps or portfolio adjustments under current statutory Indian tax rules (STCG 20%, LTCG 12.5%).
 """
 
             resp = client.models.generate_content(
@@ -239,7 +239,7 @@ Provide a direct, conversational, institutional answer addressing their exact qu
         if is_greeting:
             ai_thesis = f"""👋 **Hello! I am your Alpha Wealth Copilot.**
 
-I analyze Indian equity compounders, calculate actuarial CAGR requirements, and structure risk-mitigated portfolios under Budget 2024 statutory tax rules.
+I analyze Indian equity compounders, calculate actuarial CAGR requirements, and structure risk-mitigated portfolios under current statutory Indian tax rules (STCG 20%, LTCG 12.5%).
 
 Your current active plan is targeting **₹{target:,.0f}** over **{req.horizon_months} months** ({req.risk_level} Risk).
 

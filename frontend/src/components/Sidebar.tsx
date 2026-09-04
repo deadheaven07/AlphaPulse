@@ -54,7 +54,7 @@ const NAV_ITEMS: { id: NavPage; label: string; icon: React.ComponentType<{ class
     id: "simulator",
     label: "Profit Simulator",
     icon: Calculator,
-    description: "Monte Carlo & Budget 2024 tax engine"
+    description: "Monte Carlo & Statutory Tax Engine"
   },
   {
     id: "dividend",
@@ -259,7 +259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="px-2 py-1.5 rounded-lg bg-slate-50 dark:bg-canvas-dark border border-slate-200/60 dark:border-border-dark flex items-center justify-between text-[10px] text-muted dark:text-muted-dark">
             <span className="flex items-center gap-1 font-semibold">
               <ShieldCheck className="w-3 h-3 text-emerald-500" />
-              Budget 2024 STT & Tax
+              Statutory STT & Tax
             </span>
             <span className="font-mono font-bold">v2.2 Pro</span>
           </div>

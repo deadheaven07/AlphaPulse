@@ -34,14 +34,14 @@ export const SimulatorPage: React.FC<SimulatorPageProps> = ({
               </span>
             </div>
             <p className="text-xs text-muted dark:text-muted-dark">
-              1,000 geometric Brownian motion paths with statutory Indian transaction friction and Budget 2024 capital gains taxes
+              1,000 geometric Brownian motion paths with statutory Indian transaction friction (STCG 20% | LTCG 12.5%)
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-[11px] text-emerald-800 dark:text-emerald-300 self-start sm:self-auto">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>Budget 2024: STCG 20% | LTCG 12.5%</span>
+          <span>Current Statutory Tax Regime (STCG 20% | LTCG 12.5%)</span>
         </div>
       </div>
 

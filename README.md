@@ -7,7 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC.svg?style=flat&logo=tailwind-css)](https://tailwindcss.com)
 [![Google Gemini](https://img.shields.io/badge/AI-Gemini%202.5%20Flash%20%2B%20Search%20Grounding-4285F4.svg?style=flat&logo=google)](https://ai.google.dev)
 [![SQLite WAL](https://img.shields.io/badge/Database-SQLite%20WAL%20Mode-003B57.svg?style=flat&logo=sqlite)](https://www.sqlite.org)
-[![Budget 2024](https://img.shields.io/badge/Tax%20Engine-Budget%202024%20Compliant-10B981.svg?style=flat)](https://www.incometax.gov.in)
+[![Tax Engine](https://img.shields.io/badge/Tax%20Engine-Statutory%20STCG%2020%25%20%7C%20LTCG%2012.5%25-10B981.svg?style=flat)](https://www.incometax.gov.in)
 
 ---
 
@@ -129,7 +129,7 @@ graph TD
         API --> Quality[quality_filters.py<br/>Piotroski F-Score 0-9 & Delivery % Screener]
         API --> Psychology[crowd_psychology_engine.py<br/>Fatal Trap vs Bear Trap Classifier]
         API --> MonteCarlo[monte_carlo_engine.py<br/>1,000-Path Stochastic GBM & VaR]
-        API --> Taxes[taxes_charges.py<br/>Budget 2024 STCG, LTCG, STT & GST Solver]
+        API --> Taxes[taxes_charges.py<br/>Statutory STCG, LTCG, STT & GST Solver]
         API --> Planner[planner_engine.py<br/>Exact Actuarial SIP & Milestone Solver]
     end
     
@@ -239,7 +239,7 @@ graph TD
 
 ---
 
-### 10. 🇮🇳 Budget 2024 Statutory Post-Tax & Friction Engine
+### 10. 🇮🇳 Current Statutory Post-Tax & Friction Engine
 - **STCG @ 20%** on holding $< 12$ months.
 - **LTCG @ 12.5%** on holding $\ge 12$ months (exceeding ₹1,25,000 exemption).
 - Exact computation of STT, GST (18%), exchange turnover fees, SEBI charges, and stamp duty.
@@ -254,7 +254,7 @@ graph TD
 | **2. Radar & Screener** | Discovery & Institutional Flows | 5-Factor KPI Leaders, Insider Buying & Bulk Deals Radar, Penny Screener |
 | **3. Stock Studio** | Deep-Dive Analytics & Leaders | Weekly Top Performers, Safest Monthly Champion, Piotroski 0-9 Screener, Sector RRG |
 | **4. Intraday Terminal** | 9:15 AM – 3:20 PM Engine | 5x Broker Leverage Calculator, 15M ORB Long/Short Breakouts, 3:10 PM Square-Off |
-| **5. Profit Simulator** | Holding-Period Forecasting | 1,000-Path Monte Carlo Fan Chart, Budget 2024 Post-Tax Net ROI Calculator |
+| **5. Profit Simulator** | Holding-Period Forecasting | 1,000-Path Monte Carlo Fan Chart, Statutory Post-Tax Net ROI Calculator |
 | **6. Dividend Income** | Cash Flow Intelligence | DPS Payout Calculator, 10-Day Pre-Ex Date Accumulation Roadmap |
 | **7. Goal Planner & Portfolio** | Wealth Milestones & Demat Vault | Actuarial SIP Solver, SQLite WAL Holdings, 2-Tab Tactical Sprints, Telegram Alerts |
 
@@ -286,7 +286,7 @@ AlphaHprizon/
 │   │   │   ├── tactical_swing_engine.py  # 1-Week momentum setup & dynamic ATR holding periods
 │   │   │   ├── crowd_psychology_engine.py# Fatal risk vs bear trap noise classifier
 │   │   │   ├── technicals.py             # RSI, breakouts & EMA crosses
-│   │   │   ├── taxes_charges.py          # Budget 2024 STCG/LTCG, STT, GST & turnover levies
+│   │   │   ├── taxes_charges.py          # Statutory STCG/LTCG, STT, GST & turnover levies
 │   │   │   ├── monte_carlo_engine.py     # 1,000-path stochastic GBM simulation & VaR
 │   │   │   ├── news_engine.py            # Financial news sentiment & loss risk modeling
 │   │   │   ├── dividend_engine.py        # Dividend cash payouts & accumulation windows

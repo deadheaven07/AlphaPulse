@@ -97,7 +97,7 @@ def run_diagnostics_suite() -> Dict[str, Any]:
             "error": str(e)
         })
 
-    # Check 4: Indian Statutory Taxes & Charges (Budget 2024 Rules)
+    # Check 4: Indian Statutory Taxes & Charges (Current Statutory Regime)
     t0 = time.time()
     try:
         # Test STCG (< 12 months, 20% on net gain after statutory friction)
@@ -115,7 +115,7 @@ def run_diagnostics_suite() -> Dict[str, Any]:
             "name": "Indian Post-Tax Friction (STT, STCG 20%, LTCG 12.5%)",
             "status": "PASS",
             "latency_ms": round((time.time() - t0) * 1000, 1),
-            "details": "Budget 2024 STCG 20% & LTCG 12.5% rules verified accurately"
+            "details": "Current statutory STCG 20% & LTCG 12.5% rules verified accurately"
         })
     except Exception as e:
         checks.append({

@@ -67,7 +67,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onSelectStock, onNav
               <Zap className="w-3 h-3 text-amber-300" />
               Institutional Edge
             </span>
-            <span className="text-xs text-slate-400">Budget 2024 Post-Tax & STT Precision</span>
+            <span className="text-xs text-slate-400">Statutory Post-Tax & STT Precision</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
             Welcome to AlphaPulse India Pro Workstation
@@ -350,7 +350,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onSelectStock, onNav
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
           <div>
             <div className="text-xs font-extrabold text-slate-900 dark:text-white">100% Tax & STT Precision</div>
-            <div className="text-[11px] text-muted dark:text-muted-dark">Budget 2024 STCG 20% & LTCG 12.5% matches demat contract note.</div>
+            <div className="text-[11px] text-muted dark:text-muted-dark">Current STCG 20% & LTCG 12.5% statutory rules match demat contract note.</div>
           </div>
         </div>
 

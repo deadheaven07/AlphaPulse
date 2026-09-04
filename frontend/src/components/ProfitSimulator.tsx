@@ -104,7 +104,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
                   1,000 Stochastic Paths
                 </span>
                 <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
-                  Budget 2024 Tax Net
+                  Statutory Tax Net (Post-STCG/LTCG)
                 </span>
               </div>
               <p className="text-xs text-muted dark:text-slate-400">
@@ -402,7 +402,7 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
         </div>
       )}
 
-      {/* Statutory Taxes & Charges Friction Drawer (Budget 2024 Breakdown) */}
+      {/* Statutory Taxes & Charges Friction Drawer (STCG 20% / LTCG 12.5% Breakdown) */}
       {baseTax && (
         <div className="glass-panel-3d rounded-2xl p-5 space-y-4">
           <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTaxBreakdown(!showTaxBreakdown)}>

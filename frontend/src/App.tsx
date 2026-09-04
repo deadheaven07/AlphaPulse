@@ -293,7 +293,7 @@ export function App() {
               <span>Dedicated Focused Workstation</span>
             </div>
             <div className="flex items-center gap-3">
-              <span>Budget 2024 STCG 20% & LTCG 12.5% Tax Compliant</span>
+              <span>Current Statutory Tax Regime (STCG 20% & LTCG 12.5%) Compliant</span>
               <span>•</span>
               <span>SQLite Persistent Vault</span>
             </div>

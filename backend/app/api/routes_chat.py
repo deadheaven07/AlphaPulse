@@ -251,7 +251,7 @@ Here are the **3 optimized quantitative allocation strategies** tailored to your
 - **[ETERNAL]** (Eternal / Zomato • Live: **₹{s['ETERNAL']['price']:,.2f}**): **{s1['shares_eternal']} Shares** (₹{s1['shares_eternal'] * s['ETERNAL']['price']:,.2f})
 - **[TMPV]** (Tata Motors Passenger Vehicles • Live: **₹{s['TMPV']['price']:,.2f}**): **{s1['shares_tmpv']} Shares** (₹{s1['shares_tmpv'] * s['TMPV']['price']:,.2f})
 - 💵 **Total Invested**: **₹{s1['invested']:,.2f}** (Cash Buffer: ₹{s1['cash_buffer']:,.2f})
-- 📈 **Projected In-Hand Profit**: **+₹{s1['net_in_hand']:,.2f}** (+14% target after 20% Budget 2024 STCG deduction)
+- 📈 **Projected In-Hand Profit**: **+₹{s1['net_in_hand']:,.2f}** (+14% target after 20% statutory STCG deduction)
 - ⏱️ **Suggested Horizon**: {s1['horizon']}
 
 ---
@@ -277,7 +277,7 @@ Here are the **3 optimized quantitative allocation strategies** tailored to your
 
 ---
 
-💡 **Dalal Street Execution Rule**: For short-term swings ($< 12$ months), Budget 2024 levies 20% STCG. Holding $> 12$ months drops your tax to 12.5% LTCG with a ₹1.25 Lakh annual exemption floor."""
+💡 **Dalal Street Execution Rule**: For short-term swings ($< 12$ months), current statutory tax rules levy 20% STCG. Holding $> 12$ months drops your tax to 12.5% LTCG with a ₹1.25 Lakh annual exemption floor."""
 
 @router.post("/chat")
 def handle_conversational_chat(req: ConversationalChatRequest):
@@ -346,7 +346,7 @@ Live Market Data & Share Allocations calculated for ₹{parsed_capital:,.0f}:
 
 Guidelines:
 1. Always write stock tickers in square brackets: [ETERNAL], [TMPV], [BEL], [TATAPOWER], [COALINDIA].
-2. State exact share counts, spot prices, total invested amounts, cash buffers, and post-tax returns under Budget 2024 (20% STCG / 12.5% LTCG).
+2. State exact share counts, spot prices, total invested amounts, cash buffers, and post-tax returns under current statutory tax rules (20% STCG / 12.5% LTCG).
 3. Do NOT default to [TATAMOTORS] or ₹100,000 workspace context. Focus strictly on ₹{parsed_capital:,.0f}.
 4. Suggest 3 short follow-up questions at the very end in a line starting with 'FOLLOW_UPS: question1 | question2 | question3'.
 """
@@ -454,7 +454,7 @@ With your **₹{parsed_capital:,.0f}**, today's #1 Ranked Quantitative Leader is
 - **Why this outranked competitors today**: {tactical_card['catalyst']}
 - **Dynamic Holding Window**: **{tactical_card['holding_period_label']}** (calibrated to stock daily ATR volatility).
 - **Exact Accumulation Zone**: Enter strictly between **{tactical_card['entry_range']}**.
-- **Target 1 (+{tactical_card['target_1_pct']}%)**: Sell 50% at **₹{tactical_card['target_1']:,.2f}** to bank **+₹{tactical_card['net_in_hand_profit']:,.0f} net cash in hand** after Budget 2024 STCG (20%) and all STT charges.
+- **Target 1 (+{tactical_card['target_1_pct']}%)**: Sell 50% at **₹{tactical_card['target_1']:,.2f}** to bank **+₹{tactical_card['net_in_hand_profit']:,.0f} net cash in hand** after statutory STCG (20%) and all STT charges.
 - **Target 2 (+{tactical_card['target_2_pct']}%)**: Squeeze remaining shares to **₹{tactical_card['target_2']:,.2f}** with stop-loss trailed to breakeven.
 - **Rule #1 Capital Invalidation**: Cut immediately if price breaches **₹{tactical_card['stop_loss']:,.2f} (-{abs(tactical_card['stop_loss_pct'])}%)**.
 
@@ -473,7 +473,7 @@ With your **₹{parsed_capital:,.0f}**, today's #1 Ranked Quantitative Leader is
                 client = genai.Client(api_key=api_key)
 
                 system_instruction = f"""You are AlphaPulse India Pro's Lead Quantitative Wealth Strategist and Pair-Trading Copilot.
-You advise Indian equity investors under Budget 2024 statutory tax rules (STT 0.1%, STCG 20%, LTCG 12.5% after ₹1.25L exemption).
+You advise Indian equity investors under current statutory Indian tax rules (STT 0.1%, STCG 20%, LTCG 12.5% after ₹1.25L exemption).
 Current User Workspace Context:
 - Active Page: {ctx.current_page}
 - Selected Stock: {ctx.active_symbol}
@@ -524,7 +524,7 @@ Guidelines:
                 ai_reply_text = f"In evaluating debt profiles across high-conviction leaders:\n\n- **[BEL]** & **[TCS]**: Virtually zero net debt with surplus liquid cash reserves.\n- **[TMPV]**: Rapidly deleveraging with net-debt zero targets achieved at JLR.\n- **[LT]**: Manageable working capital debt backed by a ₹4.5 Lakh Cr EPC order book."
                 follow_up_chips = ["Show Piotroski scores", "Inspect TCS in Studio", "Simulate Tata Motors"]
             else:
-                ai_reply_text = f"Based on your current workspace configuration for **[{ctx.active_symbol}]** (Capital: ₹{ctx.capital:,.0f}, Horizon: {ctx.horizon_months}M):\n\n- **Technical Trend**: Trading with positive institutional momentum.\n- **Quality Profile**: Clean debt-to-equity and robust cash flow generation.\n- **Budget 2024 Strategy**: Hold $>12$ months to qualify for the **12.5% LTCG** tax bracket."
+                ai_reply_text = f"Based on your current workspace configuration for **[{ctx.active_symbol}]** (Capital: ₹{ctx.capital:,.0f}, Horizon: {ctx.horizon_months}M):\n\n- **Technical Trend**: Trading with positive institutional momentum.\n- **Quality Profile**: Clean debt-to-equity and robust cash flow generation.\n- **Tax Optimization Strategy**: Hold $>12$ months to qualify for the favorable **12.5% LTCG** tax bracket."
                 follow_up_chips = [f"Run Monte Carlo on {ctx.active_symbol}", "Show stop-loss price", "Check breaking news catalysts"]
 
     # 4. Extract All Mentioned Tickers to Build In-Chat Interactive Action Cards

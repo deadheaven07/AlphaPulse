@@ -120,7 +120,7 @@ def run_checkpoint_4() -> Dict[str, Any]:
     }
 
 def run_checkpoint_5() -> Dict[str, Any]:
-    """Checkpoint 5: Indian Statutory Taxes & Charges (Budget 2024 Rules)"""
+    """Checkpoint 5: Indian Statutory Taxes & Charges (Current Statutory Regime)"""
     t0 = time.time()
     from backend.app.quant.taxes_charges import calculate_indian_taxes_and_charges
 
@@ -140,7 +140,7 @@ def run_checkpoint_5() -> Dict[str, Any]:
         "name": "5. Indian Post-Tax Engine (STT/STCG/LTCG)",
         "status": "PASS",
         "latency_ms": round((time.time() - t0) * 1000, 1),
-        "details": "Budget 2024 compliance: STCG 20%, LTCG 12.5% (exemption ₹1.25L), STT 0.1%"
+        "details": "Current statutory compliance: STCG 20%, LTCG 12.5% (exemption ₹1.25L), STT 0.1%"
     }
 
 def run_checkpoint_6() -> Dict[str, Any]:

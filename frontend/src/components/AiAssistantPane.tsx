@@ -376,7 +376,7 @@ export const AiAssistantPane: React.FC<AiAssistantPaneProps> = ({
                         <span className="text-[10px] text-emerald-300 font-bold block uppercase tracking-wider flex items-center gap-1">
                           <Coins className="w-3 h-3" /> Net Cash Profit in Hand (Target 1)
                         </span>
-                        <span className="text-[9px] text-slate-400">Budget 2024 (20% STCG + STT & GST Deducted)</span>
+                        <span className="text-[9px] text-slate-400">Statutory Tax Net (20% STCG + STT & GST Deducted)</span>
                       </div>
                       <div className="text-sm font-black font-mono text-emerald-400">
                         +₹{msg.tacticalCard.net_in_hand_profit.toLocaleString("en-IN")}

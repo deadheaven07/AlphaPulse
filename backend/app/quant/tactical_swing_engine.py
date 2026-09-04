@@ -203,7 +203,7 @@ def scan_live_market_tactical_leaders(
     target_2 = round(price * (1.0 + target_2_pct / 100.0), 2)
     stop_loss = round(price * (1.0 + stop_loss_pct / 100.0), 2)
 
-    # Budget 2024 Post-Tax Calculation (20% STCG + STT + Charges)
+    # Statutory Post-Tax Calculation (20% STCG + STT + Charges)
     tax_result = calculate_indian_taxes_and_charges(
         buy_price=price,
         sell_price=target_1,
@@ -231,7 +231,7 @@ def scan_live_market_tactical_leaders(
         f"Why this won today: {winner_cand['catalyst']}. "
         f"Enter strictly between ₹{entry_low:,.2f} – ₹{entry_high:,.2f}. "
         f"Hold for {holding_days_min} to {holding_days_max} Trading Days to hit Target 1 (₹{target_1:,.2f}), "
-        f"which yields +₹{net_in_hand:,.0f} NET in hand after Budget 2024 taxes (20% STCG + STT). "
+        f"which yields +₹{net_in_hand:,.0f} NET in hand after statutory taxes (20% STCG + STT). "
         f"Capital Shield stop-loss is set at ₹{stop_loss:,.2f}."
     )
 

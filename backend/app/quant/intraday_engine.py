@@ -31,7 +31,7 @@ def calculate_intraday_charges(
     brokerage_per_order: float = 20.0
 ) -> Dict[str, float]:
     """
-    Computes exact Budget 2024 statutory charges for NSE Cash Intraday (MIS):
+    Computes exact statutory charges for NSE Cash Intraday (MIS):
     - STT: 0.025% on sell turnover
     - Brokerage: ₹20 buy + ₹20 sell = ₹40 flat
     - Exchange Turnover: 0.00345% on total turnover

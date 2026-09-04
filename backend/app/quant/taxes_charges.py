@@ -9,7 +9,7 @@ def calculate_indian_taxes_and_charges(
 ) -> Dict[str, Any]:
     """
     Calculate exact Indian statutory charges, STT, GST, Stamp Duty, and Capital Gains Tax (STCG/LTCG).
-    Rules compliant with Budget 2024 (STCG @ 20%, LTCG @ 12.5% above ₹1.25 Lakh exemption).
+    Rules compliant with current statutory tax regime (STCG @ 20%, LTCG @ 12.5% above ₹1.25 Lakh exemption).
     """
     if shares <= 0 or buy_price <= 0:
         return {
@@ -62,7 +62,7 @@ def calculate_indian_taxes_and_charges(
 
     if pre_tax_profit > 0:
         if is_stcg:
-            # STCG = 20% on all net gains (Budget 2024 revised rate)
+            # STCG = 20% on all net gains (current statutory rate)
             capital_gains_tax = round(pre_tax_profit * 0.20, 2)
             tax_type = "STCG (20%)"
         else:
