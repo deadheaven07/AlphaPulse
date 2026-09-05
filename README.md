@@ -108,31 +108,31 @@ Engineered with a **Full 3D Immersive Three.js WebGL Spatial Canvas**, a **Bento
 
 ```mermaid
 graph TD
-    User([Investor / Quantitative Trader]) -->|Interactive UI & ⌘K Copilot| WebApp[React 19 + TypeScript + Vite :5173]
-    WebApp -->|Three.js WebGL Spatial Canvas| Three[ThreeBackground.tsx<br/>3,200+ Instanced Nodes & Quantum Wave Grid]
-    WebApp -->|Async REST & Live Polling| API[FastAPI High-Concurrency Backend :8000]
+    User(["Investor / Quantitative Trader"]) -->|"Interactive UI & ⌘K Copilot"| WebApp["React 19 + TypeScript + Vite :5173"]
+    WebApp -->|"Three.js WebGL Spatial Canvas"| Three["ThreeBackground.tsx<br/>3,200+ Instanced Nodes & Quantum Wave Grid"]
+    WebApp -->|"Async REST & Live Polling"| API["FastAPI High-Concurrency Backend :8000"]
     
-    subgraph 4-Pillar Live Market Data Architecture
-        API --> AutoResolver[data_engine.py<br/>Dynamic Corporate Action Resolver & Aliases]
-        AutoResolver --> DirectFeed[Direct Exchange High-Speed Feed<br/>SSL Bypass + Spoofed Headers <250ms]
-        DirectFeed --> SqliteCache[(SQLite Price Ledger<br/>live_stock_cache Table)]
+    subgraph "4-Pillar Live Market Data Architecture"
+        API --> AutoResolver["data_engine.py<br/>Dynamic Corporate Action Resolver & Aliases"]
+        AutoResolver --> DirectFeed["Direct Exchange High-Speed Feed<br/>SSL Bypass + Spoofed Headers (&lt;250ms)"]
+        DirectFeed --> SqliteCache[("SQLite Price Ledger<br/>live_stock_cache Table")]
     end
 
-    subgraph Quantitative & Tactical Engines
-        API --> WeeklyMonthly[weekly_monthly_engine.py<br/>Weekly Top Performers & Monthly Champion]
-        API --> Scanner[tactical_swing_engine.py<br/>65+ NSE Universe Dynamic Momentum Scanner]
-        API --> Intraday[intraday_engine.py<br/>15M ORB + Live VWAP 5x MIS Engine]
-        API --> RRG[sector_rrg.py<br/>11-Sector Relative Rotation Graph & Stock Breakdown]
-        API --> Quality[quality_filters.py<br/>Piotroski F-Score 0-9 & Delivery % Screener]
-        API --> MonteCarlo[monte_carlo_engine.py<br/>1,000-Path Stochastic GBM & VaR]
-        API --> Taxes[taxes_charges.py<br/>Current Statutory Tax Regime STCG 20% | LTCG 12.5%]
-        API --> Planner[simulation_engine.py<br/>Actuarial SIP & Milestone Compounding Solver]
+    subgraph "Quantitative & Tactical Engines"
+        API --> WeeklyMonthly["weekly_monthly_engine.py<br/>Weekly Top Performers & Monthly Champion"]
+        API --> Scanner["tactical_swing_engine.py<br/>65+ NSE Universe Dynamic Momentum Scanner"]
+        API --> Intraday["intraday_engine.py<br/>15M ORB + Live VWAP 5x MIS Engine"]
+        API --> RRG["sector_rrg.py<br/>11-Sector Relative Rotation Graph & Stock Breakdown"]
+        API --> Quality["quality_filters.py<br/>Piotroski F-Score 0-9 & Delivery % Screener"]
+        API --> MonteCarlo["monte_carlo_engine.py<br/>1,000-Path Stochastic GBM & VaR"]
+        API --> Taxes["taxes_charges.py<br/>Current Statutory Tax Regime (STCG 20% / LTCG 12.5%)"]
+        API --> Planner["simulation_engine.py<br/>Actuarial SIP & Milestone Compounding Solver"]
     end
     
-    subgraph AI & Persistence Layer
-        API --> Gemini[gemini_service.py & routes_chat.py<br/>Gemini 2.5 Flash + Real-Time NLP Budget Allocator]
-        API --> SQLite[(SQLite WAL Database<br/>Holdings, Goals, Tactical Swings, Intraday Trades)]
-        API --> Monitor[portfolio_monitor.py<br/>24/7 Threat Watchdog & Telegram Phone Dispatcher]
+    subgraph "AI & Persistence Layer"
+        API --> Gemini["gemini_service.py & routes_chat.py<br/>Gemini 2.5 Flash + Real-Time NLP Budget Allocator"]
+        API --> SQLite[("SQLite WAL Database<br/>Holdings, Goals, Tactical Swings, Intraday Trades")]
+        API --> Monitor["portfolio_monitor.py<br/>24/7 Threat Watchdog & Telegram Phone Dispatcher"]
     end
 ```
 
