@@ -131,7 +131,7 @@ export const IntradayTerminal: React.FC<IntradayTerminalProps> = ({
       )}
 
       {/* Hero Header & 3:10 PM Square-Off Guardian Countdown */}
-      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-indigo-950 text-white border border-indigo-500/30 shadow-2xl space-y-4 relative overflow-hidden">
+      <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-950 to-indigo-950 text-white border border-indigo-500/30 shadow-2xl space-y-4 relative overflow-hidden card-3d-sheen glass-3d-elevation preserve-3d">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5 z-10">
             <div className="flex items-center gap-2">
@@ -178,7 +178,7 @@ export const IntradayTerminal: React.FC<IntradayTerminalProps> = ({
       </div>
 
       {/* 5x Leverage Interactive Calculator Slider */}
-      <div className="p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark glass-card-hover shadow-2xs space-y-4">
+      <div className="p-5 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark glass-card-hover shadow-2xs space-y-4 card-3d-sheen glass-3d-elevation preserve-3d">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-border-dark pb-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">

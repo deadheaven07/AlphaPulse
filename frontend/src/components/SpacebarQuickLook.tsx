@@ -107,7 +107,7 @@ export const SpacebarQuickLook: React.FC<SpacebarQuickLookProps> = ({
       />
 
       {/* Floating QuickLook Glass HUD Card */}
-      <div className="relative z-10 w-full max-w-xl rounded-[24px] bg-white/95 dark:bg-[#181920]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset] overflow-hidden animate-quicklook p-5 sm:p-6 space-y-5">
+      <div className="relative z-10 w-full max-w-xl rounded-[24px] bg-white/95 dark:bg-[#181920]/95 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.4)_inset] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.08)_inset] overflow-hidden animate-quicklook p-5 sm:p-6 space-y-5 card-3d-sheen glass-3d-elevation preserve-3d">
         {/* Header: Title & Close */}
         <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.08] pb-3.5">
           <div className="flex items-center gap-2.5">

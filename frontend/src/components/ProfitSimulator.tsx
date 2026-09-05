@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Receipt,
 } from "lucide-react";
+import { use3DTilt } from "../hooks/use3DTilt";
 
 interface ProfitSimulatorProps {
   symbol: string;
@@ -91,9 +92,21 @@ export const ProfitSimulator: React.FC<ProfitSimulatorProps> = ({
   const expectedValue = simData?.expected_value;
   const empiricalPercentiles = expectedValue?.percentile_probabilities?.empirical_from_1000_paths;
 
+  // 3D Perspective Tilt Hook
+  const { ref: simCardRef, tiltProps: simTiltProps } = use3DTilt<HTMLDivElement>({
+    maxRotation: 3.5,
+    scale: 1.006,
+    perspective: 1400,
+    glare: true,
+  });
+
   return (
     <div className="space-y-6">
-      <div className="glass-panel-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300">
+      <div
+        ref={simCardRef}
+        {...simTiltProps}
+        className="glass-panel-3d card-3d-sheen preserve-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300"
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/80 dark:border-slate-800/80 pb-4">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-brand-50 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800">

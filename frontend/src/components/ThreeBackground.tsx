@@ -1,425 +1,412 @@
 import React, { useEffect, useRef } from "react";
+import * as THREE from "three";
 
-interface ThreeBackgroundProps {
+export interface ThreeBackgroundProps {
   isDarkMode: boolean;
+  scrollProgress?: number; // 0.0 to 1.0 from window scroll
+  shockwaveTrigger?: { id: number; type: "buy" | "profit" | "warn" | "pulse"; timestamp: number } | null;
 }
 
-interface Vertex3D {
-  x: number;
-  y: number;
-  z: number;
-}
+export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({
+  isDarkMode,
+  scrollProgress = 0,
+  shockwaveTrigger = null,
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const sceneRef = useRef<{
+    scene: THREE.Scene;
+    camera: THREE.PerspectiveCamera;
+    renderer: THREE.WebGLRenderer;
+    gridMesh: THREE.Mesh;
+    gridGeom: THREE.PlaneGeometry;
+    particleSystem: THREE.Points;
+    particleGeom: THREE.BufferGeometry;
+    ringGroup: THREE.Group;
+    rings: THREE.Mesh[];
+    shockwaves: { mesh: THREE.Mesh; birth: number; maxRadius: number; speed: number; color: string }[];
+    targetCameraX: number;
+    targetCameraY: number;
+    targetCameraZ: number;
+    currentCameraX: number;
+    currentCameraY: number;
+    currentCameraZ: number;
+  } | null>(null);
 
-interface Asteroid3D {
-  x: number;
-  y: number;
-  z: number;
-  size: number;
-  rotX: number;
-  rotY: number;
-  rotZ: number;
-  speedRotX: number;
-  speedRotY: number;
-  speedRotZ: number;
-  driftZ: number;
-  driftX: number;
-  driftY: number;
-  baseVertices: Vertex3D[];
-  transformedVertices: Vertex3D[];
-  projectedVertices: { x: number; y: number; visible: boolean }[];
-  faces: number[][];
-  veinFaces: boolean[];
-  colorTone: number; // 0=charcoal/slate, 1=iron/graphite, 2=mineral rich
-}
+  const scrollRef = useRef<number>(scrollProgress);
+  scrollRef.current = scrollProgress;
 
-interface StarParticle {
-  x: number;
-  y: number;
-  z: number;
-  size: number;
-  alpha: number;
-  twinkleSpeed: number;
-}
-
-// Helper to generate a perturbed 3D icosahedron / geodesic sphere for craggy asteroid shape
-function createAsteroidMesh(radius: number): { vertices: Vertex3D[]; faces: number[][]; veinFaces: boolean[] } {
-  // Golden ratio
-  const t = (1.0 + Math.sqrt(5.0)) / 2.0;
-
-  // Base 12 icosahedron vertices
-  const rawVerts: Vertex3D[] = [
-    { x: -1, y: t, z: 0 },
-    { x: 1, y: t, z: 0 },
-    { x: -1, y: -t, z: 0 },
-    { x: 1, y: -t, z: 0 },
-    { x: 0, y: -1, z: t },
-    { x: 0, y: 1, z: t },
-    { x: 0, y: -1, z: -t },
-    { x: 0, y: 1, z: -t },
-    { x: t, y: 0, z: -1 },
-    { x: t, y: 0, z: 1 },
-    { x: -t, y: 0, z: -1 },
-    { x: -t, y: 0, z: 1 },
-  ];
-
-  // 20 triangular faces
-  const rawFaces: number[][] = [
-    [0, 11, 5], [0, 5, 1], [0, 1, 7], [0, 7, 10], [0, 10, 11],
-    [1, 5, 9], [5, 11, 4], [11, 10, 2], [10, 7, 6], [7, 1, 8],
-    [3, 9, 4], [3, 4, 2], [3, 2, 6], [3, 6, 8], [3, 8, 9],
-    [4, 9, 5], [2, 4, 11], [6, 2, 10], [8, 6, 7], [9, 8, 1],
-  ];
-
-  // Randomize & perturb vertices to create irregular crags and craters
-  const vertices: Vertex3D[] = rawVerts.map((v) => {
-    const len = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
-    // Perturb radius with noise between 0.65 and 1.35
-    const crag = 0.65 + Math.random() * 0.70;
-    const scale = (radius * crag) / len;
-    return {
-      x: v.x * scale,
-      y: v.y * scale,
-      z: v.z * scale,
-    };
-  });
-
-  // Randomly assign 20-30% of faces to have glowing mineral veins
-  const veinFaces: boolean[] = rawFaces.map(() => Math.random() < 0.25);
-
-  return { vertices, faces: rawFaces, veinFaces };
-}
-
-export const ThreeBackground: React.FC<ThreeBackgroundProps> = ({ isDarkMode }) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
+  // Track Shockwaves Triggered from UI Actions
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!shockwaveTrigger || !sceneRef.current) return;
+    const { scene, shockwaves } = sceneRef.current;
 
-    const ctx = canvas.getContext("2d", { alpha: true });
-    if (!ctx) return;
+    const colorMap = {
+      buy: isDarkMode ? 0x06b6d4 : 0x0284c7, // Cyan / Sky Blue
+      profit: isDarkMode ? 0x10b981 : 0x059669, // Emerald Green
+      warn: isDarkMode ? 0xf59e0b : 0xd97706, // Amber Gold
+      pulse: isDarkMode ? 0x8b5cf6 : 0x7c3aed, // Violet
+    };
 
-    let animationFrameId: number;
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    const shockColor = colorMap[shockwaveTrigger.type] || (isDarkMode ? 0x06b6d4 : 0x0284c7);
+    const ringGeom = new THREE.RingGeometry(10, 22, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: shockColor,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
 
+    const shockMesh = new THREE.Mesh(ringGeom, ringMat);
+    shockMesh.rotation.x = -Math.PI / 2.3;
+    shockMesh.position.set(
+      (Math.random() - 0.5) * 400,
+      -260 + (Math.random() - 0.5) * 50,
+      (Math.random() - 0.5) * 300
+    );
+
+    scene.add(shockMesh);
+    shockwaves.push({
+      mesh: shockMesh,
+      birth: performance.now(),
+      maxRadius: 480,
+      speed: 180,
+      color: shockwaveTrigger.type,
+    });
+  }, [shockwaveTrigger, isDarkMode]);
+
+  // Main Three.js Scene Setup & Render Loop
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    // 1. WebGL Renderer
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const renderer = new THREE.WebGLRenderer({
+      powerPreference: "high-performance",
+      antialias: true,
+      alpha: true,
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    container.innerHTML = "";
+    container.appendChild(renderer.domElement);
+
+    // 2. Scene & Fog
+    const scene = new THREE.Scene();
+    const fogColor = isDarkMode ? 0x0f1117 : 0xf1f3f7;
+    scene.fog = new THREE.FogExp2(fogColor, 0.00065);
+
+    // 3. Perspective Camera
+    const camera = new THREE.PerspectiveCamera(52, width / height, 1, 4000);
+    camera.position.set(0, 100, 680);
+
+    // 4. Lights
+    const ambientLight = new THREE.AmbientLight(isDarkMode ? 0x1e293b : 0xe2e8f0, 1.2);
+    scene.add(ambientLight);
+
+    const pointLight1 = new THREE.PointLight(isDarkMode ? 0x06b6d4 : 0x3b82f6, 3, 1600);
+    pointLight1.position.set(400, 300, 200);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(isDarkMode ? 0x8b5cf6 : 0xd97706, 2.5, 1600);
+    pointLight2.position.set(-400, -200, 300);
+    scene.add(pointLight2);
+
+    // 5. Deformable 3D Quantum Liquidity Grid (Wave Plane)
+    const gridCols = 54;
+    const gridRows = 54;
+    const gridGeom = new THREE.PlaneGeometry(2400, 2400, gridCols - 1, gridRows - 1);
+    const gridMat = new THREE.MeshBasicMaterial({
+      color: isDarkMode ? 0x1e3a8a : 0x93c5fd,
+      wireframe: true,
+      transparent: true,
+      opacity: isDarkMode ? 0.28 : 0.22,
+      blending: isDarkMode ? THREE.AdditiveBlending : THREE.NormalBlending,
+      depthWrite: false,
+    });
+    const gridMesh = new THREE.Mesh(gridGeom, gridMat);
+    gridMesh.rotation.x = -Math.PI / 2.25;
+    gridMesh.position.set(0, -320, -200);
+    scene.add(gridMesh);
+
+    // Store base vertex positions for mathematical wave oscillation
+    const baseGridPositions = gridGeom.attributes.position.clone();
+
+    // 6. 3,200+ Instanced Cyber Particles & Star Constellation
+    const PARTICLE_COUNT = 3200;
+    const particleGeom = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(PARTICLE_COUNT * 3);
+    const particleColors = new Float32Array(PARTICLE_COUNT * 3);
+    const particleSizes = new Float32Array(PARTICLE_COUNT);
+
+    const cyanColor = new THREE.Color(isDarkMode ? 0x06b6d4 : 0x2563eb);
+    const emeraldColor = new THREE.Color(isDarkMode ? 0x10b981 : 0x059669);
+    const violetColor = new THREE.Color(isDarkMode ? 0x8b5cf6 : 0xd97706);
+    const whiteColor = new THREE.Color(isDarkMode ? 0xffffff : 0x475569);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const i3 = i * 3;
+      // Cylinder / Space distribution
+      const radius = 200 + Math.random() * 1100;
+      const theta = Math.random() * Math.PI * 2;
+      const y = (Math.random() - 0.5) * 1400;
+
+      particlePositions[i3] = Math.cos(theta) * radius;
+      particlePositions[i3 + 1] = y;
+      particlePositions[i3 + 2] = Math.sin(theta) * radius - 100;
+
+      // Color distribution
+      const rand = Math.random();
+      let chosenColor = cyanColor;
+      if (rand < 0.35) chosenColor = cyanColor;
+      else if (rand < 0.65) chosenColor = emeraldColor;
+      else if (rand < 0.85) chosenColor = violetColor;
+      else chosenColor = whiteColor;
+
+      particleColors[i3] = chosenColor.r;
+      particleColors[i3 + 1] = chosenColor.g;
+      particleColors[i3 + 2] = chosenColor.b;
+
+      particleSizes[i] = 1.5 + Math.random() * 3.5;
+    }
+
+    particleGeom.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+    particleGeom.setAttribute("color", new THREE.BufferAttribute(particleColors, 3));
+    particleGeom.setAttribute("size", new THREE.BufferAttribute(particleSizes, 1));
+
+    // Custom Particle Canvas Texture for soft circular glow
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255,255,255,1)");
+      grad.addColorStop(0.3, "rgba(255,255,255,0.7)");
+      grad.addColorStop(0.7, "rgba(255,255,255,0.15)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+    }
+    const particleTexture = new THREE.CanvasTexture(canvas);
+
+    const particleMat = new THREE.PointsMaterial({
+      size: 3.2,
+      map: particleTexture,
+      vertexColors: true,
+      transparent: true,
+      opacity: isDarkMode ? 0.85 : 0.65,
+      blending: isDarkMode ? THREE.AdditiveBlending : THREE.NormalBlending,
+      depthWrite: false,
+    });
+
+    const particleSystem = new THREE.Points(particleGeom, particleMat);
+    scene.add(particleSystem);
+
+    // 7. Volumetric Gyroscopic Market Rings (Astrolabe / Quantum Reactor)
+    const ringGroup = new THREE.Group();
+    ringGroup.position.set(0, -40, -180);
+    scene.add(ringGroup);
+
+    const ringRadii = [280, 370, 460];
+    const ringMats = [
+      new THREE.MeshBasicMaterial({
+        color: isDarkMode ? 0x06b6d4 : 0x3b82f6,
+        transparent: true,
+        opacity: isDarkMode ? 0.35 : 0.22,
+        wireframe: true,
+      }),
+      new THREE.MeshBasicMaterial({
+        color: isDarkMode ? 0x10b981 : 0x059669,
+        transparent: true,
+        opacity: isDarkMode ? 0.28 : 0.18,
+        wireframe: true,
+      }),
+      new THREE.MeshBasicMaterial({
+        color: isDarkMode ? 0x8b5cf6 : 0xd97706,
+        transparent: true,
+        opacity: isDarkMode ? 0.22 : 0.14,
+        wireframe: true,
+      }),
+    ];
+
+    const rings: THREE.Mesh[] = [];
+    ringRadii.forEach((rad, idx) => {
+      const ringGeom = new THREE.TorusGeometry(rad, 1.8, 12, 90);
+      const ringMesh = new THREE.Mesh(ringGeom, ringMats[idx]);
+      ringMesh.rotation.x = (Math.PI / 4) * (idx + 1);
+      ringMesh.rotation.y = (Math.PI / 6) * (idx + 1);
+      ringGroup.add(ringMesh);
+      rings.push(ringMesh);
+    });
+
+    // Store references
+    sceneRef.current = {
+      scene,
+      camera,
+      renderer,
+      gridMesh,
+      gridGeom,
+      particleSystem,
+      particleGeom,
+      ringGroup,
+      rings,
+      shockwaves: [],
+      targetCameraX: 0,
+      targetCameraY: 100,
+      targetCameraZ: 680,
+      currentCameraX: 0,
+      currentCameraY: 100,
+      currentCameraZ: 680,
+    };
+
+    // 8. Mouse Tracking with Parallax Dampening
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!sceneRef.current) return;
+      const normX = (e.clientX / window.innerWidth - 0.5) * 2;
+      const normY = (e.clientY / window.innerHeight - 0.5) * 2;
+
+      sceneRef.current.targetCameraX = normX * 90;
+      sceneRef.current.targetCameraY = 100 - normY * 70;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+
+    // 9. Resize Handler
     const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      if (!sceneRef.current) return;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
     };
 
     window.addEventListener("resize", handleResize);
 
-    // Mouse coordinates with easing for subtle 3D parallax
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetMouseX = 0;
-    let targetMouseY = 0;
+    // 10. Animation & Render Loop
+    let animationFrameId: number;
+    let clock = new THREE.Clock();
 
-    const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = (e.clientX / width - 0.5) * 80;
-      targetMouseY = (e.clientY / height - 0.5) * 60;
-    };
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate);
 
-    window.addEventListener("mousemove", handleMouseMove);
+      // Respect tab visibility
+      if (document.hidden) return;
 
-    // 1. Generate 3D Asteroid Belt Entities (45 entities)
-    const ASTEROID_COUNT = 45;
-    const asteroids: Asteroid3D[] = [];
+      const delta = clock.getDelta();
+      const elapsedTime = clock.getElapsedTime();
+      const state = sceneRef.current;
+      if (!state) return;
 
-    for (let i = 0; i < ASTEROID_COUNT; i++) {
-      const radius = 18 + Math.random() * 32;
-      const mesh = createAsteroidMesh(radius);
+      // A. Camera Trajectory: Mouse Parallax + Scroll-Driven Spline
+      const currentScroll = scrollRef.current; // 0.0 to 1.0
+      // Camera zooms in slightly and descends as user scrolls down the workstation
+      state.targetCameraZ = 680 - currentScroll * 240;
+      const scrollYOffset = currentScroll * 180;
 
-      asteroids.push({
-        x: (Math.random() - 0.5) * 2200,
-        y: (Math.random() - 0.5) * 1500,
-        z: 350 + Math.random() * 1800,
-        size: radius,
-        rotX: Math.random() * Math.PI * 2,
-        rotY: Math.random() * Math.PI * 2,
-        rotZ: Math.random() * Math.PI * 2,
-        speedRotX: (Math.random() - 0.5) * 0.008,
-        speedRotY: (Math.random() - 0.5) * 0.010,
-        speedRotZ: (Math.random() - 0.5) * 0.006,
-        driftZ: -0.25 - Math.random() * 0.45,
-        driftX: (Math.random() - 0.5) * 0.15,
-        driftY: (Math.random() - 0.5) * 0.10,
-        baseVertices: mesh.vertices,
-        transformedVertices: mesh.vertices.map((v) => ({ ...v })),
-        projectedVertices: mesh.vertices.map(() => ({ x: 0, y: 0, visible: true })),
-        faces: mesh.faces,
-        veinFaces: mesh.veinFaces,
-        colorTone: Math.floor(Math.random() * 3),
+      state.currentCameraX += (state.targetCameraX - state.currentCameraX) * 0.05;
+      state.currentCameraY += (state.targetCameraY - scrollYOffset - state.currentCameraY) * 0.05;
+      state.currentCameraZ += (state.targetCameraZ - state.currentCameraZ) * 0.05;
+
+      camera.position.set(state.currentCameraX, state.currentCameraY, state.currentCameraZ);
+      camera.lookAt(0, -60 - scrollYOffset * 0.4, -120);
+
+      // B. Wave Grid Deformation Mathematics
+      const posAttr = gridGeom.attributes.position;
+      const basePos = baseGridPositions.array as Float32Array;
+      const posArr = posAttr.array as Float32Array;
+
+      for (let i = 0; i < posAttr.count; i++) {
+        const i3 = i * 3;
+        const x = basePos[i3];
+        const y = basePos[i3 + 1];
+
+        // Harmonic dual-wave equations simulating quantum market liquidity flow
+        const z =
+          Math.sin(x * 0.005 + elapsedTime * 1.6) * 22 +
+          Math.cos(y * 0.006 + elapsedTime * 1.3) * 18 +
+          Math.sin((x + y) * 0.003 + elapsedTime * 2.0) * 12;
+
+        posArr[i3 + 2] = z;
+      }
+      posAttr.needsUpdate = true;
+
+      // C. Rotate Particles & Gyro Rings
+      particleSystem.rotation.y = elapsedTime * 0.025;
+      particleSystem.rotation.x = Math.sin(elapsedTime * 0.015) * 0.05;
+
+      rings.forEach((ring, idx) => {
+        ring.rotation.x += delta * (0.18 + idx * 0.08);
+        ring.rotation.y += delta * (0.12 + idx * 0.06);
+        ring.rotation.z += delta * (0.15 + idx * 0.05);
       });
-    }
 
-    // 2. Generate Deep Cosmic Stardust Particles (150 stars)
-    const STAR_COUNT = 150;
-    const stars: StarParticle[] = [];
+      // D. Shockwaves Animation & Decay
+      const now = performance.now();
+      for (let i = state.shockwaves.length - 1; i >= 0; i--) {
+        const sw = state.shockwaves[i];
+        const age = (now - sw.birth) / 1000;
+        const currentScale = 1 + age * 12;
+        sw.mesh.scale.set(currentScale, currentScale, 1);
 
-    for (let i = 0; i < STAR_COUNT; i++) {
-      stars.push({
-        x: (Math.random() - 0.5) * 2800,
-        y: (Math.random() - 0.5) * 1800,
-        z: 400 + Math.random() * 2200,
-        size: 0.8 + Math.random() * 1.8,
-        alpha: 0.2 + Math.random() * 0.6,
-        twinkleSpeed: 0.02 + Math.random() * 0.04,
-      });
-    }
+        const mat = sw.mesh.material as THREE.MeshBasicMaterial;
+        mat.opacity = Math.max(0, 0.85 - age * 0.75);
 
-    // Camera Focal Length
-    const FOCAL_LENGTH = 650;
-    // Directional Light Vector (Normalized Top-Left-Forward: [-0.6, -0.8, 1.0])
-    const lightLen = Math.sqrt(0.36 + 0.64 + 1.0);
-    const lx = -0.6 / lightLen;
-    const ly = -0.8 / lightLen;
-    const lz = 1.0 / lightLen;
-
-    // Visibility Management (Battery & Performance Saver)
-    let isTabVisible = !document.hidden;
-    const handleVisibilityChange = () => {
-      isTabVisible = !document.hidden;
-      if (isTabVisible) {
-        lastTime = performance.now();
-        animationFrameId = requestAnimationFrame(render);
+        if (mat.opacity <= 0 || currentScale >= 28) {
+          scene.remove(sw.mesh);
+          sw.mesh.geometry.dispose();
+          mat.dispose();
+          state.shockwaves.splice(i, 1);
+        }
       }
+
+      renderer.render(scene, camera);
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    animate();
 
-    let lastTime = performance.now();
-
-    const render = (currentTime: number) => {
-      if (!isTabVisible) return;
-
-      const dt = Math.min(currentTime - lastTime, 50);
-      lastTime = currentTime;
-
-      // Smooth mouse parallax interpolation
-      mouseX += (targetMouseX - mouseX) * 0.05;
-      mouseY += (targetMouseY - mouseY) * 0.05;
-
-      ctx.clearRect(0, 0, width, height);
-
-      const centerX = width / 2;
-      const centerY = height / 2;
-
-      // -------------------------------------------------------------
-      // 1. RENDER BACKGROUND COSMIC STARDUST
-      // -------------------------------------------------------------
-      for (let i = 0; i < stars.length; i++) {
-        const star = stars[i];
-        star.z += -0.15;
-        if (star.z < 200) star.z = 2400;
-
-        star.alpha += Math.sin(currentTime * star.twinkleSpeed) * 0.015;
-        const currentAlpha = Math.max(0.1, Math.min(0.85, star.alpha));
-
-        const scale = FOCAL_LENGTH / star.z;
-        const px = (star.x - mouseX * 0.3) * scale + centerX;
-        const py = (star.y - mouseY * 0.3) * scale + centerY;
-
-        if (px >= 0 && px <= width && py >= 0 && py <= height) {
-          ctx.beginPath();
-          ctx.arc(px, py, star.size * scale, 0, Math.PI * 2);
-          if (isDarkMode) {
-            ctx.fillStyle = `rgba(167, 243, 208, ${currentAlpha * 0.6})`; // subtle cosmic emerald
-          } else {
-            ctx.fillStyle = `rgba(100, 116, 139, ${currentAlpha * 0.4})`; // soft slate
-          }
-          ctx.fill();
-        }
-      }
-
-      // -------------------------------------------------------------
-      // 2. TRANSFORM, PROJECT & RENDER 3D ASTEROIDS
-      // -------------------------------------------------------------
-      // Sort asteroids by depth (Z-Index) so furthest render first
-      asteroids.sort((a, b) => b.z - a.z);
-
-      for (let aIdx = 0; aIdx < asteroids.length; aIdx++) {
-        const ast = asteroids[aIdx];
-
-        // Update rotations and drift
-        ast.rotX += ast.speedRotX * (dt / 16);
-        ast.rotY += ast.speedRotY * (dt / 16);
-        ast.rotZ += ast.speedRotZ * (dt / 16);
-
-        ast.z += ast.driftZ * (dt / 16);
-        ast.x += ast.driftX * (dt / 16);
-        ast.y += ast.driftY * (dt / 16);
-
-        // Respawn loop when passes camera
-        if (ast.z < 280) {
-          ast.z = 2100;
-          ast.x = (Math.random() - 0.5) * 2200;
-          ast.y = (Math.random() - 0.5) * 1500;
-        }
-
-        const sinX = Math.sin(ast.rotX);
-        const cosX = Math.cos(ast.rotX);
-        const sinY = Math.sin(ast.rotY);
-        const cosY = Math.cos(ast.rotY);
-        const sinZ = Math.sin(ast.rotZ);
-        const cosZ = Math.cos(ast.rotZ);
-
-        // Transform vertices: Rotate around local origin + translate to (x, y, z) with mouse parallax
-        const worldX = ast.x - mouseX * 0.7;
-        const worldY = ast.y - mouseY * 0.7;
-        const worldZ = ast.z;
-
-        const transformed: Vertex3D[] = [];
-        const projected: { x: number; y: number; visible: boolean }[] = [];
-
-        for (let vIdx = 0; vIdx < ast.baseVertices.length; vIdx++) {
-          const v = ast.baseVertices[vIdx];
-
-          // Rotate around X
-          const y1 = v.y * cosX - v.z * sinX;
-          const z1 = v.y * sinX + v.z * cosX;
-
-          // Rotate around Y
-          const x2 = v.x * cosY + z1 * sinY;
-          const z2 = -v.x * sinY + z1 * cosY;
-
-          // Rotate around Z
-          const x3 = x2 * cosZ - y1 * sinZ;
-          const y3 = x2 * sinZ + y1 * cosZ;
-
-          // Translate to world space
-          const vx = x3 + worldX;
-          const vy = y3 + worldY;
-          const vz = z2 + worldZ;
-
-          transformed.push({ x: vx, y: vy, z: vz });
-
-          if (vz > 50) {
-            const scale = FOCAL_LENGTH / vz;
-            projected.push({
-              x: vx * scale + centerX,
-              y: vy * scale + centerY,
-              visible: true,
-            });
-          } else {
-            projected.push({ x: 0, y: 0, visible: false });
-          }
-        }
-
-        // Distance / Atmospheric Fog Factor (0.0=distant, 1.0=close)
-        const depthAlpha = Math.max(0.12, Math.min(0.85, 1.0 - (ast.z - 300) / 1900));
-
-        // Render polygon faces with directional light shading
-        for (let fIdx = 0; fIdx < ast.faces.length; fIdx++) {
-          const face = ast.faces[fIdx];
-          const v0 = transformed[face[0]];
-          const v1 = transformed[face[1]];
-          const v2 = transformed[face[2]];
-
-          const p0 = projected[face[0]];
-          const p1 = projected[face[1]];
-          const p2 = projected[face[2]];
-
-          if (!p0.visible || !p1.visible || !p2.visible) continue;
-
-          // Calculate surface normal: (v1 - v0) x (v2 - v0)
-          const ax = v1.x - v0.x;
-          const ay = v1.y - v0.y;
-          const az = v1.z - v0.z;
-
-          const bx = v2.x - v0.x;
-          const by = v2.y - v0.y;
-          const bz = v2.z - v0.z;
-
-          const nx = ay * bz - az * by;
-          const ny = az * bx - ax * bz;
-          const nz = ax * by - ay * bx;
-
-          const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);
-          if (nLen === 0) continue;
-
-          const normX = nx / nLen;
-          const normY = ny / nLen;
-          const normZ = nz / nLen;
-
-          // Backface culling: Check if face is pointing towards camera
-          // Camera vector from face center to camera (0, 0, 0)
-          const cx = -(v0.x + v1.x + v2.x) / 3;
-          const cy = -(v0.y + v1.y + v2.y) / 3;
-          const cz = -(v0.z + v1.z + v2.z) / 3;
-          const cLen = Math.sqrt(cx * cx + cy * cy + cz * cz);
-          const dotCam = (normX * cx + normY * cy + normZ * cz) / (cLen || 1);
-
-          if (dotCam <= 0) continue; // culled
-
-          // Compute diffuse lighting intensity
-          const dotLight = Math.max(0, normX * lx + normY * ly + normZ * lz);
-          const lightIntensity = Math.min(1.0, 0.20 + dotLight * 0.80);
-
-          const isVein = ast.veinFaces[fIdx];
-
-          // Color Palette Application
-          ctx.beginPath();
-          ctx.moveTo(p0.x, p0.y);
-          ctx.lineTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.closePath();
-
-          if (isDarkMode) {
-            // Dark Mode: Charcoal/Obsidian rock + glowing emerald mineral veins
-            if (isVein) {
-              const veinShade = Math.floor(120 + lightIntensity * 135);
-              ctx.fillStyle = `rgba(16, ${veinShade}, 129, ${depthAlpha * 0.90})`;
-              ctx.strokeStyle = `rgba(52, 211, 153, ${depthAlpha * 0.75})`;
-              ctx.lineWidth = 1.0;
-            } else {
-              const grayShade = Math.floor(25 + lightIntensity * 45);
-              ctx.fillStyle = `rgba(${grayShade}, ${grayShade + 4}, ${grayShade + 8}, ${depthAlpha * 0.85})`;
-              ctx.strokeStyle = `rgba(71, 85, 105, ${depthAlpha * 0.35})`;
-              ctx.lineWidth = 0.6;
-            }
-          } else {
-            // Light Mode: Warm slate/graphite rock + subtle gold/amber mineral ridges
-            if (isVein) {
-              const goldR = Math.floor(180 + lightIntensity * 60);
-              const goldG = Math.floor(140 + lightIntensity * 50);
-              ctx.fillStyle = `rgba(${goldR}, ${goldG}, 40, ${depthAlpha * 0.85})`;
-              ctx.strokeStyle = `rgba(217, 119, 6, ${depthAlpha * 0.60})`;
-              ctx.lineWidth = 1.0;
-            } else {
-              const slateVal = Math.floor(140 + lightIntensity * 85);
-              ctx.fillStyle = `rgba(${slateVal}, ${slateVal + 2}, ${slateVal + 6}, ${depthAlpha * 0.80})`;
-              ctx.strokeStyle = `rgba(148, 163, 184, ${depthAlpha * 0.40})`;
-              ctx.lineWidth = 0.6;
-            }
-          }
-
-          ctx.fill();
-          ctx.stroke();
-        }
-      }
-
-      animationFrameId = requestAnimationFrame(render);
-    };
-
-    animationFrameId = requestAnimationFrame(render);
-
+    // 11. Cleanup
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("resize", handleResize);
+
+      if (sceneRef.current) {
+        sceneRef.current.gridGeom.dispose();
+        (sceneRef.current.gridMesh.material as THREE.Material).dispose();
+        sceneRef.current.particleGeom.dispose();
+        (sceneRef.current.particleSystem.material as THREE.Material).dispose();
+        particleTexture.dispose();
+        sceneRef.current.rings.forEach((r) => {
+          r.geometry.dispose();
+          (r.material as THREE.Material).dispose();
+        });
+        sceneRef.current.shockwaves.forEach((sw) => {
+          scene.remove(sw.mesh);
+          sw.mesh.geometry.dispose();
+          (sw.mesh.material as THREE.Material).dispose();
+        });
+        renderer.dispose();
+      }
+
+      container.innerHTML = "";
+      sceneRef.current = null;
     };
   }, [isDarkMode]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-700"
+    <div
+      ref={containerRef}
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
       style={{
-        opacity: isDarkMode ? 0.85 : 0.65,
+        opacity: isDarkMode ? 0.95 : 0.85,
+        transition: "opacity 0.5s ease",
       }}
     />
   );

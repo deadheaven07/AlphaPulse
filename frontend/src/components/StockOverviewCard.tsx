@@ -22,6 +22,7 @@ import {
   Tooltip,
   CartesianGrid
 } from "recharts";
+import { use3DTilt } from "../hooks/use3DTilt";
 
 interface StockOverviewCardProps {
   quote: StockQuote;
@@ -47,6 +48,14 @@ export const StockOverviewCard: React.FC<StockOverviewCardProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("1Y");
+
+  // 3D Perspective Tilt Hook
+  const { ref: cardRef, tiltProps } = use3DTilt<HTMLDivElement>({
+    maxRotation: 4,
+    scale: 1.008,
+    perspective: 1200,
+    glare: true,
+  });
 
   const tfConfig = TIMEFRAMES.find((t) => t.label === selectedTimeframe) || TIMEFRAMES[3];
 
@@ -87,7 +96,11 @@ export const StockOverviewCard: React.FC<StockOverviewCardProps> = ({
   const quality = quote.quality_filters;
 
   return (
-    <div className="glass-panel-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300">
+    <div
+      ref={cardRef}
+      {...tiltProps}
+      className="glass-panel-3d card-3d-sheen preserve-3d rounded-2xl p-4 sm:p-6 space-y-6 transition-all duration-300"
+    >
       {/* Top Header & Stock Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/80 dark:border-slate-800/80 pb-5">
         <div className="space-y-1">

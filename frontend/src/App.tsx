@@ -24,6 +24,7 @@ import { BentoQuantDesk } from "./components/BentoQuantDesk";
 import { TearSheetExportModal } from "./components/TearSheetExportModal";
 import { useTactileAudio } from "./hooks/useTactileAudio";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useScroll3D } from "./hooks/useScroll3D";
 
 // Focused Dedicated Pages
 import { OverviewPage } from "./pages/OverviewPage";
@@ -82,19 +83,34 @@ export function App() {
     setIsDarkMode((prev) => !prev);
   };
 
+  // 3D Scroll & Shockwave Action Engine
+  const scroll3D = useScroll3D();
+  const [shockwaveTrigger, setShockwaveTrigger] = useState<{
+    id: number;
+    type: "buy" | "profit" | "warn" | "pulse";
+    timestamp: number;
+  } | null>(null);
+
+  const trigger3DShockwave = (type: "buy" | "profit" | "warn" | "pulse") => {
+    setShockwaveTrigger({ id: Date.now(), type, timestamp: Date.now() });
+  };
+
   // Global Keyboard Shortcuts (Space, 1-8, Cmd+K, T)
   useKeyboardShortcuts({
     onSelectPage: (page) => {
       playClick();
+      trigger3DShockwave("pulse");
       setActivePage(page);
     },
     onToggleTheme: toggleTheme,
     onToggleAi: () => {
       playClick();
+      trigger3DShockwave("pulse");
       setIsAiPaneOpen((prev) => !prev);
     },
     onToggleQuickLook: () => {
       playClick();
+      trigger3DShockwave("pulse");
       setIsQuickLookOpen((prev) => !prev);
     },
     isModalOpen: isAiPaneOpen || isSettingsOpen || isQuickLookOpen || isTearSheetOpen,
@@ -169,6 +185,7 @@ export function App() {
 
   const handleSaveSimulation = (sim: SimulationResult) => {
     playVaultLock();
+    trigger3DShockwave("profit");
     // Persist holding into SQLite database
     createDbHolding({
       symbol: sim.symbol,
@@ -182,6 +199,7 @@ export function App() {
 
   const handleToggleWatchlist = (symbol: string) => {
     playClick();
+    trigger3DShockwave("buy");
     setWatchlist((prev) => {
       let updated: string[];
       if (prev.includes(symbol)) {
@@ -205,14 +223,19 @@ export function App() {
 
   return (
     <div className="flex h-screen bg-canvas dark:bg-canvas-dark text-slate-900 dark:text-slate-100 overflow-hidden font-sans selection:bg-emerald-500 selection:text-white relative transition-colors duration-300">
-      {/* 3D Background Canvas with Visibility Optimization */}
-      <ThreeBackground isDarkMode={isDarkMode} />
+      {/* 3D Background Canvas with Hardware-Accelerated WebGL Engine */}
+      <ThreeBackground
+        isDarkMode={isDarkMode}
+        scrollProgress={scroll3D.scrollProgress}
+        shockwaveTrigger={shockwaveTrigger}
+      />
 
       {/* Modern Left Navigation Sidebar */}
       <Sidebar
         activePage={activePage}
         onSelectPage={(page) => {
           playClick();
+          trigger3DShockwave("pulse");
           setActivePage(page);
         }}
         onOpenAiPane={() => {

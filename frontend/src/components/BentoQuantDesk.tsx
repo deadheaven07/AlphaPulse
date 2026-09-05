@@ -34,9 +34,9 @@ export const BentoQuantDesk: React.FC<BentoQuantDeskProps> = ({
   onNavigateToSimulator,
 }) => {
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in perspective-3d">
       {/* Top Bar Header */}
-      <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#181920]/80 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
+      <div className="p-4 rounded-2xl bg-white/80 dark:bg-[#181920]/80 backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between card-3d-sheen glass-3d-elevation preserve-3d">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 text-white shadow-xs">
             <Sparkles className="w-5 h-5" />
