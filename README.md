@@ -222,5 +222,3 @@ cd frontend && npm run build
 
 ---
 
-## 📜 License
-MIT License. Engineered with mathematical precision for quantitative investors in Indian Equities.
