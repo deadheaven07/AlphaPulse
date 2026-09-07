@@ -1,9 +1,21 @@
 import os
 import re
 import json
+import logging
 from typing import Dict, Any, Optional, List
-from google import genai
-from google.genai import types
+
+logger = logging.getLogger(__name__)
+
+try:
+    from google import genai
+    from google.genai import types
+    HAS_GENAI = True
+except (ImportError, AttributeError):
+    genai = None  # type: ignore
+    types = None  # type: ignore
+    HAS_GENAI = False
+    logger.warning("google-genai package is not installed in the active environment. Running in local tactical quant fallback mode.")
+
 from backend.app.core.config import GEMINI_API_KEY, GEMINI_MODEL
 from backend.app.quant.data_engine import fetch_live_quote
 from backend.app.quant.quality_filters import evaluate_quality_filters
@@ -364,7 +376,7 @@ async def generate_ai_analysis(
     """
     key = api_key_override or GEMINI_API_KEY or os.getenv("GEMINI_API_KEY", "")
     
-    if not key or key == "YOUR_GEMINI_API_KEY_HERE":
+    if not HAS_GENAI or not key or key == "YOUR_GEMINI_API_KEY_HERE":
         return generate_grounded_fallback_thesis(query, capital, horizon_months)
 
     models_to_try = [

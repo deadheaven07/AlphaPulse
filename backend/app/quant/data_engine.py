@@ -92,6 +92,45 @@ def auto_discover_symbol(query_sym: str) -> str:
         logger.debug(f"Auto-discovery failed for {clean_q}: {e}")
     return clean_q
 
+def _normalize_quote_fields(quote: Dict[str, Any]) -> Dict[str, Any]:
+    """Coerce quote payloads into a consistent, validation-safe shape."""
+    symbol = clean_symbol(str(quote.get("symbol") or "UNKNOWN"))
+    price = float(quote.get("price") or 1.0)
+    open_price = float(quote.get("open") or price)
+    high = float(quote.get("high") or max(price, open_price))
+    low = float(quote.get("low") or min(price, open_price))
+    prev_close = float(quote.get("prev_close") or price)
+    high_52w = float(quote.get("high_52w") or max(high, price * 1.25))
+    low_52w = float(quote.get("low_52w") or min(low, price * 0.75))
+
+    if high < max(price, open_price):
+        high = max(price, open_price)
+    if low > min(price, open_price):
+        low = min(price, open_price)
+    if high_52w < high:
+        high_52w = high
+    if low_52w > low:
+        low_52w = low
+
+    normalized = dict(quote)
+    normalized["symbol"] = symbol
+    normalized["price"] = round(price, 2)
+    normalized["open"] = round(open_price, 2)
+    normalized["high"] = round(high, 2)
+    normalized["low"] = round(low, 2)
+    normalized["prev_close"] = round(prev_close, 2)
+    normalized["high_52w"] = round(high_52w, 2)
+    normalized["low_52w"] = round(low_52w, 2)
+    normalized["roce"] = float(normalized.get("roce", 18.0))
+    normalized["roe"] = float(normalized.get("roe", 16.5))
+    normalized["pe"] = float(normalized.get("pe", 24.5))
+    normalized["debt_to_equity"] = float(normalized.get("debt_to_equity", 0.4))
+    normalized["sector"] = normalized.get("sector", "Indian Equities")
+    normalized["company_name"] = normalized.get("company_name") or DISPLAY_NAME_OVERRIDES.get(symbol, f"{symbol} Limited")
+    normalized["data_source"] = normalized.get("data_source", "fallback_baseline")
+    normalized["is_estimated"] = bool(normalized.get("is_estimated", normalized["data_source"] != "live_exchange"))
+    return normalized
+
 def fetch_live_quote_direct(symbol: str) -> Optional[Dict[str, Any]]:
     """
     Fetches real-time price, day high/low, volume, and 52W range in <150ms
@@ -128,10 +167,12 @@ def fetch_live_quote_direct(symbol: str) -> Optional[Dict[str, Any]]:
             )
 
             vol = int(meta.get("regularMarketVolume") or 1500000)
-            high_52w = float(meta.get("fiftyTwoWeekHigh") or (price * 1.25))
-            low_52w = float(meta.get("fiftyTwoWeekLow") or (price * 0.75))
-            day_high = float(meta.get("regularMarketDayHigh") or (price * 1.01))
-            day_low = float(meta.get("regularMarketDayLow") or (price * 0.99))
+            open_raw = meta.get("regularMarketOpen") or meta.get("chartPreviousClose") or price
+            open_val = float(open_raw)
+            day_high = max(float(meta.get("regularMarketDayHigh") or (price * 1.01)), float(price), open_val)
+            day_low = min(float(meta.get("regularMarketDayLow") or (price * 0.99)), float(price), open_val)
+            high_52w = max(float(meta.get("fiftyTwoWeekHigh") or (price * 1.25)), day_high)
+            low_52w = min(float(meta.get("fiftyTwoWeekLow") or (price * 0.75)), day_low)
 
             quote_data = {
                 "symbol": resolved_sym,
@@ -141,7 +182,7 @@ def fetch_live_quote_direct(symbol: str) -> Optional[Dict[str, Any]]:
                 "price": round(float(price), 2),
                 "change": round(float(change), 2),
                 "change_pct": round(float(change_pct), 2),
-                "open": round(float(meta.get("regularMarketDayLow", price)), 2),
+                "open": round(open_val, 2),
                 "high": round(day_high, 2),
                 "low": round(day_low, 2),
                 "prev_close": round(float(prev_close), 2),
@@ -156,6 +197,8 @@ def fetch_live_quote_direct(symbol: str) -> Optional[Dict[str, Any]]:
                 "debt_to_equity": 0.40,
                 "beta": 1.15,
                 "cagr_3y": 25.0,
+                "data_source": "live_exchange",
+                "is_estimated": False,
                 "description": f"{comp_name} actively trading on the National Stock Exchange of India (NSE)."
             }
 
@@ -199,7 +242,9 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
         try:
             cached_sql = get_live_quote_cache(clean_sym)
             if cached_sql:
-                quote = cached_sql
+                quote = dict(cached_sql)
+                quote["data_source"] = "sqlite_cache"
+                quote["is_estimated"] = False
         except Exception as e:
             logger.debug(f"SQLite cache lookup error for {clean_sym}: {e}")
 
@@ -229,6 +274,8 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
             "debt_to_equity": 0.5,
             "beta": 1.0,
             "cagr_3y": 15.0,
+            "data_source": "fallback_baseline",
+            "is_estimated": True,
             "description": f"{clean_sym} listed on NSE."
         }
 
@@ -288,30 +335,49 @@ def fetch_historical_dataframe(raw_symbol: str, period: str = "1y", interval: st
             df = pd.DataFrame()
 
     if df.empty or len(df) < 10:
-        # Generate synthetic realistic historical dataframe
-        quote = fetch_live_quote(symbol)
-        base_p = quote["price"]
-        num_days = 250
-        dates = pd.date_range(end=datetime.now(), periods=num_days, freq="B")
-        
-        np.random.seed(abs(hash(symbol)) % 10000)
-        returns = np.random.normal(0.0008, 0.016, num_days)
-        prices = [base_p * 0.8]
-        for r in returns:
-            prices.append(prices[-1] * (1 + r))
-        prices = prices[1:]
-        scale = base_p / prices[-1]
-        prices = [p * scale for p in prices]
+        if period in ["1d", "5d"] and interval in ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h"]:
+            start = datetime.now().replace(hour=9, minute=15, second=0, microsecond=0)
+            timestamps = [start + timedelta(minutes=5 * i) for i in range(0, 80)]
+            quote = fetch_live_quote(symbol)
+            base_p = quote["price"]
+            np.random.seed(abs(hash(symbol)) % 10000)
+            closes = [base_p]
+            for _ in range(1, len(timestamps)):
+                drift = np.random.normal(0.0005, 0.003)
+                closes.append(closes[-1] * (1 + drift))
+            records = []
+            for ts, p in zip(timestamps, closes):
+                high = p * (1 + abs(np.random.normal(0, 0.004)))
+                low = p * (1 - abs(np.random.normal(0, 0.004)))
+                op = p * (1 + np.random.normal(0, 0.002))
+                vol = int(np.random.uniform(500000, 2500000))
+                records.append({"Open": op, "High": high, "Low": low, "Close": p, "Volume": vol})
+            df = pd.DataFrame(records, index=pd.DatetimeIndex(timestamps))
+        else:
+            # Generate synthetic realistic historical dataframe
+            quote = fetch_live_quote(symbol)
+            base_p = quote["price"]
+            num_days = 250
+            dates = pd.date_range(end=datetime.now(), periods=num_days, freq="B")
+            
+            np.random.seed(abs(hash(symbol)) % 10000)
+            returns = np.random.normal(0.0008, 0.016, num_days)
+            prices = [base_p * 0.8]
+            for r in returns:
+                prices.append(prices[-1] * (1 + r))
+            prices = prices[1:]
+            scale = base_p / prices[-1]
+            prices = [p * scale for p in prices]
 
-        records = []
-        for d, p in zip(dates, prices):
-            high = p * (1 + abs(np.random.normal(0, 0.009)))
-            low = p * (1 - abs(np.random.normal(0, 0.009)))
-            op = p * (1 + np.random.normal(0, 0.003))
-            vol = int(np.random.uniform(500000, 5000000))
-            records.append({"Open": op, "High": high, "Low": low, "Close": p, "Volume": vol})
-        
-        df = pd.DataFrame(records, index=dates)
+            records = []
+            for d, p in zip(dates, prices):
+                high = p * (1 + abs(np.random.normal(0, 0.009)))
+                low = p * (1 - abs(np.random.normal(0, 0.009)))
+                op = p * (1 + np.random.normal(0, 0.003))
+                vol = int(np.random.uniform(500000, 5000000))
+                records.append({"Open": op, "High": high, "Low": low, "Close": p, "Volume": vol})
+            
+            df = pd.DataFrame(records, index=dates)
 
     _CANDLE_CACHE[cache_key] = {"cached_at": now, "df": df}
     return df

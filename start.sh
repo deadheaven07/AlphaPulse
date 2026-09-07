@@ -19,6 +19,7 @@ if [ ! -d "frontend/node_modules" ]; then
 fi
 
 echo "Starting FastAPI Backend on http://127.0.0.1:8000..."
+export PYTHONPATH="$PWD"
 ./backend/venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload &
 BACKEND_PID=$!
 

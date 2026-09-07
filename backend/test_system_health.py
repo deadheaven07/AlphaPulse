@@ -9,6 +9,11 @@ import os
 from datetime import datetime
 from typing import Dict, Any, List
 
+# Ensure workspace root is in sys.path
+_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+
 # ANSI Color formatting
 GREEN = "\033[92m"
 RED = "\033[91m"

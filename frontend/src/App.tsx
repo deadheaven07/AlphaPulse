@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchHealth,
@@ -11,30 +11,42 @@ import {
   fetchStockQuote
 } from "./services/api";
 import type { SimulationResult, PortfolioAlert } from "./types";
-import { ThreeBackground } from "./components/ThreeBackground";
 import { Sidebar } from "./components/Sidebar";
 import type { NavPage } from "./components/Sidebar";
 import { MacWindowTitlebar } from "./components/MacWindowTitlebar";
-import { AiAssistantPane } from "./components/AiAssistantPane";
 import { TickerTape } from "./components/TickerTape";
 import { AlertToastContainer } from "./components/AlertToastContainer";
-import { SettingsModal } from "./components/SettingsModal";
-import { SpacebarQuickLook } from "./components/SpacebarQuickLook";
-import { BentoQuantDesk } from "./components/BentoQuantDesk";
-import { TearSheetExportModal } from "./components/TearSheetExportModal";
 import { useTactileAudio } from "./hooks/useTactileAudio";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useScroll3D } from "./hooks/useScroll3D";
 
-// Focused Dedicated Pages
-import { OverviewPage } from "./pages/OverviewPage";
-import { RadarPage } from "./pages/RadarPage";
-import { StockStudioPage } from "./pages/StockStudioPage";
-import { SimulatorPage } from "./pages/SimulatorPage";
-import { DividendPage } from "./pages/DividendPage";
-import { GoalPlannerPage } from "./pages/GoalPlannerPage";
-import { PortfolioPage } from "./pages/PortfolioPage";
-import { IntradayTerminal } from "./components/IntradayTerminal";
+// Lazy-loaded heavy components & pages
+const ThreeBackground = lazy(() => import("./components/ThreeBackground").then(m => ({ default: m.ThreeBackground })));
+const BentoQuantDesk = lazy(() => import("./components/BentoQuantDesk").then(m => ({ default: m.BentoQuantDesk })));
+const AiAssistantPane = lazy(() => import("./components/AiAssistantPane").then(m => ({ default: m.AiAssistantPane })));
+const SettingsModal = lazy(() => import("./components/SettingsModal").then(m => ({ default: m.SettingsModal })));
+const SpacebarQuickLook = lazy(() => import("./components/SpacebarQuickLook").then(m => ({ default: m.SpacebarQuickLook })));
+const TearSheetExportModal = lazy(() => import("./components/TearSheetExportModal").then(m => ({ default: m.TearSheetExportModal })));
+const IntradayTerminal = lazy(() => import("./components/IntradayTerminal").then(m => ({ default: m.IntradayTerminal })));
+
+const OverviewPage = lazy(() => import("./pages/OverviewPage").then(m => ({ default: m.OverviewPage })));
+const RadarPage = lazy(() => import("./pages/RadarPage").then(m => ({ default: m.RadarPage })));
+const StockStudioPage = lazy(() => import("./pages/StockStudioPage").then(m => ({ default: m.StockStudioPage })));
+const SimulatorPage = lazy(() => import("./pages/SimulatorPage").then(m => ({ default: m.SimulatorPage })));
+const DividendPage = lazy(() => import("./pages/DividendPage").then(m => ({ default: m.DividendPage })));
+const GoalPlannerPage = lazy(() => import("./pages/GoalPlannerPage").then(m => ({ default: m.GoalPlannerPage })));
+const PortfolioPage = lazy(() => import("./pages/PortfolioPage").then(m => ({ default: m.PortfolioPage })));
+
+function PageSkeleton() {
+  return (
+    <div className="w-full min-h-[400px] flex items-center justify-center p-12">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-10 h-10 border-2 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+        <span className="text-[11px] font-mono tracking-widest uppercase text-slate-400">Loading module...</span>
+      </div>
+    </div>
+  );
+}
 
 export function App() {
   // Navigation State (8 focused pages)
@@ -224,11 +236,13 @@ export function App() {
   return (
     <div className="flex h-screen bg-canvas dark:bg-canvas-dark text-slate-900 dark:text-slate-100 overflow-hidden font-sans selection:bg-emerald-500 selection:text-white relative transition-colors duration-300">
       {/* 3D Background Canvas with Hardware-Accelerated WebGL Engine */}
-      <ThreeBackground
-        isDarkMode={isDarkMode}
-        scrollProgress={scroll3D.scrollProgress}
-        shockwaveTrigger={shockwaveTrigger}
-      />
+      <Suspense fallback={null}>
+        <ThreeBackground
+          isDarkMode={isDarkMode}
+          scrollProgress={scroll3D.scrollProgress}
+          shockwaveTrigger={shockwaveTrigger}
+        />
+      </Suspense>
 
       {/* Modern Left Navigation Sidebar */}
       <Sidebar
@@ -252,31 +266,35 @@ export function App() {
       />
 
       {/* Interactive Left AI Assistant Chat Pane */}
-      <AiAssistantPane
-        isOpen={isAiPaneOpen}
-        onClose={() => setIsAiPaneOpen(false)}
-        currentPage={activePage}
-        activeSymbol={selectedSymbol}
-        simCapital={simCapital}
-        simHorizon={simHorizon}
-        onSelectStock={(sym, cap, horiz) => {
-          handleSelectStock(sym, cap, horiz);
-          setActivePage("studio");
-          setIsAiPaneOpen(false);
-        }}
-        onNavigateToSimulator={(sym, cap, horiz) => {
-          handleSelectStock(sym, cap, horiz);
-          setActivePage("simulator");
-          setIsAiPaneOpen(false);
-        }}
-        onNavigateToIntraday={() => {
-          playClick();
-          setActivePage("intraday");
-          setIsAiPaneOpen(false);
-        }}
-        onCapitalChange={(cap) => setSimCapital(cap)}
-        geminiConfigured={Boolean(health?.gemini_api_configured)}
-      />
+      {isAiPaneOpen && (
+        <Suspense fallback={null}>
+          <AiAssistantPane
+            isOpen={isAiPaneOpen}
+            onClose={() => setIsAiPaneOpen(false)}
+            currentPage={activePage}
+            activeSymbol={selectedSymbol}
+            simCapital={simCapital}
+            simHorizon={simHorizon}
+            onSelectStock={(sym, cap, horiz) => {
+              handleSelectStock(sym, cap, horiz);
+              setActivePage("studio");
+              setIsAiPaneOpen(false);
+            }}
+            onNavigateToSimulator={(sym, cap, horiz) => {
+              handleSelectStock(sym, cap, horiz);
+              setActivePage("simulator");
+              setIsAiPaneOpen(false);
+            }}
+            onNavigateToIntraday={() => {
+              playClick();
+              setActivePage("intraday");
+              setIsAiPaneOpen(false);
+            }}
+            onCapitalChange={(cap) => setSimCapital(cap)}
+            geminiConfigured={Boolean(health?.gemini_api_configured)}
+          />
+        </Suspense>
+      )}
 
       {/* Main Content Viewport (Scrolls independently, renders single focused page or Bento Grid) */}
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto relative z-10">
@@ -317,113 +335,115 @@ export function App() {
 
         {/* Page Container */}
         <div className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl 3xl:max-w-[1900px] ultrawide:max-w-[2400px] w-full mx-auto space-y-6">
-          {isBentoMode ? (
-            <BentoQuantDesk
-              selectedSymbol={selectedSymbol}
-              onSelectSymbol={(sym) => {
-                playClick();
-                setSelectedSymbol(sym);
-              }}
-              capital={simCapital}
-              horizon={simHorizon}
-              isWatchlisted={watchlist.includes(selectedSymbol)}
-              onToggleWatchlist={handleToggleWatchlist}
-              onSaveSimulation={handleSaveSimulation}
-              onNavigateToSimulator={() => setActivePage("simulator")}
-            />
-          ) : (
-            <>
-              {activePage === "overview" && (
-                <OverviewPage
-                  onSelectStock={(sym) => {
-                    handleSelectStock(sym);
-                    setActivePage("studio");
-                  }}
-                  onNavigate={(page) => {
-                    playClick();
-                    setActivePage(page);
-                  }}
-                />
-              )}
+          <Suspense fallback={<PageSkeleton />}>
+            {isBentoMode ? (
+              <BentoQuantDesk
+                selectedSymbol={selectedSymbol}
+                onSelectSymbol={(sym) => {
+                  playClick();
+                  setSelectedSymbol(sym);
+                }}
+                capital={simCapital}
+                horizon={simHorizon}
+                isWatchlisted={watchlist.includes(selectedSymbol)}
+                onToggleWatchlist={handleToggleWatchlist}
+                onSaveSimulation={handleSaveSimulation}
+                onNavigateToSimulator={() => setActivePage("simulator")}
+              />
+            ) : (
+              <>
+                {activePage === "overview" && (
+                  <OverviewPage
+                    onSelectStock={(sym) => {
+                      handleSelectStock(sym);
+                      setActivePage("studio");
+                    }}
+                    onNavigate={(page) => {
+                      playClick();
+                      setActivePage(page);
+                    }}
+                  />
+                )}
 
-              {activePage === "radar" && (
-                <RadarPage
-                  onSelectStock={(sym, bgt) => {
-                    handleSelectStock(sym, bgt);
-                    setActivePage("studio");
-                  }}
-                  capital={simCapital}
-                  onCapitalChange={setSimCapital}
-                />
-              )}
+                {activePage === "radar" && (
+                  <RadarPage
+                    onSelectStock={(sym, bgt) => {
+                      handleSelectStock(sym, bgt);
+                      setActivePage("studio");
+                    }}
+                    capital={simCapital}
+                    onCapitalChange={setSimCapital}
+                  />
+                )}
 
-              {activePage === "intraday" && (
-                <IntradayTerminal
-                  onSelectStock={(sym) => {
-                    handleSelectStock(sym);
-                    setActivePage("studio");
-                  }}
-                  defaultCapital={simCapital}
-                />
-              )}
+                {activePage === "intraday" && (
+                  <IntradayTerminal
+                    onSelectStock={(sym) => {
+                      handleSelectStock(sym);
+                      setActivePage("studio");
+                    }}
+                    defaultCapital={simCapital}
+                  />
+                )}
 
-              {activePage === "studio" && (
-                <StockStudioPage
-                  symbol={selectedSymbol}
-                  onSelectSymbol={(sym) => {
-                    playClick();
-                    setSelectedSymbol(sym);
-                  }}
-                  isWatchlisted={watchlist.includes(selectedSymbol)}
-                  onToggleWatchlist={handleToggleWatchlist}
-                  onNavigateToSimulator={() => {
-                    playClick();
-                    setActivePage("simulator");
-                  }}
-                />
-              )}
+                {activePage === "studio" && (
+                  <StockStudioPage
+                    symbol={selectedSymbol}
+                    onSelectSymbol={(sym) => {
+                      playClick();
+                      setSelectedSymbol(sym);
+                    }}
+                    isWatchlisted={watchlist.includes(selectedSymbol)}
+                    onToggleWatchlist={handleToggleWatchlist}
+                    onNavigateToSimulator={() => {
+                      playClick();
+                      setActivePage("simulator");
+                    }}
+                  />
+                )}
 
-              {activePage === "simulator" && (
-                <SimulatorPage
-                  symbol={selectedSymbol}
-                  capital={simCapital}
-                  horizon={simHorizon}
-                  onSaveSimulation={handleSaveSimulation}
-                />
-              )}
+                {activePage === "simulator" && (
+                  <SimulatorPage
+                    symbol={selectedSymbol}
+                    capital={simCapital}
+                    horizon={simHorizon}
+                    onSaveSimulation={handleSaveSimulation}
+                  />
+                )}
 
-              {activePage === "dividend" && (
-                <DividendPage
-                  symbol={selectedSymbol}
-                  onSelectStock={(sym) => {
-                    handleSelectStock(sym);
-                  }}
-                />
-              )}
+                {activePage === "dividend" && (
+                  <DividendPage
+                    symbol={selectedSymbol}
+                    onSelectStock={(sym) => {
+                      handleSelectStock(sym);
+                    }}
+                  />
+                )}
 
-              {activePage === "planner" && (
-                <GoalPlannerPage
-                  onNavigateToStudio={(sym: string) => {
-                    handleSelectStock(sym);
-                    setActivePage("studio");
-                  }}
-                />
-              )}
+                {activePage === "planner" && (
+                  <GoalPlannerPage
+                    onNavigateToStudio={(sym: string) => {
+                      handleSelectStock(sym);
+                      setActivePage("studio");
+                    }}
+                  />
+                )}
 
-              {activePage === "portfolio" && (
-                <PortfolioPage
-                  onSelectStock={(sym) => {
-                    handleSelectStock(sym);
-                    setActivePage("studio");
-                  }}
-                  onNavigateToStudio={() => {
-                    playClick();
-                    setActivePage("studio");
-                  }}
-                />
-              )}
-            </>
-          )}
+                {activePage === "portfolio" && (
+                  <PortfolioPage
+                    onSelectStock={(sym) => {
+                      handleSelectStock(sym);
+                      setActivePage("studio");
+                    }}
+                    onNavigateToStudio={() => {
+                      playClick();
+                      setActivePage("studio");
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </Suspense>
         </div>
 
         {/* Sub-Footer */}
@@ -464,40 +484,52 @@ export function App() {
       />
 
       {/* macOS Spacebar QuickLook Floating HUD Modal */}
-      <SpacebarQuickLook
-        isOpen={isQuickLookOpen}
-        onClose={() => setIsQuickLookOpen(false)}
-        symbol={selectedSymbol}
-        onNavigateToStudio={(sym) => {
-          handleSelectStock(sym);
-          setActivePage("studio");
-        }}
-        onNavigateToSimulator={(sym) => {
-          handleSelectStock(sym);
-          setActivePage("simulator");
-        }}
-        isWatchlisted={watchlist.includes(selectedSymbol)}
-        onToggleWatchlist={handleToggleWatchlist}
-      />
+      {isQuickLookOpen && (
+        <Suspense fallback={null}>
+          <SpacebarQuickLook
+            isOpen={isQuickLookOpen}
+            onClose={() => setIsQuickLookOpen(false)}
+            symbol={selectedSymbol}
+            onNavigateToStudio={(sym) => {
+              handleSelectStock(sym);
+              setActivePage("studio");
+            }}
+            onNavigateToSimulator={(sym) => {
+              handleSelectStock(sym);
+              setActivePage("simulator");
+            }}
+            isWatchlisted={watchlist.includes(selectedSymbol)}
+            onToggleWatchlist={handleToggleWatchlist}
+          />
+        </Suspense>
+      )}
 
       {/* Institutional Research Tear-Sheet Memo Exporter Modal */}
-      <TearSheetExportModal
-        isOpen={isTearSheetOpen}
-        onClose={() => setIsTearSheetOpen(false)}
-        symbol={selectedSymbol}
-        companyName={activeQuote?.company_name || `${selectedSymbol} Enterprises`}
-        currentPrice={activeQuote?.price || 4856.0}
-        sector={activeQuote?.sector || "Capital Goods & Defense"}
-        capital={simCapital}
-        horizonMonths={simHorizon}
-      />
+      {isTearSheetOpen && (
+        <Suspense fallback={null}>
+          <TearSheetExportModal
+            isOpen={isTearSheetOpen}
+            onClose={() => setIsTearSheetOpen(false)}
+            symbol={selectedSymbol}
+            companyName={activeQuote?.company_name || `${selectedSymbol} Enterprises`}
+            currentPrice={activeQuote?.price || 4856.0}
+            sector={activeQuote?.sector || "Capital Goods & Defense"}
+            capital={simCapital}
+            horizonMonths={simHorizon}
+          />
+        </Suspense>
+      )}
 
       {/* Settings & System Diagnostics Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onSaved={() => refetchHealth()}
-      />
+      {isSettingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            onSaved={() => refetchHealth()}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
