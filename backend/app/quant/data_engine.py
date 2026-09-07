@@ -232,7 +232,9 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
 
     # 1. In-memory hot cache (30s)
     if clean_sym in _QUOTE_CACHE and (now - _QUOTE_CACHE[clean_sym]["cached_at"]) < CACHE_TTL:
-        return _QUOTE_CACHE[clean_sym]["data"]
+        normalized = _normalize_quote_fields(_QUOTE_CACHE[clean_sym]["data"])
+        _QUOTE_CACHE[clean_sym]["data"] = normalized
+        return normalized
 
     # 2. Direct Live Exchange Ingestion
     quote = fetch_live_quote_direct(clean_sym)
@@ -278,6 +280,8 @@ def fetch_live_quote(raw_symbol: str) -> Dict[str, Any]:
             "is_estimated": True,
             "description": f"{clean_sym} listed on NSE."
         }
+
+    quote = _normalize_quote_fields(quote)
 
     _QUOTE_CACHE[clean_sym] = {"cached_at": now, "data": quote}
     return quote
@@ -378,6 +382,10 @@ def fetch_historical_dataframe(raw_symbol: str, period: str = "1y", interval: st
                 records.append({"Open": op, "High": high, "Low": low, "Close": p, "Volume": vol})
             
             df = pd.DataFrame(records, index=dates)
+
+    if period in ["1d", "5d"] and interval in ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h"] and not df.empty:
+        labels = df.index.strftime("%H:%M")
+        df = df.loc[~labels.duplicated()]
 
     _CANDLE_CACHE[cache_key] = {"cached_at": now, "df": df}
     return df
